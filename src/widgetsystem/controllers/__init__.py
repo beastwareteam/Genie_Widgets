@@ -24,14 +24,17 @@ from widgetsystem.controllers.tab_subsystem import TabSubsystem
 from widgetsystem.controllers.layout_controller import LayoutController
 from widgetsystem.controllers.theme_controller import ThemeController
 
-# Phase 4 Controllers (to be implemented)
-# from widgetsystem.controllers.dnd_controller import DnDController
-# from widgetsystem.controllers.responsive_controller import ResponsiveController
-# from widgetsystem.controllers.shortcut_controller import ShortcutController
+# Phase 4 Controllers
+from widgetsystem.controllers.dnd_controller import DnDController
+from widgetsystem.controllers.responsive_controller import ResponsiveController
+from widgetsystem.controllers.shortcut_controller import ShortcutController
 
 __all__ = [
+    "DnDController",
     "DockController",
     "LayoutController",
+    "ResponsiveController",
+    "ShortcutController",
     "TabSubsystem",
     "ThemeController",
 ]

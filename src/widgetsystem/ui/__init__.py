@@ -37,6 +37,7 @@ from widgetsystem.ui.widget_features_editor import (
     WidgetFeaturesEditorDialog,
     WidgetPropertyEditor,
 )
+from widgetsystem.ui.plugin_manager_dialog import PluginManagerDialog
 
 
 __all__ = [
@@ -67,4 +68,5 @@ __all__ = [
     "WidgetFeaturesEditorDialog",
     "WidgetPropertyEditor",
     "WindowMoveHandle",
+    "PluginManagerDialog",
 ]
