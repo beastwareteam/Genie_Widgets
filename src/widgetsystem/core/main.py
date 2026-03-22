@@ -21,6 +21,15 @@ from PySide6.QtWidgets import (
 )
 
 from widgetsystem.core import Theme, ThemeManager, get_gradient_renderer
+from widgetsystem.controllers import (
+    DnDController,
+    DockController,
+    LayoutController,
+    ResponsiveController,
+    ShortcutController,
+    TabSubsystem,
+    ThemeController,
+)
 from widgetsystem.enums import ActionName, DockArea, ResponsiveAction
 from widgetsystem.factories.dnd_factory import DnDFactory
 from widgetsystem.factories.i18n_factory import I18nFactory
@@ -87,21 +96,20 @@ class MainWindow(QMainWindow):
         # Register theme profiles with ThemeManager
         self._register_theme_profiles()
 
+        # Legacy state variables - delegated to controllers but kept for compatibility
+        # These will be removed in future versions once all code uses controllers
         self.panel_counter = 0
-        self.docks: list[Any] = []
+        self._docks: list[Any] = []
         self.action_handlers: dict[str, Any] = {}
         self.registered_action_names: set[str] = set()
         self.registered_shortcuts: set[str] = set()
         self.global_shortcuts: list[QShortcut] = []
-        self.dnd_rules_map: dict[
-            str,
-            dict[str, list[str]],
-        ] = {}  # panel_id -> {source_area -> [allowed_areas]}
-        self.drop_zones_map: dict[str, Any] = {}  # area -> DropZone info
+        self.dnd_rules_map: dict[str, dict[str, list[str]]] = {}
+        self.drop_zones_map: dict[str, Any] = {}
         self.current_breakpoint: str | None = None
         self.responsive_width_ranges: dict[str, tuple[int, int]] = {}
         self.responsive_applied_rules: set[str] = set()
-        self.layout_file = self._resolve_default_layout_file()
+        self._layout_file: Path | None = None
 
         # Initialize custom gradient system (replaces QtAds default gradients)
         self.gradient_renderer = get_gradient_renderer()
@@ -134,34 +142,60 @@ class MainWindow(QMainWindow):
         if app:
             app.installEventFilter(self._floating_patcher)
 
-        # Tab Selector Visibility Control
-        from widgetsystem.ui import (
-            FloatingStateTracker,
-            TabColorController,
-            TabSelectorEventHandler,
-            TabSelectorMonitor,
-            TabSelectorVisibilityController,
+        # =================================================================
+        # Initialize Controllers (Phase A1)
+        # =================================================================
+
+        # TabSubsystem - unified tab management
+        self.tab_sys = TabSubsystem()
+        self.tab_sys.install(self.dock_manager)
+
+        # DnDController - drag & drop rules
+        self.dnd_ctrl = DnDController(self.dnd_factory)
+
+        # DockController - dock lifecycle (needs TabSubsystem for tracking)
+        self.dock_ctrl = DockController(
+            self.dock_manager,
+            self.panel_factory,
+            self.tabs_factory,
+            self.i18n_factory,
+        )
+        # Connect dock events to TabSubsystem
+        self.dock_ctrl.dockAdded.connect(
+            lambda dock_id, dock: self.tab_sys.track_dock_widget(dock_id, dock)
         )
 
-        self._tab_monitor = TabSelectorMonitor()
-        self._tab_event_handler = TabSelectorEventHandler(self.dock_manager, self._tab_monitor)
-        self._tab_visibility = TabSelectorVisibilityController(self._tab_monitor)
-
-        # Float Button Persistence
-        self._floating_tracker = FloatingStateTracker(self.dock_manager)
-
-        # Register callback: After title bar refresh, reapply tab selector visibility
-        self._floating_tracker.register_post_refresh_callback(
-            self._tab_visibility.refresh_area_visibility,
+        # LayoutController - layout persistence
+        self.layout_ctrl = LayoutController(
+            self.dock_manager,
+            self.layout_factory,
+            self.i18n_factory,
         )
 
-        # Tab Color Controller - load colors from theme
-        active, inactive = "#E0E0E0", "#BDBDBD"
+        # ResponsiveController - breakpoints
+        self.responsive_ctrl = ResponsiveController(
+            self.responsive_factory,
+            self.dock_ctrl,
+        )
 
-        self._tab_color_controller = TabColorController(active, inactive)
-        self._tab_color_controller.initialize()
+        # ShortcutController - shortcuts and actions
+        self.shortcut_ctrl = ShortcutController(
+            self.menu_factory,
+            self.i18n_factory,
+            self,
+        )
 
-        # Build UI with factories
+        # ThemeController - unified theme management
+        self.theme_ctrl = ThemeController(self.theme_factory)
+        self.theme_ctrl.set_tab_color_controller(self.tab_sys.tab_color_controller)
+
+        # =================================================================
+        # Legacy compatibility - keep old references for gradual migration
+        # =================================================================
+        self._tab_color_controller = self.tab_sys.tab_color_controller
+        self._floating_tracker = self.tab_sys.floating_tracker
+
+        # Build UI with factories (delegates to controllers)
         self._initialize_dnd()
         self._initialize_responsive()
         self._create_menu()
@@ -180,6 +214,33 @@ class MainWindow(QMainWindow):
 
         # Apply custom gradients to override QtAds default gradients
         QTimer.singleShot(150, self._apply_custom_gradients)
+
+    # ------------------------------------------------------------------
+    # Properties for Controller Delegation (Backwards Compatibility)
+    # ------------------------------------------------------------------
+
+    @property
+    def docks(self) -> list[Any]:
+        """Get list of dock widgets (delegates to DockController if available)."""
+        if hasattr(self, "dock_ctrl") and self.dock_ctrl:
+            return self.dock_ctrl.docks
+        return self._docks
+
+    @property
+    def layout_file(self) -> Path:
+        """Get layout file path (delegates to LayoutController if available)."""
+        if hasattr(self, "layout_ctrl") and self.layout_ctrl:
+            return self.layout_ctrl.layout_file
+        if self._layout_file:
+            return self._layout_file
+        return self._resolve_default_layout_file()
+
+    @layout_file.setter
+    def layout_file(self, value: Path) -> None:
+        """Set layout file path."""
+        self._layout_file = value
+        if hasattr(self, "layout_ctrl") and self.layout_ctrl:
+            self.layout_ctrl.layout_file = value
 
     # ------------------------------------------------------------------
     # Dock Manager Configuration (DRY - Single Source of Truth)
