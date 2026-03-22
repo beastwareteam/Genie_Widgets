@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "lists.schema.json",
+  "title": "Lists Configuration Schema",
+  "description": "Schema for lists.json containing list widget configurations",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "Configuration version"
+    },
+    "lists": {
+      "type": "object",
+      "description": "List configurations by name",
+      "additionalProperties": {
+        "$ref": "#/$defs/list"
+      }
+    }
+  },
+  "required": ["lists"],
+  "$defs": {
+    "list": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["simple", "tree", "nested"],
+          "default": "simple",
+          "description": "List type"
+        },
+        "selection_mode": {
+          "type": "string",
+          "enum": ["single", "multi", "extended", "none"],
+          "default": "single",
+          "description": "Selection mode"
+        },
+        "drag_enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable drag from list"
+        },
+        "drop_enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable drop onto list"
+        },
+        "expandable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow expanding tree items"
+        },
+        "icons_enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show item icons"
+        },
+        "levels": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "default": 3,
+          "description": "Maximum nesting levels for tree"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/listItem"
+          },
+          "description": "Initial list items"
+        }
+      }
+    },
+    "listItem": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique item identifier"
+        },
+        "text": {
+          "type": "string",
+          "description": "Display text"
+        },
+        "icon": {
+          "type": "string",
+          "description": "Icon name"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/listItem"
+          },
+          "description": "Child items for tree/nested lists"
+        }
+      },
+      "required": ["text"]
+    }
+  }
+}

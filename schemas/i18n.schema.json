@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "i18n.schema.json",
+  "title": "Internationalization Configuration Schema",
+  "description": "Schema for i18n.*.json files containing translations",
+  "type": "object",
+  "properties": {
+    "language": {
+      "type": "string",
+      "description": "ISO 639-1 language code",
+      "pattern": "^[a-z]{2}$",
+      "examples": ["en", "de", "fr", "es"]
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable language name",
+      "examples": ["English", "Deutsch", "Français"]
+    },
+    "translations": {
+      "type": "object",
+      "description": "Translation key-value pairs using dot notation",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "examples": [
+        {
+          "menu.file": "File",
+          "menu.edit": "Edit",
+          "button.ok": "OK"
+        }
+      ]
+    }
+  },
+  "required": ["language", "translations"],
+  "additionalProperties": false
+}

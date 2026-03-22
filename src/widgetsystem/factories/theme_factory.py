@@ -25,15 +25,15 @@ class ThemeDefinition:
     tab_inactive_color: str = "#BDBDBD"
 
 
-class ThemeProfile:
-    """Represents a theme profile with configuration.
-    
-    A profile contains theme colors, layout configuration,
-    and can generate QSS stylesheets.
+class SimpleThemeProfile:
+    """Simple theme profile for basic theme configuration.
+
+    A lightweight profile containing theme ID and name.
+    For full ARGB color support, use widgetsystem.core.ThemeProfile instead.
     """
 
     def __init__(self, profile_id: str, name: str) -> None:
-        """Initialize theme profile.
+        """Initialize simple theme profile.
 
         Args:
             profile_id: Unique identifier for the profile
@@ -43,25 +43,25 @@ class ThemeProfile:
         self.name = name
 
     @staticmethod
-    def load_from_file(file_path: Path) -> "ThemeProfile":
-        """Load a theme profile from a JSON file.
+    def load_from_file(file_path: Path) -> "SimpleThemeProfile":
+        """Load a simple theme profile from a JSON file.
 
         Args:
             file_path: Path to the profile JSON file
 
         Returns:
-            ThemeProfile instance
+            SimpleThemeProfile instance
 
         Raises:
             json.JSONDecodeError: If file contains invalid JSON
             OSError: If file cannot be read
         """
         data = json.loads(file_path.read_text(encoding="utf-8"))
-        profile = ThemeProfile(data.get("id", ""), data.get("name", ""))
+        profile = SimpleThemeProfile(data.get("id", ""), data.get("name", ""))
         return profile
 
     def save_to_file(self, file_path: Path) -> None:
-        """Save theme profile to a JSON file.
+        """Save simple theme profile to a JSON file.
 
         Args:
             file_path: Path where the profile should be saved
@@ -73,9 +73,13 @@ class ThemeProfile:
         """Generate QSS stylesheet content from profile.
 
         Returns:
-            QSS stylesheet as a string
+            QSS stylesheet as a string (empty for simple profiles)
         """
         return ""
+
+
+# Backwards compatibility alias
+ThemeProfile = SimpleThemeProfile
 
 
 class ThemeFactory:
