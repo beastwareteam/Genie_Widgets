@@ -18,8 +18,20 @@ UI Components:
 - WidgetFeaturesEditor, ConfigurationPanel, TabSelector components
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "WidgetSystem Team"
+
+# =============================================================================
+# Type-safe Enumerations
+# =============================================================================
+from widgetsystem.enums import (
+    ActionName,
+    DockArea,
+    PanelState,
+    ResponsiveAction,
+    RuleAction,
+    ThemeMode,
+)
 
 # =============================================================================
 # Core Systems
@@ -122,6 +134,15 @@ __all__ = [
     # Version
     "__version__",
     "__author__",
+    # ==========================================================================
+    # Type-safe Enumerations
+    # ==========================================================================
+    "ActionName",
+    "DockArea",
+    "PanelState",
+    "ResponsiveAction",
+    "RuleAction",
+    "ThemeMode",
     # ==========================================================================
     # Core Systems
     # ==========================================================================

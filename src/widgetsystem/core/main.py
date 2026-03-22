@@ -6,9 +6,10 @@ from pathlib import Path
 from typing import Any
 
 import PySide6QtAds as QtAds
-from PySide6.QtCore import QByteArray, Qt, QTimer
-from PySide6.QtGui import QAction, QKeySequence, QShortcut
+from PySide6.QtCore import QByteArray, QSize, Qt, QTimer
+from PySide6.QtGui import QAction, QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
+    QAbstractButton,
     QApplication,
     QMainWindow,
     QMenu,
@@ -20,6 +21,7 @@ from PySide6.QtWidgets import (
 )
 
 from widgetsystem.core import Theme, ThemeManager, get_gradient_renderer
+from widgetsystem.enums import ActionName, DockArea, ResponsiveAction
 from widgetsystem.factories.dnd_factory import DnDFactory
 from widgetsystem.factories.i18n_factory import I18nFactory
 from widgetsystem.factories.layout_factory import LayoutDefinition, LayoutFactory
@@ -110,40 +112,7 @@ class MainWindow(QMainWindow):
         self._splitter_timer.start(300)  # Check every 300ms
 
         # Configure CDockManager flags before creating instance
-        QtAds.CDockManager.setConfigFlag(QtAds.CDockManager.eConfigFlag.OpaqueSplitterResize, True)
-        QtAds.CDockManager.setConfigFlag(
-            QtAds.CDockManager.eConfigFlag.XmlCompressionEnabled,
-            False,
-        )
-        QtAds.CDockManager.setConfigFlag(
-            QtAds.CDockManager.eConfigFlag.AllTabsHaveCloseButton,
-            True,
-        )
-        QtAds.CDockManager.setConfigFlag(
-            QtAds.CDockManager.eConfigFlag.DockAreaHasCloseButton,
-            True,
-        )
-        QtAds.CDockManager.setConfigFlag(
-            QtAds.CDockManager.eConfigFlag.DockAreaHasUndockButton,
-            True,
-        )
-        # Use Qt custom title bar for floating containers (not Windows native title bar)
-        QtAds.CDockManager.setConfigFlag(
-            QtAds.CDockManager.eConfigFlag.FloatingContainerForceNativeTitleBar,
-            False,
-        )
-        QtAds.CDockManager.setConfigFlag(
-            QtAds.CDockManager.eConfigFlag.FloatingContainerForceQWidgetTitleBar,
-            True,
-        )
-        QtAds.CDockManager.setConfigFlag(
-            QtAds.CDockManager.eConfigFlag.FloatingContainerHasWidgetTitle,
-            True,
-        )
-        QtAds.CDockManager.setConfigFlag(
-            QtAds.CDockManager.eConfigFlag.FloatingContainerHasWidgetIcon,
-            True,
-        )
+        self._configure_dock_flags()
 
         # Create dock manager as central widget
         self.dock_manager: Any = QtAds.CDockManager(self)
@@ -211,6 +180,45 @@ class MainWindow(QMainWindow):
 
         # Apply custom gradients to override QtAds default gradients
         QTimer.singleShot(150, self._apply_custom_gradients)
+
+    # ------------------------------------------------------------------
+    # Dock Manager Configuration (DRY - Single Source of Truth)
+    # ------------------------------------------------------------------
+
+    def _configure_dock_flags(self) -> None:
+        """Configure CDockManager flags.
+
+        This method is the SINGLE source of truth for dock manager configuration.
+        Called by __init__ and _reset_layout to ensure consistent behavior.
+        """
+        QtAds.CDockManager.setConfigFlag(
+            QtAds.CDockManager.eConfigFlag.OpaqueSplitterResize, True
+        )
+        QtAds.CDockManager.setConfigFlag(
+            QtAds.CDockManager.eConfigFlag.XmlCompressionEnabled, False
+        )
+        QtAds.CDockManager.setConfigFlag(
+            QtAds.CDockManager.eConfigFlag.AllTabsHaveCloseButton, True
+        )
+        QtAds.CDockManager.setConfigFlag(
+            QtAds.CDockManager.eConfigFlag.DockAreaHasCloseButton, True
+        )
+        QtAds.CDockManager.setConfigFlag(
+            QtAds.CDockManager.eConfigFlag.DockAreaHasUndockButton, True
+        )
+        # Use Qt custom title bar for floating containers (not Windows native)
+        QtAds.CDockManager.setConfigFlag(
+            QtAds.CDockManager.eConfigFlag.FloatingContainerForceNativeTitleBar, False
+        )
+        QtAds.CDockManager.setConfigFlag(
+            QtAds.CDockManager.eConfigFlag.FloatingContainerForceQWidgetTitleBar, True
+        )
+        QtAds.CDockManager.setConfigFlag(
+            QtAds.CDockManager.eConfigFlag.FloatingContainerHasWidgetTitle, True
+        )
+        QtAds.CDockManager.setConfigFlag(
+            QtAds.CDockManager.eConfigFlag.FloatingContainerHasWidgetIcon, True
+        )
 
     # ------------------------------------------------------------------
     # Dock creation helpers
@@ -304,7 +312,7 @@ class MainWindow(QMainWindow):
             if hasattr(self, "dock_manager") and self.dock_manager:
                 self.dock_manager.setStyleSheet(merged_stylesheet)
 
-        print("✅ Custom gradients applied - QtAds default gradients overridden")
+        print("[+] Custom gradients applied - QtAds default gradients overridden")
 
     def _create_empty_dock(
         self,
@@ -378,6 +386,9 @@ class MainWindow(QMainWindow):
         for tab in tab_group.tabs:
             self._add_tab_recursive(tab_widget, tab, depth=0)
 
+        # Style close buttons for main tab widget
+        self._style_tab_widget(tab_widget)
+
         # Translate group name using i18n
         group_name = self.i18n_factory.translate(tab_group.title_key, default=tab_group.id)
 
@@ -394,6 +405,38 @@ class MainWindow(QMainWindow):
         # Register widget with FloatingStateTracker for float button persistence
         self._floating_tracker.track_dock_widget(tab_group.id, dock)
 
+    def _style_tab_widget(self, tab_widget: QTabWidget) -> None:
+        """Apply consistent styling to tab widget close buttons."""
+        # Delay styling to ensure buttons exist
+        QTimer.singleShot(50, lambda: self._apply_tab_close_styling(tab_widget))
+
+    def _apply_tab_close_styling(self, tab_widget: QTabWidget) -> None:
+        """Apply close button styling after tabs are fully created."""
+        tab_bar = tab_widget.tabBar()
+        # Use Qt standard close icon
+        style = tab_widget.style()
+        if style:
+            close_icon = style.standardIcon(style.StandardPixmap.SP_TitleBarCloseButton)
+        else:
+            close_icon = QIcon()
+
+        styled_count = 0
+        for i in range(tab_bar.count()):
+            close_btn = tab_bar.tabButton(i, tab_bar.ButtonPosition.RightSide)
+            if close_btn and isinstance(close_btn, QAbstractButton):
+                close_btn.setIcon(close_icon)
+                close_btn.setIconSize(QSize(10, 10))
+                close_btn.setFixedSize(QSize(14, 14))
+                close_btn.setStyleSheet("""
+                    background: transparent;
+                    border: none;
+                    border-radius: 3px;
+                    padding: 0px;
+                    margin: 0px;
+                """)
+                styled_count += 1
+        print(f"[TAB_STYLE] Styled {styled_count} close buttons in tab widget")
+
     def _add_tab_recursive(self, parent_widget: QTabWidget, tab: Tab, depth: int = 0) -> None:
         """Recursively add tabs (handling nested children)."""
         # Translate tab name using i18n
@@ -409,6 +452,8 @@ class MainWindow(QMainWindow):
                 self._add_tab_recursive(sub_tab_widget, child_tab, depth=depth + 1)
 
             parent_widget.addTab(sub_tab_widget, tab_name)
+            # Style close buttons after tabs are added
+            self._style_tab_widget(sub_tab_widget)
         else:
             # Leaf tab - add placeholder content
             content_widget = QWidget()
@@ -441,13 +486,25 @@ class MainWindow(QMainWindow):
             delete_on_close=panel.delete_on_close,
         )
 
-    def _resolve_dock_area(self, area_name: str) -> Any:
-        """Map area name to QtAds dock area constant."""
+    def _resolve_dock_area(self, area_name: str | DockArea) -> Any:
+        """Map area name to QtAds dock area constant.
+
+        Args:
+            area_name: Area name as string or DockArea enum
+
+        Returns:
+            QtAds dock area constant or None if invalid
+        """
+        # Convert DockArea enum to string value
+        if isinstance(area_name, DockArea):
+            area_name = area_name.value
+
         area_map = {
-            "left": QtAds.LeftDockWidgetArea,
-            "right": QtAds.RightDockWidgetArea,
-            "bottom": QtAds.BottomDockWidgetArea,
-            "center": QtAds.CenterDockWidgetArea,
+            DockArea.LEFT.value: QtAds.LeftDockWidgetArea,
+            DockArea.RIGHT.value: QtAds.RightDockWidgetArea,
+            DockArea.BOTTOM.value: QtAds.BottomDockWidgetArea,
+            DockArea.CENTER.value: QtAds.CenterDockWidgetArea,
+            DockArea.TOP.value: QtAds.TopDockWidgetArea,
         }
         return area_map.get(area_name.strip().lower())
 
@@ -485,10 +542,10 @@ class MainWindow(QMainWindow):
                 )
 
             print(
-                f"✅ DnD System initialized: {len(self.drop_zones_map)} zones, {len(self.dnd_rules_map)} panels",
+                f"[+] DnD System initialized: {len(self.drop_zones_map)} zones, {len(self.dnd_rules_map)} panels",
             )
         except Exception as e:
-            print(f"⚠️ Warning: Failed to load DnD configuration: {e}")
+            print(f"[!] Warning: Failed to load DnD configuration: {e}")
 
     def is_dnd_move_allowed(self, panel_id: str, source_area: str, target_area: str) -> bool:
         """Check if a panel is allowed to move from source to target area."""
@@ -521,10 +578,10 @@ class MainWindow(QMainWindow):
 
             rules = self.responsive_factory.load_responsive_rules()
             print(
-                f"✅ Responsive System initialized: {len(breakpoints)} breakpoints, {len(rules)} rules",
+                f"[+] Responsive System initialized: {len(breakpoints)} breakpoints, {len(rules)} rules",
             )
         except Exception as e:
-            print(f"⚠️ Warning: Failed to load responsive configuration: {e}")
+            print(f"[!] Warning: Failed to load responsive configuration: {e}")
 
         # Check initial breakpoint on startup
         self.resizeEvent(None)
@@ -537,7 +594,10 @@ class MainWindow(QMainWindow):
         return None
 
     def _apply_responsive_rules(self, breakpoint_id: str) -> None:
-        """Apply panel visibility rules for the current breakpoint."""
+        """Apply panel visibility rules for the current breakpoint.
+
+        Uses ResponsiveAction enum for type-safe action handling.
+        """
         try:
             rules = self.responsive_factory.load_responsive_rules()
             for rule in rules:
@@ -549,12 +609,13 @@ class MainWindow(QMainWindow):
                 if dock is None:
                     continue
 
-                # Apply rule action
-                if rule.action == "hide":
+                # Apply rule action using ResponsiveAction enum
+                action = rule.action.lower()
+                if action == ResponsiveAction.HIDE.value:
                     dock.toggleView(False)
-                elif rule.action == "show":
+                elif action == ResponsiveAction.SHOW.value:
                     dock.toggleView(True)
-                elif rule.action == "collapse":
+                elif action == ResponsiveAction.COLLAPSE.value:
                     dock.setFloating(False)
 
                 self.responsive_applied_rules.add(rule.id)
@@ -679,28 +740,39 @@ class MainWindow(QMainWindow):
             shortcut.activated.connect(handler)
             self.global_shortcuts.append(shortcut)
 
-    def _get_action_handler(self, action_name: str) -> Any:
-        """Get handler function for named action."""
+    def _get_action_handler(self, action_name: str | ActionName) -> Any:
+        """Get handler function for named action.
+
+        Args:
+            action_name: Action name as string or ActionName enum
+
+        Returns:
+            Handler function or None if action not found
+        """
+        # Convert ActionName enum to string value
+        if isinstance(action_name, ActionName):
+            action_name = action_name.value
+
         handlers: dict[str, Any] = {
-            "save_dock": self._on_save_dock,
-            "load_dock": self._on_load_dock,
-            "save_layout": self._save_layout,
-            "load_layout": self._load_layout,
-            "reset_layout": self._reset_layout,
-            "new_dock": self._on_new_dock,
-            "float_all": self._on_float_all,
-            "dock_all": self._on_dock_all,
-            "close_all": self._on_close_all,
+            ActionName.SAVE_DOCK.value: self._on_save_dock,
+            ActionName.LOAD_DOCK.value: self._on_load_dock,
+            ActionName.SAVE_LAYOUT.value: self._save_layout,
+            ActionName.LOAD_LAYOUT.value: self._load_layout,
+            ActionName.RESET_LAYOUT.value: self._reset_layout,
+            ActionName.NEW_DOCK.value: self._on_new_dock,
+            ActionName.FLOAT_ALL.value: self._on_float_all,
+            ActionName.DOCK_ALL.value: self._on_dock_all,
+            ActionName.CLOSE_ALL.value: self._on_close_all,
             # Phase 5: Advanced Features
-            "show_theme_editor": self._show_theme_editor,
-            "show_color_picker": self._show_color_picker,
-            "show_widget_features_editor": self._show_widget_features_editor,
-            "show_plugin_manager": self._show_plugin_manager,
+            ActionName.SHOW_THEME_EDITOR.value: self._show_theme_editor,
+            ActionName.SHOW_COLOR_PICKER.value: self._show_color_picker,
+            ActionName.SHOW_WIDGET_FEATURES_EDITOR.value: self._show_widget_features_editor,
+            ActionName.SHOW_PLUGIN_MANAGER.value: self._show_plugin_manager,
         }
         return handlers.get(action_name)
 
     # ------------------------------------------------------------------
-    # Inlay Title Bar (Collapsible 3px→36px)
+    # Inlay Title Bar (Collapsible 3px->36px)
     # ------------------------------------------------------------------
 
     def _create_inlay_title_bar(self) -> None:
@@ -972,14 +1044,14 @@ class MainWindow(QMainWindow):
             written_size = self.layout_file.stat().st_size
             print(f"[SAVE] Written to {self.layout_file}")
             print(f"[SAVE] Actual file size: {written_size} bytes")
-            print("[SAVE] ✅ Save completed successfully")
+            print("[SAVE] [+] Save completed successfully")
             QMessageBox.information(
                 self,
                 self.i18n_factory.translate("message.success", default="Success"),
                 f"{self.i18n_factory.translate('message.layout_saved', default='Layout saved successfully.')}\n{self.layout_file}",
             )
         except Exception as exc:
-            print(f"[SAVE] ❌ Error: {exc}")
+            print(f"[SAVE] [X] Error: {exc}")
             QMessageBox.critical(
                 self,
                 self.i18n_factory.translate("message.error", default="Error"),
@@ -991,7 +1063,7 @@ class MainWindow(QMainWindow):
         try:
             print(f"[LOAD] Attempting to load from {self.layout_file}")
             if not self.layout_file.exists():
-                print("[LOAD] ❌ File does not exist")
+                print("[LOAD] [X] File does not exist")
                 QMessageBox.warning(
                     self,
                     self.i18n_factory.translate("message.warning", default="Warning"),
@@ -1006,7 +1078,7 @@ class MainWindow(QMainWindow):
             restored = self.dock_manager.restoreState(QByteArray(data))
             print(f"[LOAD] restoreState returned: {restored}")
             if not restored:
-                print("[LOAD] ❌ restoreState failed")
+                print("[LOAD] [X] restoreState failed")
                 QMessageBox.warning(
                     self,
                     self.i18n_factory.translate("message.warning", default="Warning"),
@@ -1016,7 +1088,7 @@ class MainWindow(QMainWindow):
                     ),
                 )
                 return
-            print("[LOAD] ✅ Layout restored successfully")
+            print("[LOAD] [+] Layout restored successfully")
             QMessageBox.information(
                 self,
                 self.i18n_factory.translate("message.success", default="Success"),
@@ -1026,7 +1098,7 @@ class MainWindow(QMainWindow):
                 ),
             )
         except Exception as exc:
-            print(f"[LOAD] ❌ Exception: {exc}")
+            print(f"[LOAD] [X] Exception: {exc}")
             QMessageBox.critical(
                 self,
                 self.i18n_factory.translate("message.error", default="Error"),
@@ -1039,7 +1111,7 @@ class MainWindow(QMainWindow):
         try:
             print(f"[STARTUP_LOAD] Checking {self.layout_file}")
             if not self.layout_file.exists():
-                print("[STARTUP_LOAD] ⚠️ File does not exist, skipping restore")
+                print("[STARTUP_LOAD] [!] File does not exist, skipping restore")
                 return
             print("[STARTUP_LOAD] File exists, attempting restore")
             data = self.layout_file.read_bytes()
@@ -1047,11 +1119,11 @@ class MainWindow(QMainWindow):
             restored = self.dock_manager.restoreState(QByteArray(data))
             print(f"[STARTUP_LOAD] restoreState returned: {restored}")
             if not restored:
-                print("[STARTUP_LOAD] ⚠️ restoreState failed")
+                print("[STARTUP_LOAD] [!] restoreState failed")
             else:
-                print("[STARTUP_LOAD] ✅ Restored successfully")
+                print("[STARTUP_LOAD] [+] Restored successfully")
         except Exception as exc:
-            print(f"[STARTUP_LOAD] ❌ Exception: {exc}")
+            print(f"[STARTUP_LOAD] [X] Exception: {exc}")
 
     def _load_named_layout(self, layout: LayoutDefinition) -> None:
         """Load a named layout from LayoutFactory."""
@@ -1122,51 +1194,38 @@ class MainWindow(QMainWindow):
             )
 
     def _reset_layout(self) -> None:
-        """Reset layout to default."""
+        """Reset layout to default.
+
+        Performs a complete reset of all subsystems:
+        1. Clears dock list
+        2. Destroys old dock manager
+        3. Resets all controller states
+        4. Recreates dock manager with fresh configuration
+        5. Rebuilds dock areas
+        """
         try:
+            # Clear dock list
             self.docks.clear()
+
+            # Destroy old dock manager
             self.dock_manager.deleteLater()
 
-            QtAds.CDockManager.setConfigFlag(
-                QtAds.CDockManager.eConfigFlag.OpaqueSplitterResize,
-                True,
-            )
-            QtAds.CDockManager.setConfigFlag(
-                QtAds.CDockManager.eConfigFlag.XmlCompressionEnabled,
-                False,
-            )
-            QtAds.CDockManager.setConfigFlag(
-                QtAds.CDockManager.eConfigFlag.AllTabsHaveCloseButton,
-                True,
-            )
-            QtAds.CDockManager.setConfigFlag(
-                QtAds.CDockManager.eConfigFlag.DockAreaHasCloseButton,
-                True,
-            )
-            QtAds.CDockManager.setConfigFlag(
-                QtAds.CDockManager.eConfigFlag.DockAreaHasUndockButton,
-                True,
-            )
-            # Use Qt custom title bar for floating containers (not Windows native title bar)
-            QtAds.CDockManager.setConfigFlag(
-                QtAds.CDockManager.eConfigFlag.FloatingContainerForceNativeTitleBar,
-                False,
-            )
-            QtAds.CDockManager.setConfigFlag(
-                QtAds.CDockManager.eConfigFlag.FloatingContainerForceQWidgetTitleBar,
-                True,
-            )
-            QtAds.CDockManager.setConfigFlag(
-                QtAds.CDockManager.eConfigFlag.FloatingContainerHasWidgetTitle,
-                True,
-            )
-            QtAds.CDockManager.setConfigFlag(
-                QtAds.CDockManager.eConfigFlag.FloatingContainerHasWidgetIcon,
-                True,
-            )
+            # Reset controller states (prevents inconsistent state after reset)
+            self._reset_controller_states()
 
+            # Reconfigure dock flags (DRY - uses single source of truth)
+            self._configure_dock_flags()
+
+            # Recreate dock manager
             self.dock_manager = QtAds.CDockManager(self)
+
+            # Rebuild dock areas and tab groups
             self._create_dock_areas()
+            self._create_tab_groups()
+
+            # Re-initialize tab subsystem controllers
+            self._reinitialize_tab_controllers()
+
             QMessageBox.information(
                 self,
                 self.i18n_factory.translate("message.success", default="Success"),
@@ -1181,6 +1240,46 @@ class MainWindow(QMainWindow):
                 self.i18n_factory.translate("message.error", default="Error"),
                 f"Failed to reset layout:\n{exc}",
             )
+
+    def _reset_controller_states(self) -> None:
+        """Reset all controller states to ensure consistent behavior after layout reset."""
+        # Reset responsive state
+        self.current_breakpoint = None
+        self.responsive_applied_rules.clear()
+
+        # Reset DnD state (keep rules, clear runtime state)
+        # Rules are loaded from config, no need to clear
+
+        # Reset panel counter for new dynamic panels
+        self.panel_counter = 0
+
+    def _reinitialize_tab_controllers(self) -> None:
+        """Re-initialize tab-related controllers after dock manager recreation."""
+        from widgetsystem.ui import (
+            FloatingStateTracker,
+            TabColorController,
+            TabSelectorEventHandler,
+            TabSelectorMonitor,
+            TabSelectorVisibilityController,
+        )
+
+        # Recreate tab subsystem controllers with new dock manager
+        self._tab_monitor = TabSelectorMonitor()
+        self._tab_event_handler = TabSelectorEventHandler(
+            self.dock_manager, self._tab_monitor
+        )
+        self._tab_visibility = TabSelectorVisibilityController(self._tab_monitor)
+
+        # Recreate floating tracker
+        self._floating_tracker = FloatingStateTracker(self.dock_manager)
+        self._floating_tracker.register_post_refresh_callback(
+            self._tab_visibility.refresh_area_visibility,
+        )
+
+        # Recreate tab color controller
+        active, inactive = "#E0E0E0", "#BDBDBD"
+        self._tab_color_controller = TabColorController(active, inactive)
+        self._tab_color_controller.initialize()
 
     # ------------------------------------------------------------------
     # Theme Management (New API)
@@ -1234,23 +1333,23 @@ class MainWindow(QMainWindow):
         if plugins_dir.exists():
             self.plugin_manager.load_all_plugins()
 
-        print(f"✓ Plugin system initialized with {len(self.plugin_registry.factories)} factories")
+        print(f"[+] Plugin system initialized with {len(self.plugin_registry.factories)} factories")
 
     def _on_plugin_loaded(self, plugin_name: str) -> None:
         """Handle plugin loaded event."""
-        print(f"✓ Plugin loaded: {plugin_name}")
+        print(f"[+] Plugin loaded: {plugin_name}")
 
     def _on_plugin_unloaded(self, plugin_name: str) -> None:
         """Handle plugin unloaded event."""
-        print(f"✓ Plugin unloaded: {plugin_name}")
+        print(f"[+] Plugin unloaded: {plugin_name}")
 
     def _on_factory_registered(self, factory_name: str) -> None:
         """Handle factory registered event."""
-        print(f"  → Factory registered: {factory_name}")
+        print(f"  -> Factory registered: {factory_name}")
 
     def _on_plugin_error(self, error_msg: str) -> None:
         """Handle plugin error event."""
-        print(f"⚠ Plugin error: {error_msg}")
+        print(f"[!] Plugin error: {error_msg}")
 
     def _register_theme_profiles(self) -> None:
         """Register all available theme profiles with ThemeManager."""
@@ -1269,7 +1368,7 @@ class MainWindow(QMainWindow):
                         theme.set_property("tab_active_color", theme_def.tab_active_color)
                         theme.set_property("tab_inactive_color", theme_def.tab_inactive_color)
                         self.theme_manager.register_theme(theme)
-                        print(f"✓ Registered legacy theme: {theme_def.name}")
+                        print(f"[+] Registered legacy theme: {theme_def.name}")
                 except Exception as e:
                     print(f"Failed to register legacy theme '{theme_def.name}': {e}")
 
@@ -1295,16 +1394,16 @@ class MainWindow(QMainWindow):
                         try:
                             qss_content = generate_qss()
                         except Exception as e:
-                            print(f"⚠️ Failed to generate QSS for profile '{profile_id}': {e}")
+                            print(f"[!] Failed to generate QSS for profile '{profile_id}': {e}")
                             qss_content = None
                         if isinstance(qss_content, str):
                             theme.set_stylesheet(qss_content)
                             theme.set_property("is_profile", True)
                             theme.set_property("profile_id", profile_id)
                             self.theme_manager.register_theme(theme)
-                            print(f"✓ Registered profile theme: {profile_name}")
+                            print(f"[+] Registered profile theme: {profile_name}")
                     except Exception as e:
-                        print(f"⚠️ Failed to register profile theme '{profile_id}': {e}")
+                        print(f"[!] Failed to register profile theme '{profile_id}': {e}")
 
         # Set default theme
         default_theme_id = self.theme_factory.get_default_theme_id()
@@ -1341,11 +1440,11 @@ class MainWindow(QMainWindow):
                 self._tab_color_controller.inactive_color = tab_inactive
                 self._tab_color_controller.apply()
 
-                print(f"✓ Theme applied: {theme.name}")
+                print(f"[+] Theme applied: {theme.name}")
                 print(f"  Stylesheet length: {len(theme.stylesheet)} chars")
                 print(f"  Has rgba colors: {'rgba(' in theme.stylesheet}")
         except Exception as e:
-            print(f"⚠️ Failed to apply theme '{theme.name}': {e}")
+            print(f"[!] Failed to apply theme '{theme.name}': {e}")
 
     def _apply_theme_profile(self, profile_id: str) -> None:
         """Apply a theme profile by ID.
@@ -1464,16 +1563,16 @@ class MainWindow(QMainWindow):
         try:
             if category == "menus":
                 self.menu_factory = MenuFactory(Path("config"))
-                print("✓ Menus configuration reloaded")
+                print("[+] Menus configuration reloaded")
             elif category == "lists":
                 self.list_factory = ListFactory(Path("config"))
-                print("✓ Lists configuration reloaded")
+                print("[+] Lists configuration reloaded")
             elif category == "tabs":
                 self.tabs_factory = TabsFactory(Path("config"))
-                print("✓ Tabs configuration reloaded")
+                print("[+] Tabs configuration reloaded")
             elif category == "panels":
                 self.panel_factory = PanelFactory(Path("config"))
-                print("✓ Panels configuration reloaded")
+                print("[+] Panels configuration reloaded")
         except Exception as e:
             print(f"Warning: Failed to reload {category} configuration: {e}")
 
@@ -1488,14 +1587,14 @@ class MainWindow(QMainWindow):
             from widgetsystem.ui.theme_editor import ThemeEditorDialog
             dialog = ThemeEditorDialog(Path("config"))
             dialog.exec()
-            print("  ✅ Theme-Editor geschlossen")
+            print("  [+] Theme-Editor geschlossen")
         except Exception as e:
             QMessageBox.critical(
                 self,
                 self.i18n_factory.translate("message.error", default="Error"),
                 f"Theme-Editor konnte nicht geöffnet werden:\n{e}",
             )
-            print(f"  ❌ Fehler beim Öffnen des Theme-Editors: {e}")
+            print(f"  [X] Fehler beim Oeffnen des Theme-Editors: {e}")
 
     def _show_color_picker(self) -> None:
         """Show ARGB color picker dialog."""
@@ -1505,7 +1604,7 @@ class MainWindow(QMainWindow):
             dialog = ARGBColorPickerDialog("#FFFF0000")
             if dialog.exec():
                 color = dialog.get_color()
-                print(f"  ✅ Farbe ausgewählt: {color}")
+                print(f"  [+] Farbe ausgewaehlt: {color}")
                 # Copy to clipboard for easy use
                 from PySide6.QtWidgets import QApplication
                 clipboard = QApplication.clipboard()
@@ -1523,7 +1622,7 @@ class MainWindow(QMainWindow):
                 self.i18n_factory.translate("message.error", default="Error"),
                 f"Color-Picker konnte nicht geöffnet werden:\n{e}",
             )
-            print(f"  ❌ Fehler beim Öffnen des Color-Pickers: {e}")
+            print(f"  [X] Fehler beim Oeffnen des Color-Pickers: {e}")
 
     def _show_widget_features_editor(self) -> None:
         """Show widget features editor dialog."""
@@ -1532,14 +1631,14 @@ class MainWindow(QMainWindow):
             from widgetsystem.ui.widget_features_editor import WidgetFeaturesEditorDialog
             dialog = WidgetFeaturesEditorDialog(Path("config"))
             dialog.exec()
-            print("  ✅ Widget-Features Editor geschlossen")
+            print("  [+] Widget-Features Editor geschlossen")
         except Exception as e:
             QMessageBox.critical(
                 self,
                 self.i18n_factory.translate("message.error", default="Error"),
                 f"Widget-Features Editor konnte nicht geöffnet werden:\n{e}",
             )
-            print(f"  ❌ Fehler beim Öffnen des Widget-Features Editors: {e}")
+            print(f"  [X] Fehler beim Oeffnen des Widget-Features Editors: {e}")
 
     def _show_plugin_manager(self) -> None:
         """Show plugin system information."""
@@ -1604,26 +1703,26 @@ registry.register_factory("my_factory", MyFactoryClass)
 ```
 
 Features:
-✅ Automatische Plugin-Erkennung
-✅ Factory-Registrierung & Lifecycle
-✅ Hot-Reload Fähigkeit
-✅ Signal-basierte Fehlerbehandlung
-✅ Konfigurationsmanagement
+[+] Automatische Plugin-Erkennung
+[+] Factory-Registrierung & Lifecycle
+[+] Hot-Reload Faehigkeit
+[+] Signal-basierte Fehlerbehandlung
+[+] Konfigurationsmanagement
                 """
             except ImportError:
                 plugin_info = """
-Plugin-System nicht verfügbar.
+Plugin-System nicht verfuegbar.
 
 Um das Plugin-System zu aktivieren:
 1. Installieren Sie die Plugin-System Dependencies
 2. Starten Sie die Anwendung neu
 
 Features (wenn aktiviert):
-✅ Automatische Plugin-Erkennung
-✅ Factory-Registrierung & Lifecycle
-✅ Hot-Reload Fähigkeit
-✅ Signal-basierte Fehlerbehandlung
-✅ Konfigurationsmanagement
+[+] Automatische Plugin-Erkennung
+[+] Factory-Registrierung & Lifecycle
+[+] Hot-Reload Faehigkeit
+[+] Signal-basierte Fehlerbehandlung
+[+] Konfigurationsmanagement
                 """
 
             info_text.setPlainText(plugin_info)
@@ -1635,7 +1734,7 @@ Features (wenn aktiviert):
             layout.addWidget(button_box)
 
             dialog.exec()
-            print("  ✅ Plugin-System Dialog geschlossen")
+            print("  [+] Plugin-System Dialog geschlossen")
 
         except Exception as e:
             QMessageBox.critical(
@@ -1643,7 +1742,7 @@ Features (wenn aktiviert):
                 self.i18n_factory.translate("message.error", default="Error"),
                 f"Plugin-System konnte nicht geöffnet werden:\n{e}",
             )
-            print(f"  ❌ Fehler beim Öffnen des Plugin-Systems: {e}")
+            print(f"  [X] Fehler beim Oeffnen des Plugin-Systems: {e}")
 
 
 # ------------------------------------------------------------------
