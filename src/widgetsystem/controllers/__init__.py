@@ -20,9 +20,9 @@ Architecture:
 from widgetsystem.controllers.dock_controller import DockController
 from widgetsystem.controllers.tab_subsystem import TabSubsystem
 
-# Phase 3 Controllers (to be implemented)
-# from widgetsystem.controllers.layout_controller import LayoutController
-# from widgetsystem.controllers.theme_controller import ThemeController
+# Phase 3 Controllers
+from widgetsystem.controllers.layout_controller import LayoutController
+from widgetsystem.controllers.theme_controller import ThemeController
 
 # Phase 4 Controllers (to be implemented)
 # from widgetsystem.controllers.dnd_controller import DnDController
@@ -31,5 +31,7 @@ from widgetsystem.controllers.tab_subsystem import TabSubsystem
 
 __all__ = [
     "DockController",
+    "LayoutController",
     "TabSubsystem",
+    "ThemeController",
 ]
