@@ -584,111 +584,35 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
 
     def _initialize_dnd(self) -> None:
-        """Initialize drag-and-drop system from DnDFactory configuration."""
-        try:
-            # Load drop zones
-            drop_zones = self.dnd_factory.load_drop_zones()
-            for zone in drop_zones:
-                self.drop_zones_map[zone.area] = zone
-                print(f"DnD: Registered drop zone '{zone.id}' for area '{zone.area}'")
-
-            # Load DnD rules
-            dnd_rules = self.dnd_factory.load_dnd_rules()
-            for rule in dnd_rules:
-                if rule.panel_id not in self.dnd_rules_map:
-                    self.dnd_rules_map[rule.panel_id] = {}
-                self.dnd_rules_map[rule.panel_id][rule.source_area] = rule.allowed_target_areas
-                print(
-                    f"DnD: Registered rule '{rule.id}' - {rule.panel_id} from {rule.source_area} -> {rule.allowed_target_areas}",
-                )
-
-            print(
-                f"[+] DnD System initialized: {len(self.drop_zones_map)} zones, {len(self.dnd_rules_map)} panels",
-            )
-        except Exception as e:
-            print(f"[!] Warning: Failed to load DnD configuration: {e}")
+        """Initialize drag-and-drop system via DnDController."""
+        self.dnd_ctrl.initialize()
 
     def is_dnd_move_allowed(self, panel_id: str, source_area: str, target_area: str) -> bool:
-        """Check if a panel is allowed to move from source to target area."""
-        if panel_id not in self.dnd_rules_map:
-            return True  # No restrictions for this panel
-
-        panel_rules = self.dnd_rules_map[panel_id]
-        if source_area not in panel_rules:
-            return True  # No restrictions for this source area
-
-        allowed_targets = panel_rules[source_area]
-        if not allowed_targets:
-            return False  # Explicit restriction
-
-        return target_area in allowed_targets
+        """Check if a panel is allowed to move (delegates to DnDController)."""
+        return self.dnd_ctrl.is_move_allowed(panel_id, source_area, target_area)
 
     # ------------------------------------------------------------------
     # Responsive Design System
     # ------------------------------------------------------------------
 
     def _initialize_responsive(self) -> None:
-        """Initialize responsive design system from ResponsiveFactory configuration."""
-        try:
-            breakpoints = self.responsive_factory.load_breakpoints()
-            for bp in breakpoints:
-                self.responsive_width_ranges[bp.id] = (bp.min_width, bp.max_width)
-                print(
-                    f"Responsive: Registered breakpoint '{bp.id}' ({bp.min_width}-{bp.max_width}px)",
-                )
-
-            rules = self.responsive_factory.load_responsive_rules()
-            print(
-                f"[+] Responsive System initialized: {len(breakpoints)} breakpoints, {len(rules)} rules",
-            )
-        except Exception as e:
-            print(f"[!] Warning: Failed to load responsive configuration: {e}")
-
+        """Initialize responsive design system via ResponsiveController."""
+        self.responsive_ctrl.initialize()
         # Check initial breakpoint on startup
         self.resizeEvent(None)
 
     def _get_current_breakpoint(self, width: int) -> str | None:
-        """Determine current breakpoint based on window width."""
-        for breakpoint_id, (min_width, max_width) in self.responsive_width_ranges.items():
-            if min_width <= width <= max_width:
-                return breakpoint_id
-        return None
+        """Determine current breakpoint (delegates to ResponsiveController)."""
+        return self.responsive_ctrl.get_breakpoint_for_width(width)
 
     def _apply_responsive_rules(self, breakpoint_id: str) -> None:
-        """Apply panel visibility rules for the current breakpoint.
-
-        Uses ResponsiveAction enum for type-safe action handling.
-        """
-        try:
-            rules = self.responsive_factory.load_responsive_rules()
-            for rule in rules:
-                if rule.breakpoint != breakpoint_id:
-                    continue
-
-                # Find dock with matching panel_id
-                dock = self._find_dock_by_panel_id(rule.panel_id)
-                if dock is None:
-                    continue
-
-                # Apply rule action using ResponsiveAction enum
-                action = rule.action.lower()
-                if action == ResponsiveAction.HIDE.value:
-                    dock.toggleView(False)
-                elif action == ResponsiveAction.SHOW.value:
-                    dock.toggleView(True)
-                elif action == ResponsiveAction.COLLAPSE.value:
-                    dock.setFloating(False)
-
-                self.responsive_applied_rules.add(rule.id)
-        except Exception as e:
-            print(f"Warning: Failed to apply responsive rules: {e}")
+        """Apply panel visibility rules (handled by ResponsiveController)."""
+        # ResponsiveController handles this internally via update_for_width()
+        pass
 
     def _find_dock_by_panel_id(self, panel_id: str) -> Any:
-        """Find a dock widget by panel ID (title matching)."""
-        for dock in self.docks:
-            if hasattr(dock, "windowTitle") and panel_id in dock.windowTitle():
-                return dock
-        return None
+        """Find a dock widget by panel ID (delegates to DockController)."""
+        return self.dock_ctrl.find_dock_by_title(panel_id)
 
     def keyPressEvent(self, event: Any) -> None:
         """Handle global key presses for core layout actions."""
@@ -924,13 +848,8 @@ class MainWindow(QMainWindow):
                 max(0, self.height() - content_top),
             )
 
-        # Responsive breakpoints
-        new_breakpoint = self._get_current_breakpoint(w)
-        if new_breakpoint and new_breakpoint != self.current_breakpoint:
-            print(f"Responsive: Breakpoint changed to '{new_breakpoint}' (width={w}px)")
-            self.current_breakpoint = new_breakpoint
-            self.responsive_applied_rules.clear()
-            self._apply_responsive_rules(new_breakpoint)
+        # Responsive breakpoints (delegated to ResponsiveController)
+        self.responsive_ctrl.update_for_width(w)
 
     def toggle_max_normal(self) -> None:
         """Toggle between maximized and normal window state."""
@@ -1095,130 +1014,62 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
 
     def _save_layout(self) -> None:
-        """Save current layout to file."""
-        try:
-            state: QByteArray = self.dock_manager.saveState()
-            print(f"[SAVE] State size: {len(state.data())} bytes")
-            self.layout_file.parent.mkdir(parents=True, exist_ok=True)
-            print(f"[SAVE] Target directory: {self.layout_file.parent}")
-            self.layout_file.write_bytes(state.data())
-            written_size = self.layout_file.stat().st_size
-            print(f"[SAVE] Written to {self.layout_file}")
-            print(f"[SAVE] Actual file size: {written_size} bytes")
-            print("[SAVE] [+] Save completed successfully")
-            QMessageBox.information(
-                self,
-                self.i18n_factory.translate("message.success", default="Success"),
-                f"{self.i18n_factory.translate('message.layout_saved', default='Layout saved successfully.')}\n{self.layout_file}",
-            )
-        except Exception as exc:
-            print(f"[SAVE] [X] Error: {exc}")
-            QMessageBox.critical(
-                self,
-                self.i18n_factory.translate("message.error", default="Error"),
-                f"Failed to save layout:\n{exc}",
-            )
-
-    def _load_layout(self) -> None:
-        """Load layout from file."""
-        try:
-            print(f"[LOAD] Attempting to load from {self.layout_file}")
-            if not self.layout_file.exists():
-                print("[LOAD] [X] File does not exist")
-                QMessageBox.warning(
-                    self,
-                    self.i18n_factory.translate("message.warning", default="Warning"),
-                    self.i18n_factory.translate(
-                        "message.layout_not_found",
-                        default="layout.xml not found.",
-                    ),
-                )
-                return
-            data = self.layout_file.read_bytes()
-            print(f"[LOAD] Read {len(data)} bytes from file")
-            restored = self.dock_manager.restoreState(QByteArray(data))
-            print(f"[LOAD] restoreState returned: {restored}")
-            if not restored:
-                print("[LOAD] [X] restoreState failed")
-                QMessageBox.warning(
-                    self,
-                    self.i18n_factory.translate("message.warning", default="Warning"),
-                    self.i18n_factory.translate(
-                        "message.layout_restore_failed",
-                        default="Layout could not be restored from file.",
-                    ),
-                )
-                return
-            print("[LOAD] [+] Layout restored successfully")
+        """Save current layout (delegates to LayoutController)."""
+        if self.layout_ctrl.save():
             QMessageBox.information(
                 self,
                 self.i18n_factory.translate("message.success", default="Success"),
                 self.i18n_factory.translate(
-                    "message.layout_loaded",
-                    default="Layout loaded successfully.",
+                    "message.layout_saved", default="Layout saved successfully."
                 ),
             )
-        except Exception as exc:
-            print(f"[LOAD] [X] Exception: {exc}")
-            QMessageBox.critical(
+        else:
+            QMessageBox.warning(
                 self,
-                self.i18n_factory.translate("message.error", default="Error"),
-                f"Failed to load layout:\n{exc}",
+                self.i18n_factory.translate("message.warning", default="Warning"),
+                self.i18n_factory.translate(
+                    "message.layout_save_failed", default="Failed to save layout."
+                ),
+            )
+
+    def _load_layout(self) -> None:
+        """Load layout (delegates to LayoutController)."""
+        if self.layout_ctrl.load():
+            QMessageBox.information(
+                self,
+                self.i18n_factory.translate("message.success", default="Success"),
+                self.i18n_factory.translate(
+                    "message.layout_loaded", default="Layout loaded successfully."
+                ),
+            )
+        else:
+            QMessageBox.warning(
+                self,
+                self.i18n_factory.translate("message.warning", default="Warning"),
+                self.i18n_factory.translate(
+                    "message.layout_load_failed", default="Failed to load layout."
+                ),
             )
 
     def _load_layout_on_startup(self) -> None:
-        """Load the last saved layout silently on app start."""
-        print("[STARTUP_LOAD] Starting layout restoration")
-        try:
-            print(f"[STARTUP_LOAD] Checking {self.layout_file}")
-            if not self.layout_file.exists():
-                print("[STARTUP_LOAD] [!] File does not exist, skipping restore")
-                return
-            print("[STARTUP_LOAD] File exists, attempting restore")
-            data = self.layout_file.read_bytes()
-            print(f"[STARTUP_LOAD] Read {len(data)} bytes")
-            restored = self.dock_manager.restoreState(QByteArray(data))
-            print(f"[STARTUP_LOAD] restoreState returned: {restored}")
-            if not restored:
-                print("[STARTUP_LOAD] [!] restoreState failed")
-            else:
-                print("[STARTUP_LOAD] [+] Restored successfully")
-        except Exception as exc:
-            print(f"[STARTUP_LOAD] [X] Exception: {exc}")
+        """Load layout on startup (delegates to LayoutController)."""
+        self.layout_ctrl.load_on_startup()
 
     def _load_named_layout(self, layout: LayoutDefinition) -> None:
-        """Load a named layout from LayoutFactory."""
-        try:
-            if not layout.file_path.exists():
-                QMessageBox.warning(
-                    self,
-                    self.i18n_factory.translate("message.warning", default="Warning"),
-                    self.i18n_factory.translate("message.file_not_found", default="File not found")
-                    + f":\n{layout.file_path}",
-                )
-                return
-            data = layout.file_path.read_bytes()
-            restored = self.dock_manager.restoreState(QByteArray(data))
-            if not restored:
-                QMessageBox.warning(
-                    self,
-                    self.i18n_factory.translate("message.warning", default="Warning"),
-                    self.i18n_factory.translate(
-                        "message.layout_restore_failed",
-                        default="Layout could not be restored from file.",
-                    ),
-                )
-                return
+        """Load a named layout (delegates to LayoutController)."""
+        if self.layout_ctrl.load_named(layout):
             QMessageBox.information(
                 self,
                 self.i18n_factory.translate("message.success", default="Success"),
                 f"{self.i18n_factory.translate('message.layout_loaded', default='Layout loaded')}: {layout.name}",
             )
-        except Exception as exc:
-            QMessageBox.critical(
+        else:
+            QMessageBox.warning(
                 self,
-                self.i18n_factory.translate("message.error", default="Error"),
-                f"Failed to load layout:\n{exc}",
+                self.i18n_factory.translate("message.warning", default="Warning"),
+                self.i18n_factory.translate(
+                    "message.layout_load_failed", default="Failed to load layout."
+                ),
             )
 
     def _apply_theme(self, theme: ThemeDefinition) -> None:
