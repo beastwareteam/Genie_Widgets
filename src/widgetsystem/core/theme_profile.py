@@ -202,23 +202,49 @@ QTabBar {{
 }}
 
 QTabBar::tab {{
-    background: {qss_color("tab_inactive_bg")};
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #4E5155,
+                                stop:0.05 #45484C,
+                                stop:0.95 #36393D,
+                                stop:1 #2E3134);
     color: {qss_color("tab_inactive_text")};
-    padding: 6px 16px;
-    margin: 2px 2px 0px 0px;
-    border: 1px solid {qss_color("splitter_handle")};
+    padding: 3px 10px;
+    margin: 3px 3px 0px 0px;
+    border-top: 1px solid #5A5D62;
+    border-left: 1px solid #4A4D52;
+    border-right: 1px solid #28292C;
     border-bottom: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    min-height: 18px;
+    max-height: 18px;
+    font-size: 11px;
 }}
 
 QTabBar::tab:selected {{
-    background: {qss_color("tab_active_bg")};
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #5C6066,
+                                stop:0.05 #52565B,
+                                stop:0.95 #42464A,
+                                stop:1 #3A3D41);
     color: {qss_color("tab_active_text")};
+    border-top: 1px solid #707580;
+    border-left: 1px solid #5C6065;
+    border-right: 1px solid #35383C;
     border-bottom: 2px solid {qss_color("tab_active_border")};
-    font-weight: bold;
+    font-weight: normal;
 }}
 
 QTabBar::tab:hover {{
-    background: {self.as_qss_color("#40ffffff")};
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #5A5E63,
+                                stop:0.05 #505458,
+                                stop:0.95 #404448,
+                                stop:1 #38393D);
+    color: #E0E0E0;
+    border-top: 1px solid #686D73;
+    border-left: 1px solid #555A5F;
+    border-right: 1px solid #303235;
 }}
 
 /* 5. Titlebars */
