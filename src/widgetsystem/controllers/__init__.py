@@ -16,13 +16,20 @@ Architecture:
         +-- TabSubsystem        - Tab monitoring & colors
 """
 
-# Controllers will be imported as they are implemented
-# from widgetsystem.controllers.dock_controller import DockController
+# Phase 2 Controllers
+from widgetsystem.controllers.dock_controller import DockController
+from widgetsystem.controllers.tab_subsystem import TabSubsystem
+
+# Phase 3 Controllers (to be implemented)
 # from widgetsystem.controllers.layout_controller import LayoutController
 # from widgetsystem.controllers.theme_controller import ThemeController
+
+# Phase 4 Controllers (to be implemented)
 # from widgetsystem.controllers.dnd_controller import DnDController
 # from widgetsystem.controllers.responsive_controller import ResponsiveController
 # from widgetsystem.controllers.shortcut_controller import ShortcutController
-# from widgetsystem.controllers.tab_subsystem import TabSubsystem
 
-__all__: list[str] = []
+__all__ = [
+    "DockController",
+    "TabSubsystem",
+]
