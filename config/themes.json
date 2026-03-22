@@ -1,0 +1,50 @@
+{
+    "default_theme": "dark",
+    "themes": [
+        {
+            "id": "dark",
+            "name": "Dark",
+            "stylesheet": "../themes/dark.qss"
+        },
+        {
+            "id": "light",
+            "name": "Light",
+            "stylesheet": "../themes/light.qss"
+        },
+        {
+            "id": "transparent",
+            "name": "Transparent",
+            "stylesheet": "../themes/transparent.qss"
+        },
+        {
+            "id": "solid_dark",
+            "name": "Solid Dark",
+            "stylesheet": "../themes/dark.qss"
+        },
+        {
+            "id": "ocean_breeze",
+            "name": "Ocean Breeze",
+            "stylesheet": "../themes/light.qss"
+        },
+        {
+            "id": "midnight_blue",
+            "name": "Midnight Blue Pro",
+            "stylesheet": "../themes/dark.qss"
+        },
+        {
+            "id": "light_transparent",
+            "name": "Light Transparent",
+            "stylesheet": "../themes/light.qss"
+        },
+        {
+            "id": "dark_transparent",
+            "name": "Dark Transparent",
+            "stylesheet": "../themes/transparent.qss"
+        },
+        {
+            "id": "ocean_blue",
+            "name": "Ocean Blue",
+            "stylesheet": "../themes/light.qss"
+        }
+    ]
+}

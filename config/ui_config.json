@@ -1,0 +1,307 @@
+{
+  "config_pages": [
+    {
+      "id": "menus_config",
+      "title_key": "config.menus.title",
+      "description_key": "config.menus.description",
+      "category": "menus",
+      "icon": "menu",
+      "order": 1,
+      "widgets": [
+        {
+          "id": "menu_editor",
+          "type": "custom",
+          "label_key": "config.menu_editor.label",
+          "dnd_enabled": true,
+          "movable": true,
+          "resizable": true,
+          "container": true,
+          "properties": {
+            "menu_name": {
+              "type": "text",
+              "label_key": "config.menu_name",
+              "required": true,
+              "placeholder": "Enter menu name"
+            },
+            "menu_items": {
+              "type": "multiline",
+              "label_key": "config.menu_items",
+              "required": false,
+              "placeholder": "Add menu items"
+            },
+            "position": {
+              "type": "select",
+              "label_key": "config.menu_position",
+              "default": "top",
+              "options": [
+                {"value": "top", "label": "config.menu.position.top"},
+                {"value": "left", "label": "config.menu.position.left"},
+                {"value": "right", "label": "config.menu.position.right"},
+                {"value": "bottom", "label": "config.menu.position.bottom"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "lists_config",
+      "title_key": "config.lists.title",
+      "description_key": "config.lists.description",
+      "category": "lists",
+      "icon": "list",
+      "order": 2,
+      "widgets": [
+        {
+          "id": "list_editor",
+          "type": "custom",
+          "label_key": "config.list_editor.label",
+          "dnd_enabled": true,
+          "movable": true,
+          "resizable": true,
+          "container": true,
+          "properties": {
+            "list_name": {
+              "type": "text",
+              "label_key": "config.list_name",
+              "required": true,
+              "placeholder": "Enter list name"
+            },
+            "list_type": {
+              "type": "select",
+              "label_key": "config.list_type",
+              "default": "vertical",
+              "options": [
+                {"value": "vertical", "label": "config.list.type.vertical"},
+                {"value": "horizontal", "label": "config.list.type.horizontal"},
+                {"value": "tree", "label": "config.list.type.tree"},
+                {"value": "table", "label": "config.list.type.table"}
+              ]
+            },
+            "sortable": {
+              "type": "boolean",
+              "label_key": "config.list_sortable",
+              "default": false
+            },
+            "searchable": {
+              "type": "boolean",
+              "label_key": "config.list_searchable",
+              "default": false
+            }
+          }
+        },
+        {
+          "id": "list_item_editor",
+          "type": "custom",
+          "label_key": "config.list_item_editor.label",
+          "dnd_enabled": true,
+          "movable": true,
+          "resizable": false,
+          "container": false,
+          "properties": {
+            "item_label": {
+              "type": "text",
+              "label_key": "config.item_label",
+              "required": true,
+              "placeholder": "Enter item label (i18n key)"
+            },
+            "item_content": {
+              "type": "text",
+              "label_key": "config.item_content",
+              "required": false,
+              "placeholder": "Enter item content"
+            },
+            "editable": {
+              "type": "boolean",
+              "label_key": "config.item_editable",
+              "default": true
+            },
+            "deletable": {
+              "type": "boolean",
+              "label_key": "config.item_deletable",
+              "default": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tabs_config",
+      "title_key": "config.tabs.title",
+      "description_key": "config.tabs.description",
+      "category": "tabs",
+      "icon": "tabs",
+      "order": 3,
+      "widgets": [
+        {
+          "id": "tab_editor",
+          "type": "custom",
+          "label_key": "config.tab_editor.label",
+          "dnd_enabled": true,
+          "movable": true,
+          "resizable": true,
+          "container": true,
+          "properties": {
+            "tab_name": {
+              "type": "text",
+              "label_key": "config.tab_name",
+              "required": true,
+              "placeholder": "Enter tab name (i18n key)"
+            },
+            "tab_closable": {
+              "type": "boolean",
+              "label_key": "config.tab_closable",
+              "default": true
+            },
+            "tab_active": {
+              "type": "boolean",
+              "label_key": "config.tab_active",
+              "default": false
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "panels_config",
+      "title_key": "config.panels.title",
+      "description_key": "config.panels.description",
+      "category": "panels",
+      "icon": "panel",
+      "order": 4,
+      "widgets": [
+        {
+          "id": "panel_editor",
+          "type": "custom",
+          "label_key": "config.panel_editor.label",
+          "dnd_enabled": true,
+          "movable": true,
+          "resizable": true,
+          "container": true,
+          "properties": {
+            "panel_name": {
+              "type": "text",
+              "label_key": "config.panel_name",
+              "required": true,
+              "placeholder": "Enter panel name (i18n key)"
+            },
+            "panel_area": {
+              "type": "select",
+              "label_key": "config.panel_area",
+              "default": "center",
+              "options": [
+                {"value": "left", "label": "config.panel.area.left"},
+                {"value": "right", "label": "config.panel.area.right"},
+                {"value": "bottom", "label": "config.panel.area.bottom"},
+                {"value": "center", "label": "config.panel.area.center"}
+              ]
+            },
+            "panel_closable": {
+              "type": "boolean",
+              "label_key": "config.panel_closable",
+              "default": true
+            },
+            "panel_movable": {
+              "type": "boolean",
+              "label_key": "config.panel_movable",
+              "default": true
+            },
+            "panel_floatable": {
+              "type": "boolean",
+              "label_key": "config.panel_floatable",
+              "default": false
+            },
+            "panel_dnd": {
+              "type": "boolean",
+              "label_key": "config.panel_dnd",
+              "default": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "theme_config",
+      "title_key": "config.theme.title",
+      "description_key": "config.theme.description",
+      "category": "theme",
+      "icon": "theme",
+      "order": 5,
+      "widgets": [
+        {
+          "id": "theme_selector",
+          "type": "custom",
+          "label_key": "config.theme_selector.label",
+          "dnd_enabled": false,
+          "movable": true,
+          "resizable": false,
+          "container": false,
+          "properties": {
+            "current_theme": {
+              "type": "select",
+              "label_key": "config.current_theme",
+              "default": "dark",
+              "options": [
+                {"value": "light", "label": "config.theme.light"},
+                {"value": "dark", "label": "config.theme.dark"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "advanced_config",
+      "title_key": "config.advanced.title",
+      "description_key": "config.advanced.description",
+      "category": "advanced",
+      "icon": "settings",
+      "order": 10,
+      "widgets": [
+        {
+          "id": "responsive_config",
+          "type": "custom",
+          "label_key": "config.responsive.label",
+          "dnd_enabled": false,
+          "movable": true,
+          "resizable": true,
+          "container": false,
+          "properties": {
+            "breakpoint": {
+              "type": "select",
+              "label_key": "config.breakpoint",
+              "options": [
+                {"value": "xs", "label": "config.breakpoint.xs"},
+                {"value": "sm", "label": "config.breakpoint.sm"},
+                {"value": "md", "label": "config.breakpoint.md"},
+                {"value": "lg", "label": "config.breakpoint.lg"},
+                {"value": "xl", "label": "config.breakpoint.xl"}
+              ]
+            }
+          }
+        },
+        {
+          "id": "dnd_config",
+          "type": "custom",
+          "label_key": "config.dnd.label",
+          "dnd_enabled": false,
+          "movable": true,
+          "resizable": true,
+          "container": false,
+          "properties": {
+            "dnd_enabled": {
+              "type": "boolean",
+              "label_key": "config.dnd_enabled",
+              "default": true
+            },
+            "dnd_opacity": {
+              "type": "number",
+              "label_key": "config.dnd_opacity",
+              "default": 0.7
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

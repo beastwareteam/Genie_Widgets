@@ -1,0 +1,120 @@
+{
+  "list_groups": [
+    {
+      "id": "main_list",
+      "title_key": "list.main.title",
+      "list_type": "tree",
+      "dock_panel_id": "left",
+      "sortable": true,
+      "filterable": true,
+      "searchable": true,
+      "multi_select": false,
+      "items": [
+        {
+          "id": "item_1",
+          "label_key": "list.item.1",
+          "content_type": "text",
+          "content": "Item 1",
+          "editable": true,
+          "deletable": true,
+          "icon": "document",
+          "data": {
+            "type": "document",
+            "priority": "high"
+          },
+          "children": [
+            {
+              "id": "item_1_1",
+              "label_key": "list.item.1.1",
+              "content_type": "text",
+              "content": "Sub Item 1.1",
+              "editable": true,
+              "deletable": true,
+              "icon": "file",
+              "data": {},
+              "children": []
+            },
+            {
+              "id": "item_1_2",
+              "label_key": "list.item.1.2",
+              "content_type": "button",
+              "content": "Action",
+              "editable": false,
+              "deletable": true,
+              "icon": "action",
+              "data": {},
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "item_2",
+          "label_key": "list.item.2",
+          "content_type": "text",
+          "content": "Item 2",
+          "editable": true,
+          "deletable": true,
+          "icon": "folder",
+          "data": {},
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "properties_list",
+      "title_key": "list.properties.title",
+      "list_type": "vertical",
+      "dock_panel_id": "bottom",
+      "sortable": false,
+      "filterable": false,
+      "searchable": false,
+      "multi_select": false,
+      "items": [
+        {
+          "id": "prop_name",
+          "label_key": "list.prop.name",
+          "content_type": "text",
+          "content": "Name",
+          "editable": true,
+          "deletable": false,
+          "icon": "",
+          "data": {},
+          "children": []
+        },
+        {
+          "id": "prop_value",
+          "label_key": "list.prop.value",
+          "content_type": "text",
+          "content": "Value",
+          "editable": true,
+          "deletable": false,
+          "icon": "",
+          "data": {},
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "liste",
+      "title_key": "list.liste.title",
+      "list_type": "vertical",
+      "dock_panel_id": "center",
+      "sortable": false,
+      "filterable": false,
+      "searchable": false,
+      "multi_select": false,
+      "items": []
+    },
+    {
+      "id": "name",
+      "title_key": "list.name.title",
+      "list_type": "vertical",
+      "dock_panel_id": "center",
+      "sortable": false,
+      "filterable": false,
+      "searchable": false,
+      "multi_select": false,
+      "items": []
+    }
+  ]
+}

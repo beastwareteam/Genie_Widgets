@@ -1,0 +1,116 @@
+{
+  "list_groups": [
+    {
+      "id": "project_explorer",
+      "title_key": "list.project_explorer.title",
+      "list_type": "tree",
+      "dock_panel_id": "left",
+      "sortable": true,
+      "filterable": true,
+      "searchable": true,
+      "multi_select": true,
+      "items": [
+        {
+          "id": "src_folder",
+          "label_key": "list.src_folder",
+          "content_type": "text",
+          "content": "src/",
+          "editable": false,
+          "deletable": false,
+          "icon": "folder",
+          "data": {
+            "type": "folder"
+          },
+          "children": [
+            {
+              "id": "main_py",
+              "label_key": "list.main_py",
+              "content_type": "text",
+              "content": "main.py",
+              "editable": true,
+              "deletable": true,
+              "icon": "python",
+              "data": {
+                "type": "python_file",
+                "lines": 735
+              },
+              "children": []
+            },
+            {
+              "id": "config_panel_py",
+              "label_key": "list.config_panel",
+              "content_type": "text",
+              "content": "config_panel.py",
+              "editable": true,
+              "deletable": true,
+              "icon": "python",
+              "data": {
+                "type": "python_file",
+                "lines": 650
+              },
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tasks_list",
+      "title_key": "list.tasks.title",
+      "list_type": "vertical",
+      "dock_panel_id": "bottom",
+      "sortable": true,
+      "filterable": true,
+      "searchable": true,
+      "multi_select": true,
+      "items": [
+        {
+          "id": "task_1",
+          "label_key": "list.task.1",
+          "content_type": "text",
+          "content": "✅ Persistence implementiert",
+          "editable": true,
+          "deletable": true,
+          "icon": "check",
+          "data": {
+            "status": "completed"
+          },
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "meine_liste",
+      "title_key": "list.meine_liste.title",
+      "list_type": "vertical",
+      "dock_panel_id": "center",
+      "sortable": false,
+      "filterable": false,
+      "searchable": false,
+      "multi_select": false,
+      "items": []
+    },
+    {
+      "id": "widget",
+      "title_key": "list.widget.title",
+      "list_type": "vertical",
+      "dock_panel_id": "center",
+      "sortable": false,
+      "filterable": false,
+      "searchable": false,
+      "multi_select": false,
+      "items": []
+    },
+    {
+      "id": "listenwidget",
+      "title_key": "list.listenwidget.title",
+      "list_type": "vertical",
+      "dock_panel_id": "center",
+      "sortable": false,
+      "filterable": false,
+      "searchable": false,
+      "multi_select": false,
+      "items": []
+    }
+  ]
+}

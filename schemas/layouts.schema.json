@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Layouts Configuration",
+  "type": "object",
+  "properties": {
+    "default_layout_id": {
+      "type": "string",
+      "description": "Default layout ID to load on startup"
+    },
+    "layouts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique layout identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name"
+          },
+          "file": {
+            "type": "string",
+            "description": "Path to layout XML file"
+          }
+        },
+        "required": ["id", "name", "file"]
+      }
+    }
+  },
+  "required": ["layouts"]
+}

@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "DnD Configuration",
+  "type": "object",
+  "properties": {
+    "drop_zones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"},
+          "area": {"type": "string"},
+          "orientation": {"type": "string"},
+          "allowed_panels": {"type": "array", "items": {"type": "string"}},
+          "nav_zone_width": {"type": "integer"},
+          "snap_enabled": {"type": "boolean"}
+        },
+        "required": ["id", "area"]
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"},
+          "panel_id": {"type": "string"},
+          "source_area": {"type": "string"},
+          "allowed_target_areas": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

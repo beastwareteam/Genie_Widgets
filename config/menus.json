@@ -1,0 +1,144 @@
+{
+  "menus": [
+    {
+      "id": "menu_file",
+      "label_key": "menu.file",
+      "type": "action",
+      "action": "",
+      "shortcut": "",
+      "visible": true,
+      "children": [
+        {
+          "id": "menu_save_layout",
+          "label_key": "action.save_layout",
+          "type": "action",
+          "action": "save_layout",
+          "shortcut": "Ctrl+S",
+          "visible": true
+        },
+        {
+          "id": "menu_load_layout",
+          "label_key": "action.load_layout",
+          "type": "action",
+          "action": "load_layout",
+          "shortcut": "Ctrl+L",
+          "visible": true
+        },
+        {
+          "id": "separator_1",
+          "label_key": "",
+          "type": "separator",
+          "action": "",
+          "shortcut": "",
+          "visible": true
+        },
+        {
+          "id": "menu_reset_layout",
+          "label_key": "action.reset_layout",
+          "type": "action",
+          "action": "reset_layout",
+          "shortcut": "Ctrl+R",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "menu_save_layout",
+      "label_key": "action.save_layout",
+      "type": "action",
+      "action": "save_layout",
+      "shortcut": "Ctrl+S",
+      "visible": true
+    },
+    {
+      "id": "menu_load_layout",
+      "label_key": "action.load_layout",
+      "type": "action",
+      "action": "load_layout",
+      "shortcut": "Ctrl+L",
+      "visible": true
+    },
+    {
+      "id": "separator_1",
+      "label_key": "",
+      "type": "separator",
+      "action": "",
+      "shortcut": "",
+      "visible": true
+    },
+    {
+      "id": "menu_reset_layout",
+      "label_key": "action.reset_layout",
+      "type": "action",
+      "action": "reset_layout",
+      "shortcut": "Ctrl+R",
+      "visible": true
+    },
+    {
+      "id": "menu_view",
+      "label_key": "menu.view",
+      "type": "action",
+      "action": "",
+      "shortcut": "",
+      "visible": true,
+      "children": [
+        {
+          "id": "menu_float_all",
+          "label_key": "action.float_all",
+          "type": "action",
+          "action": "float_all",
+          "shortcut": "",
+          "visible": true
+        },
+        {
+          "id": "menu_dock_all",
+          "label_key": "action.dock_all",
+          "type": "action",
+          "action": "dock_all",
+          "shortcut": "",
+          "visible": true
+        },
+        {
+          "id": "menu_close_all",
+          "label_key": "action.close_all",
+          "type": "action",
+          "action": "close_all",
+          "shortcut": "",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "id": "menu_float_all",
+      "label_key": "action.float_all",
+      "type": "action",
+      "action": "float_all",
+      "shortcut": "",
+      "visible": true
+    },
+    {
+      "id": "menu_dock_all",
+      "label_key": "action.dock_all",
+      "type": "action",
+      "action": "dock_all",
+      "shortcut": "",
+      "visible": true
+    },
+    {
+      "id": "menu_close_all",
+      "label_key": "action.close_all",
+      "type": "action",
+      "action": "close_all",
+      "shortcut": "",
+      "visible": true
+    },
+    {
+      "id": "menuewidget",
+      "label_key": "menu.menuewidget.label",
+      "type": "action",
+      "action": "",
+      "shortcut": "",
+      "visible": true
+    }
+  ]
+}

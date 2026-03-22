@@ -1,0 +1,34 @@
+{
+  "name": "Midnight Blue Pro",
+  "colors": {
+    "window_bg": "#00151820",
+    "splitter_handle": "#ff1e2936",
+    "splitter_width": 2,
+    "tab_active_bg": "#cc1e2936",
+    "tab_active_border": "#ff4fc3f7",
+    "tab_active_text": "#ff4fc3f7",
+    "tab_inactive_bg": "#cc0d1117",
+    "tab_inactive_text": "#ff8b949e",
+    "tab_padding": 6,
+    "tab_border_radius": 4,
+    "titlebar_bg": "#cc1e2936",
+    "titlebar_text": "#ffe1e4e8",
+    "titlebar_btn_hover": "#404fc3f7",
+    "btn_bg": "#40ffffff",
+    "btn_icon": "#ffe1e4e8",
+    "floating_border": "#ff1e2936",
+    "autohide_sidebar_bg": "#cc151820",
+    "autohide_tab_bg": "#cc1e2936",
+    "autohide_container_bg": "#cc151820",
+    "autohide_container_border": "#ff4fc3f7",
+    "overlay_base_color": "#804fc3f7",
+    "overlay_cross_color": "#ff4fc3f7",
+    "overlay_border_color": "#ff4fc3f7",
+    "overlay_border_width": 2
+  },
+  "global": {
+    "hue": 0,
+    "saturation": 1.0,
+    "brightness": 1.0
+  }
+}

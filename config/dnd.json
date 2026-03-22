@@ -1,0 +1,37 @@
+{
+  "drop_zones": [
+    {
+      "id": "zone_left",
+      "area": "left",
+      "orientation": "vertical",
+      "allowed_panels": ["left_panel"],
+      "nav_zone_width": 50,
+      "snap_enabled": true
+    },
+    {
+      "id": "zone_center",
+      "area": "center",
+      "orientation": "horizontal",
+      "allowed_panels": ["center_panel"],
+      "nav_zone_width": 0,
+      "snap_enabled": true
+    },
+    {
+      "id": "zone_bottom",
+      "area": "bottom",
+      "orientation": "vertical",
+      "allowed_panels": ["bottom_panel"],
+      "nav_zone_width": 50,
+      "snap_enabled": true
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_center_fixed",
+      "panel_id": "center_panel",
+      "source_area": "center",
+      "allowed_target_areas": ["center"],
+      "description": "Center panel cannot leave center area"
+    }
+  ]
+}

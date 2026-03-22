@@ -1,0 +1,41 @@
+{
+  "default_layout_id": "last_saved",
+  "layouts": [
+    {
+      "id": "last_saved",
+      "name": "Last Saved",
+      "file": "layout.xml"
+    },
+    {
+      "id": "most_used",
+      "name": "Most Used",
+      "file": "layout_alt.xml"
+    }
+  ],
+  "panels": [
+    {
+      "name": "Left Panel",
+      "area": "left",
+      "closable": true,
+      "movable": true,
+      "floatable": true,
+      "delete_on_close": false
+    },
+    {
+      "name": "Bottom Panel",
+      "area": "bottom",
+      "closable": true,
+      "movable": false,
+      "floatable": false,
+      "delete_on_close": false
+    },
+    {
+      "name": "Center",
+      "area": "center",
+      "closable": false,
+      "movable": true,
+      "floatable": false,
+      "delete_on_close": false
+    }
+  ]
+}

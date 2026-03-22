@@ -1,0 +1,34 @@
+{
+  "breakpoints": [
+    {
+      "id": "desktop",
+      "min_width": 1200,
+      "name": "Desktop"
+    },
+    {
+      "id": "tablet",
+      "min_width": 768,
+      "max_width": 1199,
+      "name": "Tablet"
+    },
+    {
+      "id": "mobile",
+      "max_width": 767,
+      "name": "Mobile"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_hide_left_mobile",
+      "panel_id": "left_panel",
+      "breakpoint": "mobile",
+      "action": "hide"
+    },
+    {
+      "id": "rule_hide_bottom_tablet",
+      "panel_id": "bottom_panel",
+      "breakpoint": "tablet",
+      "action": "hide"
+    }
+  ]
+}

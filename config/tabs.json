@@ -1,0 +1,49 @@
+{
+  "tab_groups": [
+    {
+      "id": "main_tabs",
+      "title_key": "tabs.main",
+      "dock_area": "center",
+      "orientation": "horizontal",
+      "tabs": [
+        {
+          "id": "tab_overview",
+          "title_key": "tab.overview",
+          "component": "overview",
+          "closable": false,
+          "active": true
+        },
+        {
+          "id": "tab_analytics",
+          "title_key": "tab.analytics",
+          "component": "analytics",
+          "closable": true,
+          "active": false,
+          "children": [
+            {
+              "id": "subtab_charts",
+              "title_key": "tab.charts",
+              "component": "charts",
+              "closable": true,
+              "active": false
+            },
+            {
+              "id": "subtab_tables",
+              "title_key": "tab.tables",
+              "component": "tables",
+              "closable": true,
+              "active": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tabwidget",
+      "title_key": "tabs.tabwidget.title",
+      "dock_area": "center",
+      "orientation": "horizontal",
+      "tabs": []
+    }
+  ]
+}

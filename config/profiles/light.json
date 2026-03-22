@@ -1,0 +1,13 @@
+{
+  "profiles": [
+    {
+      "id": "light_profile",
+      "name": "Light",
+      "theme_id": "light",
+      "colors": {
+        "tab_active": "#E0E0E0",
+        "tab_inactive": "#BDBDBD"
+      }
+    }
+  ]
+}

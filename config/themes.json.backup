@@ -1,0 +1,32 @@
+{
+  "default_theme_id": "transparent",
+  "themes": [
+    {
+      "id": "dark",
+      "name": "Dark",
+      "file": "themes/dark.qss",
+      "tab_colors": {
+        "active": "#E0E0E0",
+        "inactive": "#cfcfcf"
+      }
+    },
+    {
+      "id": "light",
+      "name": "Light",
+      "file": "themes/light.qss",
+      "tab_colors": {
+        "active": "#333333",
+        "inactive": "#666666"
+      }
+    },
+    {
+      "id": "transparent",
+      "name": "Transparent",
+      "file": "themes/transparent.qss",
+      "tab_colors": {
+        "active": "#E0E0E0",
+        "inactive": "#cfcfcf"
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "profiles": [
+    {
+      "id": "dark_profile",
+      "name": "Dark",
+      "theme_id": "dark",
+      "colors": {
+        "tab_active": "#E0E0E0",
+        "tab_inactive": "#BDBDBD"
+      }
+    }
+  ]
+}

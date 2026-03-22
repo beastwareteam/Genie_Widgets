@@ -1,0 +1,15 @@
+{
+  "default_theme_id": "dark",
+  "themes": [
+    {
+      "id": "dark",
+      "name": "Dark",
+      "file": "themes/dark.qss"
+    },
+    {
+      "id": "light",
+      "name": "Light",
+      "file": "themes/light.qss"
+    }
+  ]
+}

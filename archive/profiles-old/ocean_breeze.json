@@ -1,0 +1,34 @@
+{
+  "name": "Ocean Breeze",
+  "colors": {
+    "window_bg": "#00eceff1",
+    "splitter_handle": "#ffb0bec5",
+    "splitter_width": 2,
+    "tab_active_bg": "#ccffffff",
+    "tab_active_border": "#ff0288d1",
+    "tab_active_text": "#ff0288d1",
+    "tab_inactive_bg": "#cccfd8dc",
+    "tab_inactive_text": "#ff546e7a",
+    "tab_padding": 6,
+    "tab_border_radius": 4,
+    "titlebar_bg": "#cccfd8dc",
+    "titlebar_text": "#ff263238",
+    "titlebar_btn_hover": "#400288d1",
+    "btn_bg": "#40000000",
+    "btn_icon": "#ff263238",
+    "floating_border": "#ffb0bec5",
+    "autohide_sidebar_bg": "#cceceff1",
+    "autohide_tab_bg": "#cccfd8dc",
+    "autohide_container_bg": "#cceceff1",
+    "autohide_container_border": "#ff0288d1",
+    "overlay_base_color": "#800288d1",
+    "overlay_cross_color": "#ff0288d1",
+    "overlay_border_color": "#ff0288d1",
+    "overlay_border_width": 2
+  },
+  "global": {
+    "hue": 0,
+    "saturation": 1.0,
+    "brightness": 1.0
+  }
+}

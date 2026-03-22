@@ -1,0 +1,330 @@
+/* ============================================================================
+   TRANSPARENT THEME - Transparent surfaces, visible text, 50% border opacity
+   Custom Gradients override QtAds defaults
+   ============================================================================ */
+
+/* CRITICAL: Reset all backgrounds to transparent first */
+* {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+/* Main Window & General */
+QMainWindow {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+}
+
+QWidget {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+}
+
+/* Dock System Styling - CDockAreaWidget with custom gradient */
+ads--CDockManager {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+}
+
+/* CRITICAL: Override QtAds CDockAreaWidget gradient */
+ads--CDockAreaWidget {
+    background-color: rgba(37, 37, 37, 0.8);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
+                                stop:0 rgba(37, 37, 37, 0.8), 
+                                stop:1 rgba(26, 26, 26, 0.8));
+    color: #E0E0E0;
+    border: 1px solid rgba(64, 64, 64, 0.5);
+    margin: 0px;
+    padding: 0px;
+}
+
+ads--CDockWidget {
+    background-color: rgba(37, 37, 37, 0.8);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
+                                stop:0 rgba(37, 37, 37, 0.8), 
+                                stop:1 rgba(26, 26, 26, 0.8));
+    color: #E0E0E0;
+    border: 1px solid rgba(64, 64, 64, 0.5);
+    margin: 0px;
+    padding: 0px;
+}
+
+ads--CDockAreaTitleBar {
+    background-color: rgba(60, 64, 67, 0.8);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
+                                stop:0 rgba(60, 64, 67, 0.8), 
+                                stop:1 rgba(45, 46, 49, 0.8));
+    color: #E0E0E0;
+    border-bottom: 1px solid rgba(64, 64, 64, 0.5);
+    margin: 0px;
+    padding: 0px;
+}
+
+ads--CFloatingDockContainer {
+    background-color: rgba(45, 46, 49, 0.9);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
+                                stop:0 rgba(45, 46, 49, 0.9), 
+                                stop:1 rgba(32, 33, 36, 0.9));
+    color: #E0E0E0;
+    border: 1px solid rgba(64, 64, 64, 0.5);
+    margin: 0px;
+    padding: 0px;
+}
+
+ads--CTitleBarButton {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+    border: none;
+    padding: 2px;
+}
+
+ads--CTitleBarButton:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+}
+
+ads--CTitleBarButton:pressed {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Tab Bar Styling */
+QTabBar {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+    border: none;
+}
+
+QTabBar::tab {
+    background-color: rgba(0, 0, 0, 0);
+    color: #cfcfcf;
+    padding: 6px 16px;
+    margin: 2px 2px 0px 0px;
+    border: 1px solid rgba(64, 64, 64, 0.5);
+    border-bottom: none;
+}
+
+QTabBar::tab:selected {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+    border: 1px solid rgba(64, 64, 64, 0.5);
+    border-bottom: 2px solid rgba(100, 181, 246, 0.5);
+    font-weight: bold;
+}
+
+QTabBar::tab:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+QTabWidget {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+}
+
+QTabWidget::pane {
+    border: 1px solid rgba(64, 64, 64, 0.5);
+}
+
+/* Toolbar Styling */
+QToolBar {
+    background-color: rgba(37, 37, 37, 0.8);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
+                                stop:0 rgba(37, 37, 37, 0.8), 
+                                stop:1 rgba(26, 26, 26, 0.8));
+    color: #E0E0E0;
+    border: 1px solid rgba(64, 64, 64, 0.5);
+    padding: 5px;
+    border-radius: 5px;
+}
+
+QToolBar QToolButton {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+    border: none;
+    padding: 5px;
+}
+
+QToolBar QToolButton:hover {
+    background-color: rgba(60, 64, 67, 0.5);
+    border-radius: 3px;
+}
+
+QToolButton {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+    border: 1px solid rgba(64, 64, 64, 0.5);
+    border-radius: 4px;
+    padding: 6px 16px;
+    font-weight: bold;
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(100, 181, 246, 0.5);
+}
+
+QPushButton:pressed {
+    background-color: rgba(255, 255, 255, 0.10);
+}
+
+/* Input Fields */
+QLineEdit {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+    border: 1px solid rgba(64, 64, 64, 0.5);
+    border-radius: 2px;
+    padding: 4px 8px;
+    selection-background-color: rgba(100, 181, 246, 0.5);
+}
+
+QLineEdit:focus {
+    border: 1px solid rgba(100, 181, 246, 0.7);
+}
+
+QTextEdit {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+    border: 1px solid rgba(64, 64, 64, 0.5);
+    border-radius: 2px;
+    padding: 4px 8px;
+    selection-background-color: rgba(100, 181, 246, 0.5);
+}
+
+QTextEdit:focus {
+    border: 1px solid rgba(100, 181, 246, 0.7);
+}
+
+/* Combo Box */
+QComboBox {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+    border: 1px solid rgba(64, 64, 64, 0.5);
+    border-radius: 2px;
+    padding: 4px 8px;
+}
+
+QComboBox:focus {
+    border: 1px solid rgba(100, 181, 246, 0.7);
+}
+
+QComboBox::drop-down {
+    border: none;
+    padding-right: 4px;
+}
+
+/* Menu Bar & Menu */
+QMenuBar {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+    border: 1px solid rgba(64, 64, 64, 0.5);
+}
+
+QMenuBar::item:selected {
+    background-color: rgba(100, 181, 246, 0.3);
+}
+
+QMenu {
+    background-color: rgba(20, 20, 20, 0.9);
+    color: #E0E0E0;
+    border: 1px solid rgba(64, 64, 64, 0.5);
+}
+
+QMenu::item:selected {
+    background-color: rgba(100, 181, 246, 0.5);
+}
+
+/* Label */
+QLabel {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+}
+
+/* Scroll Bar */
+QScrollBar {
+    background-color: rgba(0, 0, 0, 0);
+    border: none;
+    width: 12px;
+    height: 12px;
+}
+
+QScrollBar::handle {
+    background-color: rgba(100, 100, 100, 0.5);
+    border-radius: 6px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:hover {
+    background-color: rgba(150, 150, 150, 0.7);
+}
+
+QScrollBar::add-line, QScrollBar::sub-line {
+    background-color: rgba(0, 0, 0, 0);
+    border: none;
+}
+
+/* Splitter */
+QSplitter::handle {
+    background-color: rgba(64, 64, 64, 0.3);
+    height: 8px;
+}
+
+QSplitter::handle:hover {
+    background-color: rgba(100, 181, 246, 0.4);
+}
+
+/* Dock Widget Title Bar Text */
+ads--CDockAreaTitleBar QLabel {
+    color: #E0E0E0;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+QPushButton:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Menu */
+QMenu,
+QMenuBar {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+    border: 1px solid rgba(64, 64, 64, 0.5);
+}
+
+QMenu::item:selected,
+QMenuBar::item:selected {
+    background-color: rgba(100, 181, 246, 0.18);
+}
+
+/* Input Widgets */
+QLineEdit,
+QTextEdit,
+QPlainTextEdit,
+QComboBox {
+    background-color: rgba(0, 0, 0, 0);
+    color: #E0E0E0;
+    border: 1px solid rgba(64, 64, 64, 0.5);
+    border-radius: 2px;
+    padding: 4px 6px;
+    selection-background-color: rgba(100, 181, 246, 0.5);
+    selection-color: #FFFFFF;
+}
+
+QLineEdit:focus,
+QTextEdit:focus,
+QPlainTextEdit:focus,
+QComboBox:focus {
+    border: 2px solid rgba(100, 181, 246, 0.5);
+    outline: none;
+}
+
+/* Scroll Bar */
+QScrollBar:vertical,
+QScrollBar:horizontal {
+    background-color: rgba(0, 0, 0, 0);
+    border: 1px solid rgba(64, 64, 64, 0.5);
+}
+
+QScrollBar::handle:vertical,
+QScrollBar::handle:horizontal {
+    background-color: rgba(128, 128, 128, 0.5);
+    min-height: 20px;
+    min-width: 20px;
+}

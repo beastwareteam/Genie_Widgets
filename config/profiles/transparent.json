@@ -1,0 +1,13 @@
+{
+  "profiles": [
+    {
+      "id": "transparent_profile",
+      "name": "Transparent",
+      "theme_id": "transparent",
+      "colors": {
+        "tab_active": "#E0E0E0",
+        "tab_inactive": "#BDBDBD"
+      }
+    }
+  ]
+}

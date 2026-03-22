@@ -1,0 +1,107 @@
+{
+  "panels": [
+    {
+      "id": "left_panel",
+      "name_key": "panel.left",
+      "area": "left",
+      "closable": true,
+      "movable": true,
+      "floatable": true,
+      "delete_on_close": false,
+      "dnd_enabled": true,
+      "responsive_hidden_at": [
+        "mobile"
+      ]
+    },
+    {
+      "id": "bottom_panel",
+      "name_key": "panel.bottom",
+      "area": "bottom",
+      "closable": true,
+      "movable": true,
+      "floatable": true,
+      "delete_on_close": false,
+      "dnd_enabled": true,
+      "responsive_hidden_at": [
+        "mobile"
+      ]
+    },
+    {
+      "id": "center_panel",
+      "name_key": "panel.center",
+      "area": "center",
+      "closable": false,
+      "movable": true,
+      "floatable": false,
+      "delete_on_close": false,
+      "dnd_enabled": true,
+      "responsive_hidden_at": []
+    },
+    {
+      "id": "dynamic_panel_1",
+      "name_key": "panel.dynamic_1",
+      "area": "center",
+      "closable": true,
+      "movable": true,
+      "floatable": false,
+      "delete_on_close": false,
+      "dnd_enabled": true,
+      "responsive_hidden_at": []
+    },
+    {
+      "id": "dynamic_panel_2",
+      "name_key": "panel.dynamic_2",
+      "area": "center",
+      "closable": true,
+      "movable": true,
+      "floatable": false,
+      "delete_on_close": false,
+      "dnd_enabled": true,
+      "responsive_hidden_at": []
+    },
+    {
+      "id": "dynamic_panel_3",
+      "name_key": "panel.dynamic_3",
+      "area": "center",
+      "closable": true,
+      "movable": true,
+      "floatable": false,
+      "delete_on_close": false,
+      "dnd_enabled": true,
+      "responsive_hidden_at": []
+    },
+    {
+      "id": "dynamic_panel_4",
+      "name_key": "panel.dynamic_4",
+      "area": "center",
+      "closable": true,
+      "movable": true,
+      "floatable": false,
+      "delete_on_close": false,
+      "dnd_enabled": true,
+      "responsive_hidden_at": []
+    },
+    {
+      "id": "dynamic_panel_5",
+      "name_key": "panel.dynamic_5",
+      "area": "center",
+      "closable": true,
+      "movable": true,
+      "floatable": false,
+      "delete_on_close": false,
+      "dnd_enabled": true,
+      "responsive_hidden_at": []
+    },
+    {
+      "id": "dynamic_panel_6",
+      "name_key": "panel.dynamic_6",
+      "area": "center",
+      "closable": true,
+      "movable": true,
+      "floatable": false,
+      "delete_on_close": false,
+      "dnd_enabled": true,
+      "responsive_hidden_at": []
+    }
+  ]
+}
