@@ -8,12 +8,13 @@ Provides:
 """
 
 import importlib
+import importlib.util
 import inspect
 import json
 import logging
 import sys
 from pathlib import Path
-from typing import Any, Callable, Type
+from typing import Any
 
 from PySide6.QtCore import QObject, Signal
 
@@ -43,11 +44,11 @@ class PluginRegistry(QObject):
         """
         super().__init__(parent)
         self.plugins: dict[str, dict[str, Any]] = {}
-        self.factories: dict[str, Type[Any]] = {}
+        self.factories: dict[str, type[Any]] = {}
         self.plugin_instances: dict[str, Any] = {}
         logger.debug("PluginRegistry initialized")
 
-    def register_factory(self, factory_name: str, factory_class: Type[Any]) -> None:
+    def register_factory(self, factory_name: str, factory_class: type[Any]) -> None:
         """Register a factory class.
 
         Args:
@@ -78,7 +79,7 @@ class PluginRegistry(QObject):
             del self.factories[factory_name]
             logger.info(f"Factory unregistered: {factory_name}")
 
-    def get_factory(self, factory_name: str) -> Type[Any] | None:
+    def get_factory(self, factory_name: str) -> type[Any] | None:
         """Get registered factory.
 
         Args:
@@ -89,7 +90,7 @@ class PluginRegistry(QObject):
         """
         return self.factories.get(factory_name)
 
-    def get_all_factories(self) -> dict[str, Type[Any]]:
+    def get_all_factories(self) -> dict[str, type[Any]]:
         """Get all registered factories.
 
         Returns:

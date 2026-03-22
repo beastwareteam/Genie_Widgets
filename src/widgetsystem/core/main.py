@@ -1211,12 +1211,11 @@ class MainWindow(QMainWindow):
             ("UIConfigFactory", UIConfigFactory),
         ]
 
+        import contextlib
+
         for factory_name, factory_class in factories_to_register:
-            try:
+            with contextlib.suppress(ValueError):
                 self.plugin_registry.register_factory(factory_name, factory_class)
-            except ValueError:
-                # Factory already registered - skip
-                pass
 
         # Create plugin manager for plugin discovery
         self.plugin_manager = PluginManager(
