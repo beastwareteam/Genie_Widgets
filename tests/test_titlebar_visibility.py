@@ -24,7 +24,7 @@ from widgetsystem.ui.inlay_titlebar import (
 )
 
 
-class TestWindow(QMainWindow):
+class DemoTitleBarWindow(QMainWindow):
     """Minimal test window to verify TitleBar functionality."""
 
     def __init__(self) -> None:
@@ -143,7 +143,7 @@ def main() -> None:
         }
     """)
     
-    window = TestWindow()
+    window = DemoTitleBarWindow()
     window.show()
     
     print("\n" + "="*60)

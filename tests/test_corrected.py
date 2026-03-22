@@ -19,9 +19,9 @@ from widgetsystem.ui.tab_selector_event_handler import TabSelectorEventHandler
 from widgetsystem.ui.tab_selector_visibility_controller import TabSelectorVisibilityController
 
 
-class TestWindow(QMainWindow):
-    """Test Window mit Tab Selector Control."""
-    
+class DemoWindow(QMainWindow):
+    """Demo Window mit Tab Selector Control (not a pytest test class)."""
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("TEST - Tab Selector Visibility (Corrected)")
@@ -183,7 +183,7 @@ class TestWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = TestWindow()
+    window = DemoWindow()
     window.show()
     
     sys.exit(app.exec())
