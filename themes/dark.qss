@@ -37,17 +37,7 @@ ads--CDockWidget {
     padding: 0px;
 }
 
-/* Title Bar with Gradient */
-ads--CDockAreaTitleBar {
-    background-color: #3C4043;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                stop:0 #3C4043, 
-                                stop:1 #2D2E31);
-    color: #E0E0E0;
-    border-bottom: 1px solid #3C3C3C;
-    margin: 0px;
-    padding: 0px;
-}
+/* Title Bar - siehe oben bei DOCK TITLE BAR */
 
 /* Floating Container with Gradient */
 ads--CFloatingDockContainer {
@@ -61,50 +51,247 @@ ads--CFloatingDockContainer {
     padding: 0px;
 }
 
-ads--CTitleBarButton {
-    background-color: transparent;
-    color: #E0E0E0;
+/* CTitleBarButton - siehe oben bei TITLE BAR BUTTONS */
+
+/* ============================================================================
+   DOCK TITLE BAR - Hintergrund-Layer (vertieft)
+   ============================================================================ */
+
+/* Title Bar - dunkler Hintergrund, Tabs heben sich davon ab */
+ads--CDockAreaTitleBar {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #1E1F21,
+                                stop:1 #252628);
     border: none;
+    border-top: 1px solid #151617;
+    padding: 0px;
+    margin: 0px;
+    min-height: 26px;
+    max-height: 26px;
+}
+
+/* ============================================================================
+   DOCK TAB BAR - Container
+   ============================================================================ */
+
+ads--CDockAreaTabBar {
+    background: transparent;
+    border: none;
+    padding: 0px 4px;
+    margin: 0px;
+}
+
+/* ============================================================================
+   DOCK WIDGET TABS - Erhaben, 3D-Effekt mit Licht von oben
+   ============================================================================ */
+
+/* Inaktive Tabs - erhaben, aber dezent */
+ads--CDockWidgetTab {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #4E5155,
+                                stop:0.05 #45484C,
+                                stop:0.95 #36393D,
+                                stop:1 #2E3134);
+    color: #A8A8A8;
+    padding: 3px 10px;
+    margin: 3px 3px 0px 0px;
+    border-top: 1px solid #5A5D62;
+    border-left: 1px solid #4A4D52;
+    border-right: 1px solid #28292C;
+    border-bottom: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    min-height: 18px;
+    max-height: 18px;
+}
+
+/* Hover - etwas heller */
+ads--CDockWidgetTab:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #5A5E63,
+                                stop:0.05 #505458,
+                                stop:0.95 #404448,
+                                stop:1 #38393D);
+    color: #E0E0E0;
+    border-top: 1px solid #686D73;
+    border-left: 1px solid #555A5F;
+    border-right: 1px solid #303235;
+}
+
+/* Aktiver Tab - am hellsten, deutlich erhaben */
+ads--CDockWidgetTab[activeTab="true"] {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #5C6066,
+                                stop:0.05 #52565B,
+                                stop:0.95 #42464A,
+                                stop:1 #3A3D41);
+    color: #FFFFFF;
+    border-top: 1px solid #707580;
+    border-left: 1px solid #5C6065;
+    border-right: 1px solid #35383C;
+    border-bottom: 2px solid #5294D6;
+    font-weight: normal;
+}
+
+/* Tab Label */
+ads--CDockWidgetTab QLabel {
+    padding: 0px;
+    margin: 0px;
+    font-size: 11px;
+}
+
+/* Tab Close Button */
+ads--CDockWidgetTab > QPushButton,
+ads--CDockWidgetTab #tabCloseButton {
+    background: transparent;
+    border: none;
+    padding: 0px;
+    margin: 0px 0px 0px 6px;
+    min-width: 14px;
+    max-width: 14px;
+    min-height: 14px;
+    max-height: 14px;
+}
+
+ads--CDockWidgetTab > QPushButton:hover,
+ads--CDockWidgetTab #tabCloseButton:hover {
+    background: rgba(255, 90, 90, 0.4);
+    border-radius: 3px;
+}
+
+/* ============================================================================
+   TITLE BAR BUTTONS - Rechte Seite, dezent
+   ============================================================================ */
+
+ads--CTitleBarButton {
+    background: transparent;
+    border: none;
+    padding: 2px;
+    margin: 2px;
+    min-width: 18px;
+    max-width: 18px;
+    min-height: 18px;
+    max-height: 18px;
 }
 
 ads--CTitleBarButton:hover {
-    background-color: #3C3C3C;
-    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
 }
 
 ads--CTitleBarButton:pressed {
-    background-color: #4C4C4C;
+    background: rgba(255, 255, 255, 0.18);
 }
 
-/* Tab Bar Styling */
+/* ============================================================================
+   STANDARD TAB BAR (QTabBar) - Subtabs/Nested Tabs
+   Identisch mit Dock Tabs
+   ============================================================================ */
+
+/* Tab Bar Container - dunkler Hintergrund wie Title Bar */
 QTabBar {
-    background-color: #1E1E1E;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #1E1F21,
+                                stop:1 #252628);
     color: #E0E0E0;
+    border: none;
+    border-top: 1px solid #151617;
+    min-height: 26px;
+    max-height: 26px;
 }
 
+/* QTabWidget Header-Bereich */
+QTabWidget::tab-bar {
+    left: 4px;
+}
+
+/* Inaktive Subtabs - erhaben, 3D-Effekt mit Licht von oben */
 QTabBar::tab {
-    background-color: #2A2A2A;
-    color: #BDBDBD;
-    padding: 6px 16px;
-    margin: 2px 2px 0px 0px;
-    border: 1px solid #3C3C3C;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #4E5155,
+                                stop:0.05 #45484C,
+                                stop:0.95 #36393D,
+                                stop:1 #2E3134);
+    color: #A8A8A8;
+    padding: 3px 8px 3px 10px;
+    margin: 3px 3px 0px 0px;
+    border-top: 1px solid #5A5D62;
+    border-left: 1px solid #4A4D52;
+    border-right: 1px solid #28292C;
     border-bottom: none;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    min-width: 50px;
+    min-height: 18px;
+    max-height: 18px;
+    font-size: 11px;
 }
 
-QTabBar::tab:selected {
-    background-color: #252525;
-    color: #E0E0E0;
-    border: 1px solid #3C3C3C;
-    border-bottom: 2px solid #64B5F6;
-    font-weight: bold;
-}
-
+/* Hover Subtabs - etwas heller */
 QTabBar::tab:hover {
-    background-color: #323232;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #5A5E63,
+                                stop:0.05 #505458,
+                                stop:0.95 #404448,
+                                stop:1 #38393D);
+    color: #E0E0E0;
+    border-top: 1px solid #686D73;
+    border-left: 1px solid #555A5F;
+    border-right: 1px solid #303235;
 }
 
+/* Aktiver Subtab - am hellsten, Akzent-Border zur Unterscheidung */
+QTabBar::tab:selected {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #5C6066,
+                                stop:0.05 #52565B,
+                                stop:0.95 #42464A,
+                                stop:1 #3A3D41);
+    color: #FFFFFF;
+    border-top: 1px solid #707580;
+    border-left: 1px solid #6A90B0;
+    border-right: 1px solid #35383C;
+    border-bottom: 2px solid #5294D6;
+    font-weight: normal;
+}
+
+
+/* Tab Pane - Inhalt mit passender Einfassung */
 QTabWidget::pane {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #252628,
+                                stop:1 #1E1F21);
+    border: 1px solid #151617;
+    border-top: none;
+    padding: 2px;
+}
+
+/* Scroll-Buttons fuer viele Tabs */
+QTabBar::scroller {
+    width: 20px;
+}
+
+QTabBar QToolButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #4E5155,
+                                stop:1 #36393D);
+    border: 1px solid #28292C;
+    border-radius: 3px;
+    margin: 2px;
+    padding: 2px;
+}
+
+QTabBar QToolButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #5A5E63,
+                                stop:1 #404448);
     border: 1px solid #3C3C3C;
+}
+
+QTabBar QToolButton:pressed {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 #404448,
+                                stop:1 #36393D);
 }
 
 /* Toolbar Styling */
@@ -401,5 +588,25 @@ QMessageBox QLabel {
 QMessageBox QPushButton {
     min-width: 60px;
     padding: 6px 16px;
+}
+
+/* ============================================================================
+   NESTED TAB CLOSE BUTTONS - QTabWidget nested tabs
+   ============================================================================ */
+
+QTabWidget QTabBar::close-button {
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+    padding: 0px;
+    margin: 0px;
+    min-width: 14px;
+    max-width: 14px;
+    min-height: 14px;
+    max-height: 14px;
+}
+
+QTabWidget QTabBar::close-button:hover {
+    background: rgba(255, 90, 90, 0.4);
 }
 

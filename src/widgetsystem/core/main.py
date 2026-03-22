@@ -42,7 +42,7 @@ from widgetsystem.factories.tabs_factory import Tab, TabGroup, TabsFactory
 from widgetsystem.factories.theme_factory import ThemeDefinition, ThemeFactory
 from widgetsystem.factories.ui_config_factory import UIConfigFactory
 from widgetsystem.core.plugin_system import PluginManager, PluginRegistry
-from widgetsystem.ui import ConfigurationPanel, InlayTitleBarController
+from widgetsystem.ui import ConfigurationPanel, InlayTitleBarController, PluginManagerDialog
 
 # Import constants from inlay_titlebar
 try:
@@ -310,73 +310,17 @@ class MainWindow(QMainWindow):
                 splitter.setHandleWidth(1)
 
     def _apply_custom_gradients(self) -> None:
-        """Apply custom gradients to all dock areas, overriding QtAds defaults.
+        """Re-apply stylesheet to dock manager to ensure gradient overrides work.
 
-        QtAds renders gradients in C++ (CDockAreaWidget::paintEvent) which ignores
-        most QSS properties. This method uses QSS stylesheet to disable those gradients
-        by setting explicit background colors and applying CSS gradient overrides.
+        QtAds renders gradients in C++ (CDockAreaWidget::paintEvent) which can
+        ignore QSS properties. Re-applying the stylesheet after a short delay
+        helps ensure the theme gradients from dark.qss take effect.
         """
-        # Apply QSS that forces solid backgrounds, hiding QtAds gradients
-        gradient_qss = """
-        /* Override QtAds CDockAreaWidget gradients with custom styling */
-        ads--CDockAreaWidget {
-            background-color: #252525;
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                        stop:0 #252525, 
-                                        stop:1 #1A1A1A);
-            color: #E0E0E0;
-            border: 1px solid rgba(64, 64, 64, 0.5);
-            margin: 0px;
-            padding: 0px;
-        }
-        
-        ads--CDockWidget {
-            background-color: #252525;
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                        stop:0 #252525, 
-                                        stop:1 #1A1A1A);
-            color: #E0E0E0;
-            border: 1px solid rgba(64, 64, 64, 0.5);
-            margin: 0px;
-            padding: 0px;
-        }
-        
-        ads--CDockAreaTitleBar {
-            background-color: #3C4043;
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                        stop:0 #3C4043, 
-                                        stop:1 #2D2E31);
-            color: #E0E0E0;
-            border-bottom: 1px solid rgba(64, 64, 64, 0.5);
-            margin: 0px;
-            padding: 0px;
-        }
-        
-        ads--CFloatingDockContainer {
-            background-color: #2D2E31;
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                        stop:0 #2D2E31, 
-                                        stop:1 #202124);
-            color: #E0E0E0;
-            border: 1px solid rgba(64, 64, 64, 0.5);
-            margin: 0px;
-            padding: 0px;
-        }
-        """
-
-        # Merge with existing theme stylesheet
         app = QApplication.instance()
-        if isinstance(app, QApplication):
-            current_stylesheet = app.styleSheet()
-            # Prepend gradient overrides to ensure they take precedence
-            merged_stylesheet = gradient_qss + "\n\n" + current_stylesheet
-            app.setStyleSheet(merged_stylesheet)
-
-            # Also apply to dock manager
-            if hasattr(self, "dock_manager") and self.dock_manager:
-                self.dock_manager.setStyleSheet(merged_stylesheet)
-
-        print("[+] Custom gradients applied - QtAds default gradients overridden")
+        if isinstance(app, QApplication) and hasattr(self, "dock_manager") and self.dock_manager:
+            # Re-apply current stylesheet to dock manager for better override
+            self.dock_manager.setStyleSheet(app.styleSheet())
+            print("[+] Theme stylesheet re-applied to dock manager")
 
     def _create_empty_dock(
         self,
@@ -475,31 +419,22 @@ class MainWindow(QMainWindow):
         QTimer.singleShot(50, lambda: self._apply_tab_close_styling(tab_widget))
 
     def _apply_tab_close_styling(self, tab_widget: QTabWidget) -> None:
-        """Apply close button styling after tabs are fully created."""
+        """Apply close button icons after tabs are fully created.
+
+        Note: Button styling is handled by dark.qss (QTabWidget QTabBar::close-button).
+        This method only sets the icon and size.
+        """
         tab_bar = tab_widget.tabBar()
         # Use Qt standard close icon
         style = tab_widget.style()
-        if style:
-            close_icon = style.standardIcon(style.StandardPixmap.SP_TitleBarCloseButton)
-        else:
-            close_icon = QIcon()
+        close_icon = style.standardIcon(style.StandardPixmap.SP_TitleBarCloseButton) if style else QIcon()
 
-        styled_count = 0
         for i in range(tab_bar.count()):
             close_btn = tab_bar.tabButton(i, tab_bar.ButtonPosition.RightSide)
             if close_btn and isinstance(close_btn, QAbstractButton):
                 close_btn.setIcon(close_icon)
                 close_btn.setIconSize(QSize(10, 10))
                 close_btn.setFixedSize(QSize(14, 14))
-                close_btn.setStyleSheet("""
-                    background: transparent;
-                    border: none;
-                    border-radius: 3px;
-                    padding: 0px;
-                    margin: 0px;
-                """)
-                styled_count += 1
-        print(f"[TAB_STYLE] Styled {styled_count} close buttons in tab widget")
 
     def _add_tab_recursive(self, parent_widget: QTabWidget, tab: Tab, depth: int = 0) -> None:
         """Recursively add tabs (handling nested children)."""
@@ -1556,101 +1491,16 @@ class MainWindow(QMainWindow):
             print(f"  [X] Fehler beim Oeffnen des Widget-Features Editors: {e}")
 
     def _show_plugin_manager(self) -> None:
-        """Show plugin system information."""
-        print("🔌 Zeige Plugin-System Informationen...")
+        """Show plugin system information using PluginManagerDialog."""
+        print("[+] Zeige Plugin-System Informationen...")
         try:
-            # Create a simple info dialog for plugin system
-            from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QTextEdit, QDialogButtonBox
-
-            dialog = QDialog(self)
-            dialog.setWindowTitle("🔌 Plugin-System")
-            dialog.setGeometry(200, 200, 600, 400)
-
-            layout = QVBoxLayout(dialog)
-
-            title = QLabel("Plugin-System Status")
-            from PySide6.QtGui import QFont
-            font = QFont()
-            font.setPointSize(14)
-            font.setBold(True)
-            title.setFont(font)
-            layout.addWidget(title)
-
-            # Plugin info
-            info_text = QTextEdit()
-            info_text.setReadOnly(True)
-
-            try:
-                from widgetsystem.core.plugin_system import PluginManager, PluginRegistry
-                registry = PluginRegistry()
-                manager = PluginManager(
-                    plugin_dirs=[Path("plugins")],
-                    registry=registry
-                )
-
-                plugin_info = f"""
-Plugin-Registry Status:
-• Registrierte Factories: {len(registry.get_all_factories())}
-• Geladene Plugins: {len(registry.get_all_plugins())}
-
-Plugin-Manager Status:
-• Plugin-Verzeichnisse: {len(manager.plugin_dirs)}
-• Registry verbunden: {'Ja' if manager.registry else 'Nein'}
-
-API-Beispiel:
-```python
-from widgetsystem.core import PluginManager, PluginRegistry
-
-# Registry erstellen
-registry = PluginRegistry()
-
-# Manager mit Plugin-Verzeichnissen
-manager = PluginManager(
-    plugin_dirs=[Path("plugins")],
-    registry=registry
-)
-
-# Alle Plugins laden
-loaded = manager.load_all_plugins()
-
-# Factory registrieren
-registry.register_factory("my_factory", MyFactoryClass)
-```
-
-Features:
-[+] Automatische Plugin-Erkennung
-[+] Factory-Registrierung & Lifecycle
-[+] Hot-Reload Faehigkeit
-[+] Signal-basierte Fehlerbehandlung
-[+] Konfigurationsmanagement
-                """
-            except ImportError:
-                plugin_info = """
-Plugin-System nicht verfuegbar.
-
-Um das Plugin-System zu aktivieren:
-1. Installieren Sie die Plugin-System Dependencies
-2. Starten Sie die Anwendung neu
-
-Features (wenn aktiviert):
-[+] Automatische Plugin-Erkennung
-[+] Factory-Registrierung & Lifecycle
-[+] Hot-Reload Faehigkeit
-[+] Signal-basierte Fehlerbehandlung
-[+] Konfigurationsmanagement
-                """
-
-            info_text.setPlainText(plugin_info)
-            layout.addWidget(info_text)
-
-            # Close button
-            button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-            button_box.rejected.connect(dialog.reject)
-            layout.addWidget(button_box)
-
+            dialog = PluginManagerDialog(
+                self.plugin_registry,
+                self.plugin_manager,
+                parent=self,
+            )
             dialog.exec()
             print("  [+] Plugin-System Dialog geschlossen")
-
         except Exception as e:
             QMessageBox.critical(
                 self,
