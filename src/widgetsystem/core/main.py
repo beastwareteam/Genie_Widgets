@@ -86,15 +86,15 @@ class MainWindow(QMainWindow):
         # Initialize Plugin System
         self._init_plugin_system()
 
-        # Initialize Theme Manager
+        # Initialize Theme Manager (theme registration happens after controllers are ready)
         self.theme_manager = ThemeManager.instance()
         self.theme_manager.themeChanged.connect(self._on_theme_changed)
 
         # Create default theme profiles if they don't exist
         self.theme_factory.create_default_profiles()
 
-        # Register theme profiles with ThemeManager
-        self._register_theme_profiles()
+        # NOTE: _register_theme_profiles() is called after controllers are initialized
+        # to ensure _tab_color_controller is available for theme application
 
         # Legacy state variables - delegated to controllers but kept for compatibility
         # These will be removed in future versions once all code uses controllers
@@ -194,6 +194,9 @@ class MainWindow(QMainWindow):
         # =================================================================
         self._tab_color_controller = self.tab_sys.tab_color_controller
         self._floating_tracker = self.tab_sys.floating_tracker
+
+        # Register theme profiles NOW (after controllers are ready)
+        self._register_theme_profiles()
 
         # Build UI with factories (delegates to controllers)
         self._initialize_dnd()
