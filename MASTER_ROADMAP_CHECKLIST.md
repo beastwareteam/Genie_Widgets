@@ -337,7 +337,7 @@ Interpretation:
 
 ### 7.2 Core
 
-- Neuer Matrix-Eintrag: `F-CORE-010 | EnumTypes | P1 | ✅ Implemented | 🟡 Partially Tested`
+- Neuer Matrix-Eintrag: `F-CORE-010 | EnumTypes | P1 | ✅ Implemented | 🟢 Verified`
 
 | ID | Feature | Prio | Verify | Risiko | Code | Test |
 |---|---|---|---|---|---|---|
@@ -350,7 +350,7 @@ Interpretation:
 | F-CORE-007 | ThemeManager Singleton & Signals | P1 | 🟢 Verified | 🔴 Hoch | [src/widgetsystem/core/theme_manager.py](src/widgetsystem/core/theme_manager.py) | [tests/test_theme_manager.py](tests/test_theme_manager.py) |
 | F-CORE-008 | ThemeProfile ARGB-Profilmodell | P1 | 🟢 Verified | 🟠 Mittel | [src/widgetsystem/core/theme_profile.py](src/widgetsystem/core/theme_profile.py) | [tests/test_theme_profile.py](tests/test_theme_profile.py) |
 | F-CORE-009 | Gradient-System | P2 | 🟢 Verified | 🟡 Niedrig | [src/widgetsystem/core/gradient_system.py](src/widgetsystem/core/gradient_system.py) | [tests/test_gradient_system.py](tests/test_gradient_system.py) |
-| F-CORE-010 | EnumTypes | P1 | 🟡 Partially Tested | 🟠 Mittel | [src/widgetsystem/enums.py](src/widgetsystem/enums.py) | [tests/test_enums.py](tests/test_enums.py) |
+| F-CORE-010 | EnumTypes | P1 | 🟢 Verified | 🟠 Mittel | [src/widgetsystem/enums.py](src/widgetsystem/enums.py) | [tests/test_enums.py](tests/test_enums.py) |
 
 #### 7.2.1 Core-Detailregister (lesbar, sortiert, fehlerklar)
 
