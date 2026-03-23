@@ -52,6 +52,9 @@ class TestTabSelectorMonitor:
 
     def test_update_tab_count(self) -> None:
         """Test updating tab count."""
+        # QApplication must exist before any QObject is created
+        _ = QApplication.instance() or QApplication([])
+
         monitor = TabSelectorMonitor()
         area_widget = Mock()
         area_widget.dockWidgetsCount = Mock(return_value=1)
@@ -63,9 +66,7 @@ class TestTabSelectorMonitor:
         monitor.tab_count_changed.connect(slot)
         monitor.update_tab_count("area_1", 2)
 
-        app = QApplication.instance() or QApplication([])
-        app.processEvents()
-
+        # Mock slots use DirectConnection — called synchronously during emit()
         assert monitor._area_tab_counts["area_1"] == 2
         slot.assert_called_once_with("area_1", 2)
 

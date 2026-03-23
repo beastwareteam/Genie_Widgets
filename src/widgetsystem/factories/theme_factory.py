@@ -99,6 +99,26 @@ class ThemeFactory:
         self.themes_file = self.config_path / "themes.json"
         self._cache: dict[str, Any] = {}
 
+    def _load_theme_config(self) -> dict[str, Any] | None:
+        """Load raw theme configuration from disk.
+
+        Returns:
+            Parsed configuration dictionary or None if unavailable/invalid.
+        """
+        if not self.themes_file.exists():
+            return None
+
+        try:
+            with open(self.themes_file, encoding="utf-8") as config_file:
+                config_data = json.load(config_file)
+        except (json.JSONDecodeError, OSError):
+            return None
+
+        if not isinstance(config_data, dict):
+            return None
+
+        return config_data
+
     def load_themes(self) -> list[dict[str, Any]]:
         """Load all themes from configuration file.
 
@@ -109,19 +129,15 @@ class ThemeFactory:
             FileNotFoundError: If configuration file doesn't exist
             json.JSONDecodeError: If configuration is invalid JSON
         """
-        if not self.themes_file.exists():
+        config_data = self._load_theme_config()
+        if config_data is None:
             return []
 
-        try:
-            config_data = json.loads(self.themes_file.read_text(encoding="utf-8"))
-            if not isinstance(config_data, dict):
-                return []
-            themes = config_data.get("themes", [])
-            if not isinstance(themes, list):
-                return []
-            return themes
-        except (json.JSONDecodeError, OSError):
+        themes = config_data.get("themes", [])
+        if not isinstance(themes, list):
             return []
+
+        return themes
 
     def list_themes(self) -> list[ThemeDefinition]:
         """List all available themes from the configuration file.
@@ -175,16 +191,15 @@ class ThemeFactory:
         Returns:
             Default theme ID or None if not configured
         """
-        if not self.themes_file.exists():
+        config_data = self._load_theme_config()
+        if config_data is None:
             return None
 
-        try:
-            config_data = json.loads(self.themes_file.read_text(encoding="utf-8"))
-            if not isinstance(config_data, dict):
-                return None
-            return config_data.get("default_theme")
-        except (json.JSONDecodeError, OSError):
+        default_theme_id = config_data.get("default_theme")
+        if not isinstance(default_theme_id, str):
             return None
+
+        return default_theme_id
 
     def get_default_theme(self) -> ThemeDefinition | None:
         """Get the default theme definition.
@@ -294,3 +309,17 @@ class ThemeFactory:
         """
         profiles_dir = self.config_path / "profiles"
         profiles_dir.mkdir(parents=True, exist_ok=True)
+
+        default_profiles: list[tuple[str, str]] = [
+            ("dark_transparent", "Dark Transparent"),
+            ("light_transparent", "Light Transparent"),
+            ("solid_dark", "Solid Dark"),
+        ]
+
+        for profile_id, profile_name in default_profiles:
+            profile_file = profiles_dir / f"{profile_id}.json"
+            if profile_file.exists():
+                continue
+
+            profile = ThemeProfile(profile_id=profile_id, name=profile_name)
+            self.save_profile(profile, profile_id)

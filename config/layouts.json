@@ -4,12 +4,12 @@
     {
       "id": "last_saved",
       "name": "Last Saved",
-      "file": "layout.xml"
+      "file": "data/layout.xml"
     },
     {
       "id": "most_used",
       "name": "Most Used",
-      "file": "layout_alt.xml"
+      "file": "data/layout.xml"
     }
   ],
   "panels": [

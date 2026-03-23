@@ -1,5 +1,8 @@
 # 🎯 PROJEKT-STRUKTUR ANALYSE - EXECUTIVE SUMMARY
 
+> ⚠️ **Historischer Stand (vor 2026-03-07).** Unit-Tests sind vorhanden in `tests/`.
+> Die nachfolgende Analyse ist veraltet und dient nur als Referenz.
+
 **Analysetag**: 24. Februar 2026  
 **Projekt**: WidgetSystem - Qt ADS Docking Application  
 **Analyseur**: GitHub Copilot  

@@ -7,9 +7,10 @@ Ein modulares, konfigurationsgesteuertes GUI-Anwendungs-Framework mit PySide6 un
 **Dieses Projekt hat umfassende Richtlinien. Bitte lesen Sie diese Dateien VOR der Arbeit:**
 
 ### Pflichtlektüre
-1. **`AGENT_CONFIG.md`** - Übersicht und Einstiegspunkt für alle AI-Agents
-2. **`.github/copilot-instructions.md`** - Vollständige Projektrichtlinien
-3. **`QUICK_REFERENCE.md`** - Kompakte Referenz (Deutsch)
+1. **`MASTER_ROADMAP_CHECKLIST.md`** - Zentrale Source of Truth (Bestand, Roadmap, Regression)
+2. **`AGENT_CONFIG.md`** - Übersicht und Einstiegspunkt für alle AI-Agents
+3. **`.github/copilot-instructions.md`** - Vollständige Projektrichtlinien
+4. **`QUICK_REFERENCE.md`** - Kompakte Referenz (Deutsch)
 
 ### Kontext-spezifische Richtlinien
 - `.github/instructions/factories.instructions.md` - Factory-Klassen
@@ -150,8 +151,8 @@ pytest tests/ --cov=src/widgetsystem # Tests mit Coverage (min 80%)
 # Vollständige Demo
 python examples/complete_demo.py
 
-# Basis-Demo
-python examples/demo.py
+# Inlay-Titlebar Demo
+python examples/demo_inlay_titlebar.py
 ```
 
 ## 🏗️ Architektur-Prinzipien

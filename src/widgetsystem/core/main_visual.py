@@ -50,7 +50,7 @@ class ExtendedMainWindow(QMainWindow):
 
         self.setWindowTitle("WidgetSystem - Erweitert (Config + Visual Layer)")
         self.setMinimumSize(1400, 900)
-        self.layout_file = Path("layout.xml")
+        self.layout_file = Path.cwd() / "data" / "layout.xml"
         self.enable_visual_layer = enable_visual_layer
 
         # Initialize all factories
@@ -346,6 +346,10 @@ class ExtendedMainWindow(QMainWindow):
             "✅ Persistente Speicherung\n\n"
             "© 2026 Maximale Funktionalität",
         )
+
+
+#: Alias so that ``from widgetsystem.core.main_visual import MainVisualWindow`` works.
+MainVisualWindow = ExtendedMainWindow
 
 
 def main(visual_layer: bool = True) -> None:

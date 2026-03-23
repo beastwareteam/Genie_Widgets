@@ -7,6 +7,7 @@
 This project uses comprehensive guidelines for maintaining code quality and consistency. All configuration files are in the `.github/` directory:
 
 ### Primary Configuration
+- **`MASTER_ROADMAP_CHECKLIST.md`** - Zentrale Source of Truth für Bestand, Roadmap und Regression
 - **`.github/copilot-instructions.md`** - Complete project guidelines (workspace-wide)
   - Project structure and architecture
   - Code style and conventions
@@ -45,11 +46,12 @@ Located in `.github/instructions/` directory:
 
 **Before making ANY changes to this codebase:**
 
-1. **Read** `.github/copilot-instructions.md` (complete guidelines)
-2. **Scan** `QUICK_REFERENCE.md` (quick overview)
-3. **Check** relevant instruction file in `.github/instructions/` based on file type
-4. **Review** existing code patterns in `src/widgetsystem/` 
-5. **Verify** with `pytest tests/` before committing
+1. **Read** `MASTER_ROADMAP_CHECKLIST.md` (source of truth for status and regression scope)
+2. **Read** `.github/copilot-instructions.md` (complete guidelines)
+3. **Scan** `QUICK_REFERENCE.md` (quick overview)
+4. **Check** relevant instruction file in `.github/instructions/` based on file type
+5. **Review** existing code patterns in `src/widgetsystem/`
+6. **Verify** with `pytest tests/` before committing
 
 ## 🔑 Key Rules Summary
 

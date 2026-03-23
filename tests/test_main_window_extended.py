@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from widgetsystem.core.main import MainWindow
+from widgetsystem.controllers.dock_controller import DockController
 from widgetsystem.factories.layout_factory import LayoutDefinition
 from widgetsystem.factories.theme_factory import ThemeDefinition
 
@@ -30,8 +31,15 @@ def dummy_window(tmp_path: Path, i18n_mock: MagicMock) -> SimpleNamespace:
 
     tab_color_controller = MagicMock()
 
+    layout_ctrl = MagicMock()
+    layout_ctrl.save.return_value = True
+    layout_ctrl.load.return_value = True
+    layout_ctrl.load_on_startup.return_value = True
+    layout_ctrl.load_named.return_value = True
+
     return SimpleNamespace(
         dock_manager=dock_manager,
+        layout_ctrl=layout_ctrl,
         i18n_factory=i18n_mock,
         layout_file=tmp_path / "layout.xml",
         docks=[],
@@ -51,74 +59,65 @@ class TestLayoutPersistenceHelpers:
     """Test layout persistence helpers from MainWindow."""
 
     def test_save_layout_success(self, dummy_window: SimpleNamespace) -> None:
-        """Save layout writes bytes and shows info message."""
+        """Save layout delegates to layout_ctrl and shows info on success."""
+        dummy_window.layout_ctrl.save.return_value = True
         with patch("widgetsystem.core.main.QMessageBox.information") as info_box:
             MainWindow._save_layout(dummy_window)  # type: ignore[arg-type]
-            assert dummy_window.layout_file.exists()
             info_box.assert_called_once()
 
     def test_save_layout_exception(self, dummy_window: SimpleNamespace) -> None:
-        """Save layout exceptions are shown as critical message."""
-        dummy_window.layout_file = MagicMock()
-        dummy_window.layout_file.parent = MagicMock()
-        dummy_window.layout_file.parent.mkdir.side_effect = OSError("no write")
-
-        with patch("widgetsystem.core.main.QMessageBox.critical") as critical_box:
+        """Save layout failure (layout_ctrl.save returns False) shows warning."""
+        dummy_window.layout_ctrl.save.return_value = False
+        with patch("widgetsystem.core.main.QMessageBox.warning") as warning_box:
             MainWindow._save_layout(dummy_window)  # type: ignore[arg-type]
-            critical_box.assert_called_once()
+            warning_box.assert_called_once()
 
     def test_load_layout_missing_file(self, dummy_window: SimpleNamespace) -> None:
-        """Missing layout file triggers warning and returns early."""
+        """Failed load (layout_ctrl.load returns False) triggers warning."""
+        dummy_window.layout_ctrl.load.return_value = False
         with patch("widgetsystem.core.main.QMessageBox.warning") as warning_box:
             MainWindow._load_layout(dummy_window)  # type: ignore[arg-type]
             warning_box.assert_called_once()
-            dummy_window.dock_manager.restoreState.assert_not_called()
 
     def test_load_layout_restore_failed(self, dummy_window: SimpleNamespace) -> None:
-        """restoreState failure triggers warning."""
-        dummy_window.layout_file.write_bytes(b"x")
-        dummy_window.dock_manager.restoreState.return_value = False
-
+        """layout_ctrl.load failure triggers warning."""
+        dummy_window.layout_ctrl.load.return_value = False
         with patch("widgetsystem.core.main.QMessageBox.warning") as warning_box:
             MainWindow._load_layout(dummy_window)  # type: ignore[arg-type]
             assert warning_box.call_count >= 1
 
     def test_load_layout_success(self, dummy_window: SimpleNamespace) -> None:
         """Successful load shows information dialog."""
-        dummy_window.layout_file.write_bytes(b"valid-layout")
-
+        dummy_window.layout_ctrl.load.return_value = True
         with patch("widgetsystem.core.main.QMessageBox.information") as info_box:
             MainWindow._load_layout(dummy_window)  # type: ignore[arg-type]
             info_box.assert_called_once()
 
     def test_load_layout_exception(self, dummy_window: SimpleNamespace) -> None:
-        """Load exceptions trigger critical message."""
-        dummy_window.layout_file = MagicMock()
-        dummy_window.layout_file.exists.return_value = True
-        dummy_window.layout_file.read_bytes.side_effect = RuntimeError("read error")
-
-        with patch("widgetsystem.core.main.QMessageBox.critical") as critical_box:
+        """layout_ctrl.load returning False shows warning (no try/except in delegating method)."""
+        dummy_window.layout_ctrl.load.return_value = False
+        with patch("widgetsystem.core.main.QMessageBox.warning") as warning_box:
             MainWindow._load_layout(dummy_window)  # type: ignore[arg-type]
-            critical_box.assert_called_once()
+            warning_box.assert_called_once()
 
     def test_load_layout_on_startup_missing_file(self, dummy_window: SimpleNamespace) -> None:
-        """Startup load returns silently when file is absent."""
+        """Startup load delegates to layout_ctrl.load_on_startup."""
         MainWindow._load_layout_on_startup(dummy_window)  # type: ignore[arg-type]
-        dummy_window.dock_manager.restoreState.assert_not_called()
+        dummy_window.layout_ctrl.load_on_startup.assert_called_once()
 
     def test_load_layout_on_startup_restore_attempt(self, dummy_window: SimpleNamespace) -> None:
-        """Startup load attempts restore when file exists."""
-        dummy_window.layout_file.write_bytes(b"state")
+        """Startup load always delegates to layout_ctrl.load_on_startup."""
         MainWindow._load_layout_on_startup(dummy_window)  # type: ignore[arg-type]
-        dummy_window.dock_manager.restoreState.assert_called_once()
+        dummy_window.layout_ctrl.load_on_startup.assert_called_once()
 
 
 class TestNamedLayoutAndThemeApply:
     """Test named layout and theme application helpers."""
 
     def test_load_named_layout_missing_file(self, dummy_window: SimpleNamespace) -> None:
-        """Missing named layout file triggers warning."""
+        """layout_ctrl.load_named returning False triggers warning."""
         layout = LayoutDefinition("l1", "Layout 1", Path("does_not_exist.xml"))
+        dummy_window.layout_ctrl.load_named.return_value = False
 
         with patch("widgetsystem.core.main.QMessageBox.warning") as warning_box:
             MainWindow._load_named_layout(dummy_window, layout)  # type: ignore[arg-type]
@@ -129,21 +128,18 @@ class TestNamedLayoutAndThemeApply:
         dummy_window: SimpleNamespace,
         tmp_path: Path,
     ) -> None:
-        """Named layout restore failure triggers warning."""
-        file_path = tmp_path / "named.xml"
-        file_path.write_bytes(b"layout")
-        layout = LayoutDefinition("l1", "Layout 1", file_path)
-        dummy_window.dock_manager.restoreState.return_value = False
+        """layout_ctrl.load_named failure triggers warning."""
+        layout = LayoutDefinition("l1", "Layout 1", tmp_path / "named.xml")
+        dummy_window.layout_ctrl.load_named.return_value = False
 
         with patch("widgetsystem.core.main.QMessageBox.warning") as warning_box:
             MainWindow._load_named_layout(dummy_window, layout)  # type: ignore[arg-type]
             warning_box.assert_called_once()
 
     def test_load_named_layout_success(self, dummy_window: SimpleNamespace, tmp_path: Path) -> None:
-        """Named layout success triggers information message."""
-        file_path = tmp_path / "named.xml"
-        file_path.write_bytes(b"layout")
-        layout = LayoutDefinition("l1", "Layout 1", file_path)
+        """layout_ctrl.load_named success triggers information message."""
+        layout = LayoutDefinition("l1", "Layout 1", tmp_path / "named.xml")
+        dummy_window.layout_ctrl.load_named.return_value = True
 
         with patch("widgetsystem.core.main.QMessageBox.information") as info_box:
             MainWindow._load_named_layout(dummy_window, layout)  # type: ignore[arg-type]
@@ -335,3 +331,42 @@ class TestMainEntryPoint:
 
                 fake_window.show.assert_called_once()
                 exit_mock.assert_called_once_with(0)
+
+
+def test_dock_controller_lifecycle() -> None:
+    """DockController lifecycle: register, find, unregister, and reset."""
+    dock_manager = MagicMock()
+    panel_factory = MagicMock()
+    tabs_factory = MagicMock()
+    i18n_factory = MagicMock()
+
+    controller = DockController(
+        dock_manager=dock_manager,
+        panel_factory=panel_factory,
+        tabs_factory=tabs_factory,
+        i18n_factory=i18n_factory,
+    )
+
+    added: list[str] = []
+    removed: list[str] = []
+    controller.dockAdded.connect(lambda dock_id, _dock: added.append(dock_id))
+    controller.dockRemoved.connect(lambda dock_id: removed.append(dock_id))
+
+    dock = MagicMock()
+    dock.windowTitle.return_value = "Panel One"
+
+    controller._register_dock("panel_1", dock)
+    assert controller.dock_count == 1
+    assert controller.find_dock("panel_1") is dock
+    assert controller.find_dock_by_title("Panel") is dock
+    assert added == ["panel_1"]
+
+    controller._unregister_dock("panel_1")
+    assert controller.dock_count == 0
+    assert controller.find_dock("panel_1") is None
+    assert removed == ["panel_1"]
+
+    controller._register_dock("panel_2", dock)
+    assert controller.dock_count == 1
+    controller.reset()
+    assert controller.dock_count == 0

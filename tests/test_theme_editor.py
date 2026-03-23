@@ -1,4 +1,4 @@
-"""Tests for theme_editor.py - Live Theme Editor components.
+﻿"""Tests for theme_editor.py - Live Theme Editor components.
 
 Tests cover:
 - ARGBColorButton initialization and color handling
@@ -69,7 +69,7 @@ def temp_config_dir() -> Path:
                 "font_size": 12,
             },
         ]
-        (config_path / "themes.json").write_text(json.dumps(themes), encoding="utf-8")
+        (config_path / "themes.json").write_text(json.dumps({"themes": themes}), encoding="utf-8")
 
         yield config_path
 
@@ -437,7 +437,7 @@ class TestEditorEdgeCases:
         with tempfile.TemporaryDirectory() as tmpdir:
             config_path = Path(tmpdir)
             themes = [{"id": "minimal", "name": "Minimal"}]
-            (config_path / "themes.json").write_text(json.dumps(themes), encoding="utf-8")
+            (config_path / "themes.json").write_text(json.dumps({"themes": themes}), encoding="utf-8")
 
             editor = LiveThemeEditor(config_path)
             editor.theme_combo.setCurrentIndex(0)

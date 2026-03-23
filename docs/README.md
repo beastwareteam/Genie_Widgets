@@ -7,7 +7,7 @@
 ║                     WIDGETSYSTEM v1.0.0                               ║
 ║           Configuration-Driven PySide6 GUI Framework                  ║
 ╠══════════════════════════════════════════════════════════════════════╣
-║  10 Factories  │  27 UI Components  │  6 Core Systems  │  100% Typed  ║
+║  10 Factories  │  14 UI Components  │  6 Core Systems  │  100% Typed  ║
 ╚══════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -33,7 +33,7 @@
 | Document | Description |
 |----------|-------------|
 | [API_REFERENCE.md](API_REFERENCE.md) | Complete API documentation |
-| [UI_COMPONENTS.md](UI_COMPONENTS.md) | All 27 UI components |
+| [UI_COMPONENTS.md](UI_COMPONENTS.md) | All 14 UI component modules |
 | [SIGNALS_EVENTS.md](SIGNALS_EVENTS.md) | Qt signals reference |
 
 ### Configuration
@@ -54,7 +54,7 @@
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│                      UI COMPONENTS (27)                              │
+│                      UI COMPONENTS (14)                              │
 │  InlayTitleBar │ ThemeEditor │ ARGBColorPicker │ WidgetEditor       │
 │  FloatingTitle │ TabSelector │ TabColorController │ ConfigViewers   │
 └─────────────────────────────────────────────────────────────────────┘
@@ -154,9 +154,9 @@
 │                      PROJECT METRICS                             │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  Source Modules      41      │██████████████████████████████│   │
-│  Test Modules        49      │████████████████████████████████│ │
-│  UI Components       27      │████████████████████│            │
+│  Source Modules      44      │██████████████████████████████│   │
+│  Test Modules        54      │████████████████████████████████│ │
+│  UI Components       14      │████████████████████│            │
 │  Factory Classes     10      │███████│                         │
 │  Core Systems         6      │████│                            │
 │  JSON Configs        11      │████████│                        │

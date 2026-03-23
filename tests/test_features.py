@@ -1,96 +1,47 @@
-"""Test widget features after close."""
+"""Pytest coverage for dock widget feature behavior."""
 
-import sys
 import PySide6QtAds as QtAds
-from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget
 
-class FeaturesTest(QMainWindow):
-    """Test features."""
-    
-    def __init__(self):
-        super().__init__()
-        self.dock_manager = QtAds.CDockManager(self)
-        
-        #Create panels
-        self.dock1 = QtAds.CDockWidget(self.dock_manager, "Panel 1", self)
-        self.dock1.setWidget(QWidget())
-        self.dock_manager.addDockWidget(QtAds.LeftDockWidgetArea, self.dock1)
-        
-        self.dock2 = QtAds.CDockWidget(self.dock_manager, "Panel 2", self)
-        self.dock2.setWidget(QWidget())
-        area = self.dock1.dockAreaWidget()
-        self.dock_manager.addDockWidgetTabToArea(self.dock2, area)
-        
-        # List available feature constants
-        print("\n" + "="*60)
-        print("CDockWidget.DockWidgetFeature constants:")
-        print("="*60)
-        if hasattr(QtAds.CDockWidget, 'DockWidgetFeature'):
-            for attr in dir(QtAds.CDockWidget.DockWidgetFeature):
-                if not attr.startswith('_'):
-                    val = getattr(QtAds.CDockWidget.DockWidgetFeature, attr)
-                    print(f"  - {attr} = {val}")
-        elif hasattr(QtAds.CDockWidget, 'eDockWidgetFeature'):
-            for attr in dir(QtAds.CDockWidget.eDockWidgetFeature):
-                if not attr.startswith('_'):
-                    val = getattr(QtAds.CDockWidget.eDockWidgetFeature, attr)
-                    print(f"  - {attr} = {val}")
-        
-        print("\n" + "="*60)
-        print("BEFORE closing Panel 2:")
-        print("="*60)
-        self._check_widget("Panel 2", self.dock2)
-        
-        QTimer.singleShot(1000, self.close_and_check)
-        QTimer.singleShot(3000, app.quit)
-    
-    def _check_widget(self, name, widget):
-        """Check widget properties."""
-        print(f"\n{name}:")
-        
-        if hasattr(widget, 'features'):
-            print(f"  features(): {widget.features()}")
-        
-        if hasattr(widget, 'isClosed'):
-            print(f"  isClosed(): {widget.isClosed()}")
-        
-        if hasattr(widget, 'isVisible'):
-            print(f"  isVisible(): {widget.isVisible()}")
-        
-        if hasattr(widget, 'isHidden'):
-            print(f"  isHidden(): {widget.isHidden()}")
-        
-        if hasattr(widget, 'testWidgetFeature'):
-            # Try known features
-            if hasattr(QtAds.CDockWidget, 'DockWidgetClosable'):
-                closable = widget.testWidgetFeature(QtAds.CDockWidget.DockWidgetClosable)
-                print(f"  testWidgetFeature(DockWidgetClosable): {closable}")
-        
-        # Check if widget() still exists
-        if hasattr(widget, 'widget'):
-            inner_widget = widget.widget()
-            if inner_widget:
-                print(f"  widget(): EXISTS (visible={inner_widget.isVisible()})")
-            else:
-                print(f"  widget(): None")
-    
-    def close_and_check(self):
-        """Close and check."""
-        print("\n" + "="*60)
-        print("Closing Panel 2...")
-        self.dock2.close()
-        print("Closed")
-        
-        print("\n" + "="*60)
-        print("AFTER closing Panel 2:")
-        print("="*60)
-        self._check_widget("Panel 2", self.dock2)
-        print("\n")
+
+def _get_app() -> QApplication:
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication([])
+    return app
 
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = FeaturesTest()
-    window.show()
-    sys.exit(app.exec())
+def test_dock_widget_features_available() -> None:
+    """Dock widgets expose feature API and widget container."""
+    _get_app()
+    window = QMainWindow()
+    dock_manager = QtAds.CDockManager(window)
+
+    dock = QtAds.CDockWidget(dock_manager, "Panel", window)
+    dock.setWidget(QWidget())
+    dock_manager.addDockWidget(QtAds.LeftDockWidgetArea, dock)
+
+    assert dock.widget() is not None
+    assert hasattr(dock, "features")
+    assert hasattr(dock, "close")
+
+
+def test_tabbed_dock_widgets_can_be_created() -> None:
+    """Two dock widgets can be placed in the same area as tabs."""
+    _get_app()
+    window = QMainWindow()
+    dock_manager = QtAds.CDockManager(window)
+
+    dock1 = QtAds.CDockWidget(dock_manager, "Panel 1", window)
+    dock1.setWidget(QWidget())
+    dock_manager.addDockWidget(QtAds.LeftDockWidgetArea, dock1)
+
+    dock2 = QtAds.CDockWidget(dock_manager, "Panel 2", window)
+    dock2.setWidget(QWidget())
+    area = dock1.dockAreaWidget()
+    dock_manager.addDockWidgetTabToArea(dock2, area)
+
+    assert area is not None
+    assert hasattr(area, "dockWidgets")
+    widgets = area.dockWidgets() if hasattr(area, "dockWidgets") else []
+    assert len(widgets) >= 2

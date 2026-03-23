@@ -374,10 +374,23 @@ class InlayTitleBarController:
         self.titlebar: InlayTitleBar | None = None
 
     def install(self) -> None:
-        """Create the titlebar widget, parent it to the main window, and position it."""
+        """Create the titlebar widget, parent it to the main window, and position it.
+
+        Calling install() a second time is a no-op.
+        """
+        if self.titlebar is not None:
+            return
         self.titlebar = InlayTitleBar(self._win)
+        self.titlebar.show()
         self.titlebar.raise_()
         self._position()
+
+    def uninstall(self) -> None:
+        """Remove the titlebar widget and reset to uninstalled state."""
+        if self.titlebar is not None:
+            self.titlebar.hide()
+            self.titlebar.deleteLater()
+            self.titlebar = None
 
     def set_title(self, title: str) -> None:
         if self.titlebar:

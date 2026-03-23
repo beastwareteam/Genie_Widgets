@@ -5,7 +5,7 @@
 ║                           GENIE WIDGETS v1.0.0                                ║
 ║         Configuration-Driven PySide6 GUI Framework with QtAds                ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
-║   10 Factories  │  27 UI Components  │  6 Core Systems  │  100% Type Hints   ║
+║   10 Factories  │  14 UI Components  │  6 Core Systems  │  100% Type Hints   ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 ```
 
@@ -26,7 +26,7 @@
                                    │
                                    ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                           UI COMPONENTS (27)                                 │
+│                           UI COMPONENTS (14)                                 │
 │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐       │
 │  │InlayTitleBar │ │ ThemeEditor  │ │ARGBColorPick │ │WidgetEditor  │       │
 │  │  3px → 35px  │ │  Live Edit   │ │  #AARRGGBB   │ │  Properties  │       │
@@ -160,14 +160,16 @@ app.run()
 
 ```
 WidgetSystem/
-├── src/widgetsystem/          # Source Code (41 modules)
-│   ├── core/                  #   Core Systems (6)
+├── src/widgetsystem/          # Source Code (44 modules)
+│   ├── core/                  #   Core Systems (9)
+│   ├── controllers/           #   Controllers (7)
 │   ├── factories/             #   Factory Classes (10)
-│   └── ui/                    #   UI Components (27)
+│   ├── ui/                    #   UI Components (14)
+│   └── debug/                 #   Debug Tools (3)
 ├── config/                    # JSON Configuration (11 files)
 ├── schemas/                   # JSON Schemas (10 files)
 ├── themes/                    # QSS Stylesheets (3)
-├── tests/                     # Test Suite (49 modules)
+├── tests/                     # Test Suite (54 modules)
 ├── docs/                      # Documentation (12 files)
 └── examples/                  # Demo Applications
 ```
@@ -197,9 +199,9 @@ WidgetSystem/
 ┌────────────────────────────────────────────────────────────┐
 │                    PROJECT METRICS                          │
 ├────────────────────────────────────────────────────────────┤
-│  Source Modules     41   ██████████████████████████████    │
-│  Test Modules       49   ████████████████████████████████  │
-│  UI Components      27   ████████████████████              │
+│  Source Modules     44   ██████████████████████████████    │
+│  Test Modules       54   ████████████████████████████████  │
+│  UI Components      14   ████████████████████              │
 │  Factory Classes    10   ███████                           │
 │  Core Systems        6   ████                              │
 │  JSON Configs       11   ████████                          │
@@ -216,9 +218,10 @@ WidgetSystem/
 ## For AI Agents
 
 Before starting work, read:
-1. [AGENT_CONFIG.md](AGENT_CONFIG.md) - Overview
-2. [.github/copilot-instructions.md](.github/copilot-instructions.md) - Guidelines
-3. [AGENTS.md](AGENTS.md) - Structure & conventions
+1. [MASTER_ROADMAP_CHECKLIST.md](MASTER_ROADMAP_CHECKLIST.md) - Source of Truth (Bestand, Roadmap, Regression)
+2. [AGENT_CONFIG.md](AGENT_CONFIG.md) - Overview
+3. [.github/copilot-instructions.md](.github/copilot-instructions.md) - Guidelines
+4. [AGENTS.md](AGENTS.md) - Structure & conventions
 
 ---
 

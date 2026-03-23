@@ -105,7 +105,7 @@ Beispiele:
 
 ## Nächste Schritte
 
-### Phase 2 (Optional): Live Theme Editor
+### ✅ Implementiert — F-UI-011 ThemeEditor + F-UI-012 ARGBColorPicker (seit 2026-03-07)
 - [ ] `ARGBColorPicker` Widget
 - [ ] `ThemeEditorWidget` UI
 - [ ] Integration in MainWindow als Dock

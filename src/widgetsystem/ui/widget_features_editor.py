@@ -387,7 +387,7 @@ class WidgetFeaturesEditor(QWidget):
         # Property editor
         self.editor = WidgetPropertyEditor(self.config_path, self)
         self.editor.load_widgets()
-        self.editor.saved.connect(self.updated.emit)
+        self.editor.saved.connect(lambda _path: self.updated.emit())
         layout.addWidget(self.editor)
 
     def refresh(self) -> None:

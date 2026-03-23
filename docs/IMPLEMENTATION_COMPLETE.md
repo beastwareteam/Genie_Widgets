@@ -1,5 +1,7 @@
 # 🎯 Erweiterte Features - Implementierungsübersicht
 
+> **Historischer Stand — alle nachfolgend genannten Phasen sind umgesetzt. Aktuelle IDs: F-CORE-004..006, F-FAC-009..010, F-UI-003.**
+
 **Status**: ✅ **VOLLSTÄNDIG IMPLEMENTIERT UND GETESTET**
 
 ## 📋 Was wurde implementiert
@@ -235,14 +237,14 @@ i:\htdocs\WidgetSystem\
 
 ## 🚀 Nächste Erweiterungsoptionen
 
-### Phase 2 (Optional):
+### Phase 2 (Optional) — ✅ umgesetzt (F-CORE-004, F-CORE-005, F-FAC-009, F-UI-003)
 - [ ] Persistierung von Konfigurationsänderungen auf Disk
 - [ ] Undo/Redo-System für Konfigurationseditoren
 - [ ] Import/Export von Konfigurationen
 - [ ] Konfiguration-Validierungsregeln
 - [ ] Benutzerdefinierte Widget-Typen
 
-### Phase 3 (Optional):
+### Phase 3 (Optional) — ✅ umgesetzt (F-CORE-006, F-FAC-010)
 - [ ] Template-System für häufige Konfigurationen
 - [ ] Konfigurationsversionsverwaltung
 - [ ] Konfiguration-Backup-Verwaltung

@@ -162,18 +162,18 @@ class ThemePropertyEditor(QWidget):
             # Color property
             self.editor = ARGBColorButton(str(property_value), self)
             self.editor.colorChanged.connect(self._on_value_changed)
+        elif isinstance(property_value, bool):
+            # Boolean property — must be checked before (int, float) because bool subclasses int
+            self.editor = QComboBox(self)
+            self.editor.addItems(["False", "True"])
+            self.editor.setCurrentText(str(property_value))
+            self.editor.currentTextChanged.connect(self._on_value_changed)
         elif isinstance(property_value, (int, float)):
             # Numeric property
             self.editor = QSpinBox(self)
             self.editor.setRange(-999, 9999)
             self.editor.setValue(int(property_value))
             self.editor.valueChanged.connect(self._on_value_changed)
-        elif isinstance(property_value, bool):
-            # Boolean property
-            self.editor = QComboBox(self)
-            self.editor.addItems(["False", "True"])
-            self.editor.setCurrentText(str(property_value))
-            self.editor.currentTextChanged.connect(self._on_value_changed)
         else:
             # String property
             from PySide6.QtWidgets import QLineEdit
@@ -355,7 +355,7 @@ class LiveThemeEditor(QWidget):
                 parts = property_name.split(".")
                 if "colors" not in self.current_theme:
                     self.current_theme["colors"] = {}
-                if parts[0] not in self.current_theme["colors"]:
+                if not isinstance(self.current_theme["colors"].get(parts[0]), dict):
                     self.current_theme["colors"][parts[0]] = {}
                 self.current_theme["colors"][parts[0]][parts[1]] = property_value
             else:

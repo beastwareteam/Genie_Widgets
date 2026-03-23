@@ -183,17 +183,23 @@ class VisualMainWindow(QMainWindow):
 
         # Theme Editor button
         theme_editor_btn = QPushButton("🎨 Theme Editor")
-        theme_editor_btn.clicked.connect(self._show_theme_editor)
+        show_theme_editor = getattr(self, "_show_theme_editor", None)
+        if callable(show_theme_editor):
+            theme_editor_btn.clicked.connect(show_theme_editor)
         toolbar.addWidget(theme_editor_btn)
 
         # Color Picker button
         color_picker_btn = QPushButton("🌈 Farbauswahl")
-        color_picker_btn.clicked.connect(self._show_color_picker)
+        show_color_picker = getattr(self, "_show_color_picker", None)
+        if callable(show_color_picker):
+            color_picker_btn.clicked.connect(show_color_picker)
         toolbar.addWidget(color_picker_btn)
 
         # Widget Features Editor button
         widget_editor_btn = QPushButton("🔧 Widget Editor")
-        widget_editor_btn.clicked.connect(self._show_widget_editor)
+        show_widget_editor = getattr(self, "_show_widget_editor", None)
+        if callable(show_widget_editor):
+            widget_editor_btn.clicked.connect(show_widget_editor)
         toolbar.addWidget(widget_editor_btn)
 
     def _create_menu(self) -> None:

@@ -246,7 +246,7 @@ class ThemeController(QObject):
             print(f"  Stylesheet length: {len(theme.stylesheet)} chars")
             print(f"  Has rgba colors: {'rgba(' in theme.stylesheet}")
 
-            self.themeApplied.emit(theme.id, theme.name)
+            self.themeApplied.emit(theme.theme_id, theme.name)
 
         except Exception as e:
             print(f"[!] Failed to apply theme '{theme.name}': {e}")

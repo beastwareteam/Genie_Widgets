@@ -1,5 +1,9 @@
 # Theme System Implementation Guide
 
+> **Status 2026-03-23:** Phase-2-Features sind vollständig implementiert —
+> F-UI-011 ThemeEditor, F-UI-012 ARGBColorPicker. Die nachfolgenden Abschnitte
+> beschreiben den historischen Planungsstand.
+
 ## Übersicht
 
 Das WidgetSystem verfügt nun über ein vollständiges Theme-Management-System mit ARGB-Transparenz-Unterstützung, das vom Qt Advanced Docking System inspiriert ist.
