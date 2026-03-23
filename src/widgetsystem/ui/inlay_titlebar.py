@@ -32,6 +32,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QMainWindow
 
@@ -55,6 +56,7 @@ class InlayTitleBar(QWidget):
     contentOffsetChanged = Signal(int)
 
     def __init__(self, parent: QWidget | None = None) -> None:
+        """Initialize the inlay titlebar widget in collapsed state."""
         super().__init__(parent)
         self.setObjectName("InlayTitleBar")
 
@@ -179,6 +181,7 @@ class InlayTitleBar(QWidget):
     # ── Title text ────────────────────────────────────────────────────────────
 
     def set_title(self, title: str) -> None:
+        """Set the window title text displayed in the titlebar."""
         self._title_label.setText(title)
 
     # ── Expand / Collapse ─────────────────────────────────────────────────────
@@ -239,14 +242,14 @@ class InlayTitleBar(QWidget):
 
     # ── Mouse event: hover detection ──────────────────────────────────────────
 
-    def enterEvent(self, event: Any) -> None:  # noqa: ANN401
+    def enterEvent(self, event: Any) -> None:
         """Mouse entered the titlebar area - expand it."""
         logger.debug("enterEvent triggered! Expanding...")
         super().enterEvent(event)
         self._collapse_timer.stop()
         self._expand()
 
-    def leaveEvent(self, event: Any) -> None:  # noqa: ANN401
+    def leaveEvent(self, event: Any) -> None:
         """Mouse left the titlebar area - start collapse timer."""
         logger.debug("leaveEvent triggered! Starting collapse timer...")
         super().leaveEvent(event)
@@ -270,7 +273,7 @@ class InlayTitleBar(QWidget):
         )
 
         is_inside = titlebar_global_rect.contains(cursor_pos)
-        logger.debug(f"_check_collapse() - Cursor inside: {is_inside}")
+        logger.debug("_check_collapse() - Cursor inside: %s", is_inside)
         
         if not is_inside:
             logger.debug("_check_collapse() - Cursor outside, collapsing...")
@@ -279,7 +282,8 @@ class InlayTitleBar(QWidget):
 
     # ── Window drag via titlebar ──────────────────────────────────────────────
 
-    def mousePressEvent(self, event: Any) -> None:  # noqa: ANN401
+    def mousePressEvent(self, event: Any) -> None:
+        """Handle mouse press to begin window drag."""
         if event.button() == Qt.MouseButton.LeftButton:
             # Stop collapse timer while dragging
             self._collapse_timer.stop()
@@ -289,7 +293,8 @@ class InlayTitleBar(QWidget):
                 self._drag_start_window_pos = win.pos()
         super().mousePressEvent(event)
 
-    def mouseMoveEvent(self, event: Any) -> None:  # noqa: ANN401
+    def mouseMoveEvent(self, event: Any) -> None:
+        """Handle mouse move to reposition window while dragging."""
         if self._drag_start_global is not None:
             win = self._main_window()
             if win and not win.isMaximized():
@@ -297,7 +302,8 @@ class InlayTitleBar(QWidget):
                 win.move(self._drag_start_window_pos + delta)
         super().mouseMoveEvent(event)
 
-    def mouseReleaseEvent(self, event: Any) -> None:  # noqa: ANN401
+    def mouseReleaseEvent(self, event: Any) -> None:
+        """Handle mouse release to end window drag."""
         self._drag_start_global = None
         self._drag_start_window_pos = None
 
@@ -307,7 +313,7 @@ class InlayTitleBar(QWidget):
 
         super().mouseReleaseEvent(event)
 
-    def mouseDoubleClickEvent(self, event: Any) -> None:  # noqa: ANN401
+    def mouseDoubleClickEvent(self, event: Any) -> None:
         """Double-click title bar to toggle maximized."""
         if event.button() == Qt.MouseButton.LeftButton:
             self._on_toggle_max()
@@ -341,15 +347,16 @@ class InlayTitleBar(QWidget):
         """Walk up the widget hierarchy to find the QMainWindow."""
         p = self.parent()
         while p is not None:
-            from PySide6.QtWidgets import QMainWindow as _QMW
-            if isinstance(p, _QMW):
+            from PySide6.QtWidgets import QMainWindow
+            if isinstance(p, QMainWindow):
                 return p  # type: ignore[return-value]
             p = p.parent()
         return None
 
     # ── Paint the thin 3-px indicator strip ───────────────────────────────────
 
-    def paintEvent(self, event: Any) -> None:  # noqa: ANN401
+    def paintEvent(self, event: Any) -> None:
+        """Paint the collapsed indicator strip when titlebar is minimised."""
         super().paintEvent(event)
         if not self._expanded and self.height() <= COLLAPSED_HIT_HEIGHT + 2:
             # Draw a subtle accent line across the full width
@@ -370,6 +377,7 @@ class InlayTitleBarController:
     """Installs and manages the InlayTitleBar for a QMainWindow."""
 
     def __init__(self, main_window: Any) -> None:
+        """Initialize the controller with the target main window."""
         self._win = main_window
         self.titlebar: InlayTitleBar | None = None
 
@@ -393,6 +401,7 @@ class InlayTitleBarController:
             self.titlebar = None
 
     def set_title(self, title: str) -> None:
+        """Forward the title text to the installed titlebar, if present."""
         if self.titlebar:
             self.titlebar.set_title(title)
 

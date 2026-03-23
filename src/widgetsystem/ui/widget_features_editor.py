@@ -10,31 +10,28 @@ Provides UI for editing widget-specific features like:
 import json
 import logging
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
-    QComboBox,
     QDialog,
     QDialogButtonBox,
-    QDoubleSpinBox,
     QGroupBox,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QMessageBox,
     QPushButton,
-    QSpinBox,
     QSplitter,
-    QTabWidget,
     QTableWidget,
     QTableWidgetItem,
+    QTabWidget,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +60,7 @@ class WidgetPropertyEditor(QWidget):
         self.widget_configs: dict[str, dict[str, Any]] = {}
         self._load_configs()
         self._setup_ui()
-        logger.debug(f"WidgetPropertyEditor initialized with config path: {config_path}")
+        logger.debug("WidgetPropertyEditor initialized with config path: %s", config_path)
 
     def _setup_ui(self) -> None:
         """Set up user interface."""
@@ -148,12 +145,12 @@ class WidgetPropertyEditor(QWidget):
             config_path = self.config_path / config_file
             if config_path.exists():
                 try:
-                    with open(config_path, "r", encoding="utf-8") as f:
+                    with open(config_path, encoding="utf-8") as f:
                         data = json.load(f)
                         self.widget_configs[config_file] = data
-                        logger.debug(f"Loaded config: {config_file}")
+                        logger.debug("Loaded config: %s", config_file)
                 except Exception as exc:
-                    logger.error(f"Error loading {config_file}: {exc}")
+                    logger.exception("Error loading %s", config_file)
 
     def _populate_tree(self) -> None:
         """Populate widget tree from loaded configurations."""
@@ -161,7 +158,7 @@ class WidgetPropertyEditor(QWidget):
 
         for config_name, config_data in self.widget_configs.items():
             if not isinstance(config_data, dict):
-                continue
+                 continue  # type: ignore[unreachable]
 
             root = QTreeWidgetItem(self.tree)
             root.setText(0, config_name.replace(".json", "").title())
@@ -225,12 +222,12 @@ class WidgetPropertyEditor(QWidget):
                 config_path = self.config_path / config_file
                 with open(config_path, "w", encoding="utf-8") as f:
                     json.dump(config_data, f, indent=2, ensure_ascii=False)
-                    logger.info(f"Saved config: {config_file}")
+                    logger.info("Saved config: %s", config_file)
 
             self.saved.emit(str(self.config_path))
             QMessageBox.information(self, "Success", "Configuration saved successfully!")
         except Exception as exc:
-            logger.exception(f"Error saving configuration: {exc}")
+            logger.exception("Error saving configuration")
             QMessageBox.critical(self, "Error", f"Failed to save: {exc}")
 
     def _reload_config(self) -> None:
@@ -289,7 +286,7 @@ class WidgetFeaturesEditorDialog(QDialog):
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
 
-        logger.debug(f"WidgetFeaturesEditorDialog created")
+        logger.debug("WidgetFeaturesEditorDialog created")
 
     def _create_statistics_tab(self, config_path: Path) -> QWidget:
         """Create statistics tab.
@@ -322,7 +319,7 @@ class WidgetFeaturesEditorDialog(QDialog):
             for config_file in config_files:
                 config_path_file = config_path / config_file
                 if config_path_file.exists():
-                    with open(config_path_file, "r", encoding="utf-8") as f:
+                    with open(config_path_file, encoding="utf-8") as f:
                         data = json.load(f)
                         if isinstance(data, dict) and "items" in data:
                             count = len(data.get("items", []))
@@ -336,7 +333,7 @@ class WidgetFeaturesEditorDialog(QDialog):
             stats_layout.addWidget(label)
 
         except Exception as exc:
-            logger.exception(f"Error generating statistics: {exc}")
+            logger.exception("Error generating statistics")
             label = QLabel(f"Error: {exc}")
             stats_layout.addWidget(label)
 
@@ -370,7 +367,7 @@ class WidgetFeaturesEditor(QWidget):
         super().__init__(parent)
         self.config_path = config_path
         self._setup_ui()
-        logger.debug(f"WidgetFeaturesEditor initialized with config path: {config_path}")
+        logger.debug("WidgetFeaturesEditor initialized with config path: %s", config_path)
 
     def _setup_ui(self) -> None:
         """Set up user interface."""

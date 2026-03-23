@@ -7,6 +7,7 @@ from PySide6.QtCore import QEvent, QObject
 from PySide6.QtWidgets import QApplication, QWidget
 import PySide6QtAds as QtAds
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -98,7 +99,7 @@ class TabColorController(QObject):
 
         except Exception as e:
             # Silently fail - don't disrupt normal event processing
-            logger.exception(f"Event filter error: {e}")
+            logger.exception("Event filter error")
 
         return False
 

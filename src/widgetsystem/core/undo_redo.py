@@ -7,17 +7,18 @@ Provides a command-based undo/redo implementation with:
 - Serialization support for persistence
 """
 
-import copy
-import json
-import logging
 from abc import ABC, abstractmethod
 from collections import deque
-from dataclasses import dataclass, field
-from datetime import datetime
+from collections.abc import Callable
+import copy
+from dataclasses import dataclass
+from datetime import UTC, datetime
+import logging
 from pathlib import Path
-from typing import Any, Callable, Generic, TypeVar
+from typing import Any, TypeVar
 
 from PySide6.QtCore import QObject, Signal
+
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ class Command(ABC):
             description: Human-readable description of the command
         """
         self.description = description
-        self.timestamp = datetime.now()
+        self.timestamp = datetime.now(tz=UTC)
 
     @abstractmethod
     def execute(self) -> None:
@@ -53,6 +54,7 @@ class Command(ABC):
         self.execute()
 
     def __repr__(self) -> str:
+        """Return string representation of the command."""
         return f"{self.__class__.__name__}({self.description!r})"
 
 
@@ -67,9 +69,10 @@ class PropertyChangeCommand(Command):
     description: str = ""
 
     def __post_init__(self) -> None:
+        """Initialize description and timestamp after dataclass construction."""
         if not self.description:
             self.description = f"Change {self.property_name}"
-        self.timestamp = datetime.now()
+        self.timestamp = datetime.now(tz=UTC)
 
     def execute(self) -> None:
         """Apply the new value."""
@@ -97,6 +100,7 @@ class DictChangeCommand(Command):
     description: str = ""
 
     def __post_init__(self) -> None:
+        """Initialize description and timestamp after dataclass construction."""
         if not self.description:
             if self.old_value is None:
                 self.description = f"Add key '{self.key}'"
@@ -104,7 +108,7 @@ class DictChangeCommand(Command):
                 self.description = f"Remove key '{self.key}'"
             else:
                 self.description = f"Modify key '{self.key}'"
-        self.timestamp = datetime.now()
+        self.timestamp = datetime.now(tz=UTC)
 
     def execute(self) -> None:
         """Apply the change."""
@@ -136,6 +140,7 @@ class ListChangeCommand(Command):
     description: str = ""
 
     def __post_init__(self) -> None:
+        """Initialize description and timestamp after dataclass construction."""
         if not self.description:
             if self.old_item is None:
                 self.description = f"Insert item at index {self.index}"
@@ -143,7 +148,7 @@ class ListChangeCommand(Command):
                 self.description = f"Remove item at index {self.index}"
             else:
                 self.description = f"Modify item at index {self.index}"
-        self.timestamp = datetime.now()
+        self.timestamp = datetime.now(tz=UTC)
 
     def execute(self) -> None:
         """Apply the change."""
@@ -154,10 +159,9 @@ class ListChangeCommand(Command):
             # Remove item
             if self.index < len(self.target_list):
                 self.target_list.pop(self.index)
-        else:
-            # Modify item
-            if self.index < len(self.target_list):
-                self.target_list[self.index] = self.new_item
+        # Modify item
+        elif self.index < len(self.target_list):
+            self.target_list[self.index] = self.new_item
 
     def undo(self) -> None:
         """Reverse the change."""
@@ -168,10 +172,9 @@ class ListChangeCommand(Command):
         elif self.new_item is None and self.old_item is not None:
             # Item was removed, restore it
             self.target_list.insert(self.index, self.old_item)
-        else:
-            # Item was modified, restore old value
-            if self.index < len(self.target_list):
-                self.target_list[self.index] = self.old_item
+        # Item was modified, restore old value
+        elif self.index < len(self.target_list):
+            self.target_list[self.index] = self.old_item
 
 
 class CompositeCommand(Command):
@@ -263,7 +266,7 @@ class UndoRedoManager(QObject):
         self._redo_stack: deque[Command] = deque(maxlen=max_history)
         self._is_undoing = False
         self._is_redoing = False
-        logger.debug(f"UndoRedoManager initialized with max_history={max_history}")
+        logger.debug("UndoRedoManager initialized with max_history=%s", max_history)
 
     def execute(self, command: Command) -> None:
         """Execute a command and add it to the undo stack.
@@ -283,10 +286,10 @@ class UndoRedoManager(QObject):
             self.commandExecuted.emit(command.description)
             self.stackChanged.emit()
 
-            logger.debug(f"Command executed: {command.description}")
+            logger.debug("Command executed: %s", command.description)
 
         except Exception as exc:
-            logger.exception(f"Error executing command: {exc}")
+            logger.exception("Error executing command")
 
     def undo(self) -> bool:
         """Undo the last command.
@@ -307,11 +310,11 @@ class UndoRedoManager(QObject):
             self.commandUndone.emit(command.description)
             self.stackChanged.emit()
 
-            logger.debug(f"Command undone: {command.description}")
+            logger.debug("Command undone: %s", command.description)
             return True
 
         except Exception as exc:
-            logger.exception(f"Error undoing command: {exc}")
+            logger.exception("Error undoing command")
             return False
 
         finally:
@@ -336,11 +339,11 @@ class UndoRedoManager(QObject):
             self.commandRedone.emit(command.description)
             self.stackChanged.emit()
 
-            logger.debug(f"Command redone: {command.description}")
+            logger.debug("Command redone: %s", command.description)
             return True
 
         except Exception as exc:
-            logger.exception(f"Error redoing command: {exc}")
+            logger.exception("Error redoing command")
             return False
 
         finally:
@@ -465,7 +468,7 @@ class ConfigurationUndoManager(UndoRedoManager):
             data: Data to snapshot (will be deep-copied)
         """
         self._snapshots[name] = copy.deepcopy(data)
-        logger.debug(f"Created snapshot: {name}")
+        logger.debug("Created snapshot: %s", name)
 
     def restore_snapshot(self, name: str) -> Any | None:
         """Restore a named snapshot.
@@ -491,7 +494,7 @@ class ConfigurationUndoManager(UndoRedoManager):
     def set_save_point(self) -> None:
         """Mark current state as save point."""
         self._save_point_index = len(self._undo_stack)
-        logger.debug(f"Save point set at index {self._save_point_index}")
+        logger.debug("Save point set at index %s", self._save_point_index)
 
     def is_at_save_point(self) -> bool:
         """Check if current state matches save point.
@@ -554,7 +557,7 @@ class ConfigurationUndoManager(UndoRedoManager):
             index=index,
             old_item=None,
             new_item=copy.deepcopy(item),
-            description=description or f"Insert item",
+            description=description or "Insert item",
         )
         self.execute(command)
 
@@ -577,6 +580,6 @@ class ConfigurationUndoManager(UndoRedoManager):
                 index=index,
                 old_item=copy.deepcopy(target_list[index]),
                 new_item=None,
-                description=description or f"Remove item",
+                description=description or "Remove item",
             )
             self.execute(command)

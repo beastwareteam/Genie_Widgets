@@ -12,6 +12,7 @@ from typing import Any
 
 from PySide6.QtCore import QObject, Signal
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -87,7 +88,7 @@ class TabSelectorMonitor(QObject):
         old_count = self._area_tab_counts[area_id]
 
         if old_count != new_count:
-            logger.debug(f"Tab count changed for {area_id}: {old_count} -> {new_count}")
+            logger.debug("Tab count changed for %s: %s -> %s", area_id, old_count, new_count)
             self._area_tab_counts[area_id] = new_count
             self.tab_count_changed.emit(area_id, new_count)
 

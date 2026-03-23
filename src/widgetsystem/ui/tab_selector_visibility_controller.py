@@ -4,12 +4,16 @@ This module controls the visibility of tab selector dropdown buttons in
 CDockAreaTitleBar instances based on the number of tabs in each area.
 """
 
+import logging
 from typing import Any
 
 from PySide6.QtCore import QObject, Slot
 from PySide6.QtWidgets import QWidget
 
 from widgetsystem.ui.tab_selector_monitor import TabSelectorMonitor
+
+
+logger = logging.getLogger(__name__)
 
 
 class TabSelectorVisibilityController(QObject):
@@ -46,37 +50,45 @@ class TabSelectorVisibilityController(QObject):
             count: The new tab count
         """
         try:
-            print(
-                f"[TabSelectorVisibilityController] _on_tab_count_changed called: {area_id}, count={count}",
-            )  # DEBUG
+            logger.debug(
+                "_on_tab_count_changed called: %s, count=%s",
+                area_id,
+                count,
+            )
 
             area_widget = self.tab_monitor._monitored_areas.get(area_id)
             if not area_widget:
-                print(
-                    f"[TabSelectorVisibilityController] Area widget not found for {area_id}",
-                )  # DEBUG
+                logger.debug(
+                    "Area widget not found for %s",
+                    area_id,
+                )
                 return
 
             # Get or find the title bar
             title_bar = self._get_title_bar(area_widget)
             if not title_bar:
-                print(
-                    f"[TabSelectorVisibilityController] Title bar not found for {area_id}",
-                )  # DEBUG
+                logger.debug(
+                    "Title bar not found for %s",
+                    area_id,
+                )
                 return
 
             # Get the tab selector (dropdown/combobox)
             tab_selector = self._find_tab_selector(title_bar)
             if not tab_selector:
-                print(
-                    f"[TabSelectorVisibilityController] Tab selector button not found for {area_id}",
-                )  # DEBUG
+                logger.debug(
+                    "Tab selector button not found for %s",
+                    area_id,
+                )
             else:
                 # Update visibility based on tab count
                 should_show = count > 1
-                print(
-                    f"[TabSelectorVisibilityController] Setting tab selector visibility for {area_id}: {should_show} (count={count})",
-                )  # DEBUG
+                logger.debug(
+                    "Setting tab selector visibility for %s: %s (count=%s)",
+                    area_id,
+                    should_show,
+                    count,
+                )
                 self._set_selector_visibility(tab_selector, should_show)
 
             # CRITICAL: Also ensure float button is visible!
@@ -84,12 +96,13 @@ class TabSelectorVisibilityController(QObject):
             float_button = self._find_float_button(title_bar)
             if float_button and not float_button.isVisible():
                 float_button.setVisible(True)
-                print(
-                    f"[TabSelectorVisibilityController] Restored float button visibility for {area_id} (on count change)",
-                )  # DEBUG
+                logger.debug(
+                    "Restored float button visibility for %s (on count change)",
+                    area_id,
+                )
 
         except Exception as e:
-            print(f"Error in _on_tab_count_changed: {e}")
+            logger.exception("Error in _on_tab_count_changed")
 
     def refresh_area_visibility(self, area_widget: Any) -> None:
         """Refresh tab selector AND float button visibility for a specific area.
@@ -132,12 +145,13 @@ class TabSelectorVisibilityController(QObject):
             if float_button:
                 # Float button should always be visible (enabled state controlled by QtAds)
                 float_button.setVisible(True)
-                print(
-                    f"[TabSelectorVisibilityController] Restored float button visibility for {area_id}",
-                )  # DEBUG
+                logger.debug(
+                    "Restored float button visibility for %s",
+                    area_id,
+                )
 
         except Exception as e:
-            print(f"Error in refresh_area_visibility: {e}")
+            logger.exception("Error in refresh_area_visibility")
 
     @staticmethod
     def _get_title_bar(area_widget: Any) -> Any:
@@ -186,7 +200,7 @@ class TabSelectorVisibilityController(QObject):
 
             return None
         except Exception as e:
-            print(f"Error finding tab selector: {e}")
+            logger.exception("Error finding tab selector")
             return None
 
     @staticmethod
@@ -219,7 +233,7 @@ class TabSelectorVisibilityController(QObject):
 
             return None
         except Exception as e:
-            print(f"Error finding float button: {e}")
+            logger.exception("Error finding float button")
             return None
 
     @staticmethod
@@ -234,7 +248,7 @@ class TabSelectorVisibilityController(QObject):
             if selector:
                 selector.setVisible(visible)
         except Exception as e:
-            print(f"Error setting tab selector visibility: {e}")
+            logger.exception("Error setting tab selector visibility")
 
     def register_area(self, area_id: str, area_widget: Any) -> None:
         """Register a dock area for monitoring.

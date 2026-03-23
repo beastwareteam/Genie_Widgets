@@ -12,9 +12,13 @@ The TabSubsystem provides a unified lifecycle and API for all tab-related
 functionality in the dock manager.
 """
 
+import logging
 from typing import Any
 
 from PySide6.QtCore import QObject, Signal
+
+
+logger = logging.getLogger(__name__)
 
 
 class TabSubsystem(QObject):
@@ -118,7 +122,7 @@ class TabSubsystem(QObject):
         self._tab_color_controller.initialize()
 
         self._installed = True
-        print(f"[TabSubsystem] Installed on dock manager")
+        logger.info("Installed on dock manager")
 
     def uninstall(self) -> None:
         """Uninstall the TabSubsystem from the dock manager.
@@ -137,7 +141,7 @@ class TabSubsystem(QObject):
 
         self._dock_manager = None
         self._installed = False
-        print(f"[TabSubsystem] Uninstalled")
+        logger.info("Uninstalled")
 
     def reset(self) -> None:
         """Reset the TabSubsystem.

@@ -13,6 +13,7 @@ from widgetsystem.ui.floating_titlebar import (
     WindowMoveHandle,
 )
 from widgetsystem.ui.inlay_titlebar import InlayTitleBar, InlayTitleBarController
+from widgetsystem.ui.plugin_manager_dialog import PluginManagerDialog
 from widgetsystem.ui.tab_color_controller import TabColorController
 from widgetsystem.ui.tab_selector_event_handler import TabSelectorEventHandler
 from widgetsystem.ui.tab_selector_monitor import TabSelectorMonitor
@@ -37,7 +38,6 @@ from widgetsystem.ui.widget_features_editor import (
     WidgetFeaturesEditorDialog,
     WidgetPropertyEditor,
 )
-from widgetsystem.ui.plugin_manager_dialog import PluginManagerDialog
 
 
 __all__ = [
@@ -54,6 +54,7 @@ __all__ = [
     "LiveThemeEditor",
     "MenusViewer",
     "PanelsViewer",
+    "PluginManagerDialog",
     "TabColorController",
     "TabSelectorEventHandler",
     "TabSelectorMonitor",
@@ -68,5 +69,4 @@ __all__ = [
     "WidgetFeaturesEditorDialog",
     "WidgetPropertyEditor",
     "WindowMoveHandle",
-    "PluginManagerDialog",
 ]

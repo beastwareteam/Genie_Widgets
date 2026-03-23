@@ -4,7 +4,8 @@ This controller manages QShortcut and QAction registration,
 preventing duplicates and providing a centralized API.
 """
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from PySide6.QtCore import QObject, Qt, Signal
 from PySide6.QtGui import QAction, QKeySequence, QShortcut

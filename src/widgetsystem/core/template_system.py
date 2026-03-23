@@ -7,15 +7,17 @@ Provides functionality for:
 - Built-in templates for common use cases
 """
 
+from collections.abc import Callable  # noqa: TC003
 import copy
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 import json
 import logging
-from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from PySide6.QtCore import QObject, Signal
+
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +33,8 @@ class TemplateMetadata:
     tags: list[str] = field(default_factory=list)
     author: str = ""
     version: str = "1.0.0"
-    created_date: str = field(default_factory=lambda: datetime.now().isoformat())
-    modified_date: str = field(default_factory=lambda: datetime.now().isoformat())
+    created_date: str = field(default_factory=lambda: datetime.now(tz=UTC).isoformat())
+    modified_date: str = field(default_factory=lambda: datetime.now(tz=UTC).isoformat())
     parent_template: str | None = None
     is_builtin: bool = False
 
@@ -88,8 +90,8 @@ class ConfigurationTemplate:
             tags=metadata_data.get("tags", []),
             author=metadata_data.get("author", ""),
             version=metadata_data.get("version", "1.0.0"),
-            created_date=metadata_data.get("created_date", datetime.now().isoformat()),
-            modified_date=metadata_data.get("modified_date", datetime.now().isoformat()),
+            created_date=metadata_data.get("created_date", datetime.now(tz=UTC).isoformat()),
+            modified_date=metadata_data.get("modified_date", datetime.now(tz=UTC).isoformat()),
             parent_template=metadata_data.get("parent_template"),
             is_builtin=metadata_data.get("is_builtin", False),
         )
@@ -129,7 +131,7 @@ class TemplateManager(QObject):
         super().__init__(parent)
         self.templates_path = templates_path or Path("templates")
         self.templates: dict[str, ConfigurationTemplate] = {}
-        self._variable_processors: dict[str, Callable[[str, dict], str]] = {}
+        self._variable_processors: dict[str, Callable[[str, dict[str, Any]], str]] = {}
 
         # Ensure templates directory exists
         self.templates_path.mkdir(parents=True, exist_ok=True)
@@ -138,19 +140,19 @@ class TemplateManager(QObject):
         self._load_templates()
         self._load_builtin_templates()
 
-        logger.debug(f"TemplateManager initialized with {len(self.templates)} templates")
+        logger.debug("TemplateManager initialized with %s templates", len(self.templates))
 
     def _load_templates(self) -> None:
         """Load templates from directory."""
         for template_file in self.templates_path.glob("*.json"):
             try:
-                with open(template_file, "r", encoding="utf-8") as f:
+                with open(template_file, encoding="utf-8") as f:
                     data = json.load(f)
                     template = ConfigurationTemplate.from_dict(data)
                     self.templates[template.metadata.id] = template
-                    logger.debug(f"Loaded template: {template.metadata.name}")
+                    logger.debug("Loaded template: %s", template.metadata.name)
             except Exception as exc:
-                logger.warning(f"Failed to load template {template_file}: {exc}")
+                logger.warning("Failed to load template %s: %s", template_file, exc)
 
     def _load_builtin_templates(self) -> None:
         """Load built-in templates."""
@@ -449,7 +451,7 @@ class TemplateManager(QObject):
         self._save_template(template)
         self.templateCreated.emit(template_id)
 
-        logger.info(f"Created template: {name}")
+        logger.info("Created template: %s", name)
         return template
 
     def update_template(
@@ -475,7 +477,7 @@ class TemplateManager(QObject):
             return False
 
         if template.metadata.is_builtin:
-            logger.warning(f"Cannot modify builtin template: {template_id}")
+            logger.warning("Cannot modify builtin template: %s", template_id)
             return False
 
         if content is not None:
@@ -489,12 +491,12 @@ class TemplateManager(QObject):
             if hasattr(template.metadata, key) and key != "is_builtin":
                 setattr(template.metadata, key, value)
 
-        template.metadata.modified_date = datetime.now().isoformat()
+        template.metadata.modified_date = datetime.now(tz=UTC).isoformat()
 
         self._save_template(template)
         self.templateUpdated.emit(template_id)
 
-        logger.info(f"Updated template: {template_id}")
+        logger.info("Updated template: %s", template_id)
         return True
 
     def delete_template(self, template_id: str) -> bool:
@@ -511,7 +513,7 @@ class TemplateManager(QObject):
             return False
 
         if template.metadata.is_builtin:
-            logger.warning(f"Cannot delete builtin template: {template_id}")
+            logger.warning("Cannot delete builtin template: %s", template_id)
             return False
 
         # Remove from memory
@@ -523,7 +525,7 @@ class TemplateManager(QObject):
             template_file.unlink()
 
         self.templateDeleted.emit(template_id)
-        logger.info(f"Deleted template: {template_id}")
+        logger.info("Deleted template: %s", template_id)
         return True
 
     def apply_template(
@@ -542,7 +544,7 @@ class TemplateManager(QObject):
         """
         template = self.templates.get(template_id)
         if not template:
-            logger.warning(f"Template not found: {template_id}")
+            logger.warning("Template not found: %s", template_id)
             return None
 
         # Merge variables
@@ -555,9 +557,9 @@ class TemplateManager(QObject):
         rendered = self._render_content(content, variables)
 
         self.templateApplied.emit(template_id)
-        logger.info(f"Applied template: {template.metadata.name}")
+        logger.info("Applied template: %s", template.metadata.name)
 
-        return rendered
+        return rendered  # type: ignore[no-any-return]
 
     def create_from_existing(
         self,
@@ -633,22 +635,20 @@ class TemplateManager(QObject):
                     if content == placeholder:
                         # Entire string is a variable - preserve type
                         return var_value
-                    else:
-                        # Part of string - convert to string
-                        content = content.replace(placeholder, str(var_value))
+                    # Part of string - convert to string
+                    content = content.replace(placeholder, str(var_value))
             return content
 
-        elif isinstance(content, dict):
+        if isinstance(content, dict):
             return {
                 key: self._render_content(value, variables)
                 for key, value in content.items()
             }
 
-        elif isinstance(content, list):
+        if isinstance(content, list):
             return [self._render_content(item, variables) for item in content]
 
-        else:
-            return content
+        return content
 
     def _extract_variables(self, config: dict[str, Any]) -> dict[str, Any]:
         """Extract potential variables from configuration.
@@ -710,15 +710,14 @@ class TemplateManager(QObject):
         """
         if content == old_value:
             return new_value
-        elif isinstance(content, dict):
+        if isinstance(content, dict):
             return {
                 key: self._replace_value(value, old_value, new_value)
                 for key, value in content.items()
             }
-        elif isinstance(content, list):
+        if isinstance(content, list):
             return [self._replace_value(item, old_value, new_value) for item in content]
-        else:
-            return content
+        return content
 
     def get_categories(self) -> list[str]:
         """Get list of all template categories.
@@ -726,7 +725,7 @@ class TemplateManager(QObject):
         Returns:
             List of category names
         """
-        return list(set(t.metadata.category for t in self.templates.values()))
+        return list({t.metadata.category for t in self.templates.values()})
 
     def get_tags(self) -> list[str]:
         """Get list of all template tags.

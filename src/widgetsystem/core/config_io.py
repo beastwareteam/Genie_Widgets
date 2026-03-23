@@ -7,16 +7,17 @@ Provides functionality for:
 - Configuration migration between versions
 """
 
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 import json
 import logging
-import shutil
-import zipfile
-from dataclasses import dataclass, field
-from datetime import datetime
 from pathlib import Path
+import shutil
 from typing import Any
+import zipfile
 
 from PySide6.QtCore import QObject, Signal
+
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,7 @@ class ConfigMetadata:
     """Metadata for exported configuration."""
 
     version: str = "1.0.0"
-    export_date: str = field(default_factory=lambda: datetime.now().isoformat())
+    export_date: str = field(default_factory=lambda: datetime.now(tz=UTC).isoformat())
     source_app: str = "WidgetSystem"
     description: str = ""
     included_files: list[str] = field(default_factory=list)
@@ -87,7 +88,7 @@ class ConfigurationExporter(QObject):
         """
         super().__init__(parent)
         self.config_path = config_path
-        logger.debug(f"ConfigurationExporter initialized for {config_path}")
+        logger.debug("ConfigurationExporter initialized for %s", config_path)
 
     def export_to_json(
         self,
@@ -117,14 +118,14 @@ class ConfigurationExporter(QObject):
                 file_path = self.config_path / filename
                 if file_path.exists():
                     try:
-                        with open(file_path, "r", encoding="utf-8") as f:
+                        with open(file_path, encoding="utf-8") as f:
                             export_data[key] = json.load(f)
                         self.exportProgress.emit(
                             int((idx + 1) / total_files * 100),
                             filename,
                         )
                     except json.JSONDecodeError as exc:
-                        logger.warning(f"Skipping invalid JSON: {filename} - {exc}")
+                        logger.warning("Skipping invalid JSON: %s - %s", filename, exc)
 
             # Add metadata
             if options.add_metadata:
@@ -144,7 +145,7 @@ class ConfigurationExporter(QObject):
                 json.dump(export_data, f, indent=2, ensure_ascii=False)
 
             self.exportCompleted.emit(str(destination))
-            logger.info(f"Configuration exported to {destination}")
+            logger.info("Configuration exported to %s", destination)
             return True
 
         except Exception as exc:
@@ -181,7 +182,7 @@ class ConfigurationExporter(QObject):
                 "w",
                 compression=zipfile.ZIP_DEFLATED if options.compress else zipfile.ZIP_STORED,
             ) as archive:
-                for idx, (key, filename) in enumerate(files_to_export):
+                for idx, (_key, filename) in enumerate(files_to_export):
                     file_path = self.config_path / filename
                     if file_path.exists():
                         archive.write(file_path, filename)
@@ -200,7 +201,9 @@ class ConfigurationExporter(QObject):
                 # Add metadata
                 if options.add_metadata:
                     metadata = ConfigMetadata(
-                        included_files=[f[1] for f in files_to_export if (self.config_path / f[1]).exists()],
+                        included_files=[
+                            f[1] for f in files_to_export if (self.config_path / f[1]).exists()
+                        ],
                     )
                     archive.writestr(
                         "_metadata.json",
@@ -216,7 +219,7 @@ class ConfigurationExporter(QObject):
                     )
 
             self.exportCompleted.emit(str(destination))
-            logger.info(f"Configuration archived to {destination}")
+            logger.info("Configuration archived to %s", destination)
             return True
 
         except Exception as exc:
@@ -285,7 +288,7 @@ class ConfigurationImporter(QObject):
         """
         super().__init__(parent)
         self.config_path = config_path
-        logger.debug(f"ConfigurationImporter initialized for {config_path}")
+        logger.debug("ConfigurationImporter initialized for %s", config_path)
 
     def import_from_json(
         self,
@@ -306,13 +309,12 @@ class ConfigurationImporter(QObject):
 
         try:
             # Read source file
-            with open(source, "r", encoding="utf-8") as f:
+            with open(source, encoding="utf-8") as f:
                 import_data = json.load(f)
 
             # Validate if required
-            if options.validate_before_import:
-                if not self._validate_import_data(import_data):
-                    return False
+            if options.validate_before_import and not self._validate_import_data(import_data):
+                return False
 
             # Create backup if required
             if options.create_backup:
@@ -320,7 +322,7 @@ class ConfigurationImporter(QObject):
 
             # Import each configuration
             imported_count = 0
-            config_keys = [k for k in import_data.keys() if not k.startswith("_")]
+            config_keys = [k for k in import_data if not k.startswith("_")]
             total_keys = len(config_keys)
 
             for idx, key in enumerate(config_keys):
@@ -332,7 +334,7 @@ class ConfigurationImporter(QObject):
                         if options.merge_configs:
                             self._merge_config(dest_path, import_data[key])
                         else:
-                            logger.info(f"Skipping existing: {filename}")
+                            logger.info("Skipping existing: %s", filename)
                             continue
                     else:
                         with open(dest_path, "w", encoding="utf-8") as f:
@@ -345,7 +347,7 @@ class ConfigurationImporter(QObject):
                     )
 
             self.importCompleted.emit(imported_count)
-            logger.info(f"Imported {imported_count} configurations from {source}")
+            logger.info("Imported %s configurations from %s", imported_count, source)
             return True
 
         except Exception as exc:
@@ -394,7 +396,7 @@ class ConfigurationImporter(QObject):
                             content = json.loads(archive.read(filename).decode("utf-8"))
                             self._merge_config(dest_path, content)
                         else:
-                            logger.info(f"Skipping existing: {filename}")
+                            logger.info("Skipping existing: %s", filename)
                             continue
                     else:
                         # Ensure parent directory exists
@@ -408,7 +410,7 @@ class ConfigurationImporter(QObject):
                     )
 
             self.importCompleted.emit(imported_count)
-            logger.info(f"Imported {imported_count} files from archive {source}")
+            logger.info("Imported %s files from archive %s", imported_count, source)
             return True
 
         except Exception as exc:
@@ -417,7 +419,7 @@ class ConfigurationImporter(QObject):
             self.importFailed.emit(error_msg)
             return False
 
-    def _validate_import_data(self, data: dict[str, Any]) -> bool:
+    def _validate_import_data(self, data: Any) -> bool:
         """Validate import data structure.
 
         Args:
@@ -438,7 +440,7 @@ class ConfigurationImporter(QObject):
 
         unknown_keys = set(data.keys()) - valid_keys
         if unknown_keys:
-            logger.warning(f"Unknown keys in import data: {unknown_keys}")
+            logger.warning("Unknown keys in import data: %s", unknown_keys)
 
         return True
 
@@ -449,13 +451,13 @@ class ConfigurationImporter(QObject):
             Path to backup directory or None
         """
         try:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
             backup_dir = self.config_path.parent / f"config_backup_{timestamp}"
             shutil.copytree(self.config_path, backup_dir)
-            logger.info(f"Backup created at {backup_dir}")
+            logger.info("Backup created at %s", backup_dir)
             return backup_dir
         except Exception as exc:
-            logger.warning(f"Failed to create backup: {exc}")
+            logger.warning("Failed to create backup: %s", exc)
             return None
 
     def _merge_config(self, dest_path: Path, new_data: Any) -> None:
@@ -466,9 +468,10 @@ class ConfigurationImporter(QObject):
             new_data: New data to merge
         """
         try:
-            with open(dest_path, "r", encoding="utf-8") as f:
+            with open(dest_path, encoding="utf-8") as f:
                 existing = json.load(f)
 
+            merged: dict[str, Any] | list[Any]
             if isinstance(existing, dict) and isinstance(new_data, dict):
                 # Deep merge dictionaries
                 merged = self._deep_merge(existing, new_data)
@@ -482,10 +485,10 @@ class ConfigurationImporter(QObject):
             with open(dest_path, "w", encoding="utf-8") as f:
                 json.dump(merged, f, indent=2, ensure_ascii=False)
 
-            logger.debug(f"Merged configuration: {dest_path}")
+            logger.debug("Merged configuration: %s", dest_path)
 
         except Exception as exc:
-            logger.warning(f"Merge failed for {dest_path}: {exc}")
+            logger.warning("Merge failed for %s: %s", dest_path, exc)
 
     def _deep_merge(
         self,
@@ -558,7 +561,7 @@ class BackupManager:
             Path to backup or None on failure
         """
         try:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            timestamp = datetime.now(tz=UTC).strftime("%Y%m%d_%H%M%S")
             backup_name = f"config_backup_{timestamp}"
             if description:
                 backup_name += f"_{description.replace(' ', '_')[:20]}"
@@ -569,11 +572,11 @@ class BackupManager:
             # Cleanup old backups
             self._cleanup_old_backups()
 
-            logger.info(f"Backup created: {backup_path}")
+            logger.info("Backup created: %s", backup_path)
             return backup_path
 
         except Exception as exc:
-            logger.exception(f"Failed to create backup: {exc}")
+            logger.exception("Failed to create backup")
             return None
 
     def restore_backup(self, backup_path: Path) -> bool:
@@ -587,7 +590,7 @@ class BackupManager:
         """
         try:
             if not backup_path.exists():
-                logger.error(f"Backup not found: {backup_path}")
+                logger.error("Backup not found: %s", backup_path)
                 return False
 
             # Create safety backup of current state
@@ -599,11 +602,11 @@ class BackupManager:
             # Copy backup to config path
             shutil.copytree(backup_path, self.config_path)
 
-            logger.info(f"Configuration restored from {backup_path}")
+            logger.info("Configuration restored from %s", backup_path)
             return True
 
         except Exception as exc:
-            logger.exception(f"Failed to restore backup: {exc}")
+            logger.exception("Failed to restore backup")
             return False
 
     def list_backups(self) -> list[Path]:
@@ -613,12 +616,11 @@ class BackupManager:
             List of backup directory paths
         """
         pattern = "config_backup_*"
-        backups = sorted(
+        return sorted(
             self.backup_base.glob(pattern),
             key=lambda p: p.stat().st_mtime,
             reverse=True,
         )
-        return backups
 
     def delete_backup(self, backup_path: Path) -> bool:
         """Delete a backup.
@@ -632,11 +634,11 @@ class BackupManager:
         try:
             if backup_path.exists():
                 shutil.rmtree(backup_path)
-                logger.info(f"Backup deleted: {backup_path}")
+                logger.info("Backup deleted: %s", backup_path)
                 return True
             return False
         except Exception as exc:
-            logger.exception(f"Failed to delete backup: {exc}")
+            logger.exception("Failed to delete backup")
             return False
 
     def _cleanup_old_backups(self) -> None:

@@ -4,10 +4,11 @@ This module provides a UI component for editing application themes at runtime,
 including color selection, ARGB support, and live preview capabilities.
 """
 
+from collections.abc import Callable
 import json
 import logging
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QColor
@@ -19,6 +20,7 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QLineEdit,
     QPushButton,
     QSpinBox,
     QVBoxLayout,
@@ -26,6 +28,7 @@ from PySide6.QtWidgets import (
 )
 
 from widgetsystem.factories.theme_factory import ThemeFactory
+
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +88,7 @@ class ARGBColorButton(QPushButton):
             # Display text
             self.setText(f"{self.current_color}\n({alpha_percent:.0f}% opacity)")
         except Exception as e:
-            logger.exception(f"Error updating color button: {e}")
+            logger.exception("Error updating color button")
             self.setText("Select Color")
 
     def _on_color_clicked(self) -> None:
@@ -115,7 +118,7 @@ class ARGBColorButton(QPushButton):
                 self._update_display()
                 self.colorChanged.emit(self.current_color)
         except Exception as e:
-            logger.exception(f"Error selecting color: {e}")
+            logger.exception("Error selecting color")
 
     def set_color(self, color: str) -> None:
         """Set the current color.
@@ -176,8 +179,6 @@ class ThemePropertyEditor(QWidget):
             self.editor.valueChanged.connect(self._on_value_changed)
         else:
             # String property
-            from PySide6.QtWidgets import QLineEdit
-
             self.editor = QLineEdit(self)
             self.editor.setText(str(property_value))
             self.editor.textChanged.connect(self._on_value_changed)
@@ -190,6 +191,7 @@ class ThemePropertyEditor(QWidget):
             new_value = self.editor.current_color
         elif isinstance(self.editor, QSpinBox):
             new_value = str(self.editor.value())
+            self.editor: ARGBColorButton | QComboBox | QSpinBox | QLineEdit
         elif isinstance(self.editor, QComboBox):
             new_value = self.editor.currentText()
         else:
@@ -201,12 +203,11 @@ class ThemePropertyEditor(QWidget):
         """Get current editor value."""
         if isinstance(self.editor, ARGBColorButton):
             return self.editor.current_color
-        elif isinstance(self.editor, QSpinBox):
+        if isinstance(self.editor, QSpinBox):
             return self.editor.value()
-        elif isinstance(self.editor, QComboBox):
+        if isinstance(self.editor, QComboBox):
             return self.editor.currentText() == "True"
-        else:
-            return self.editor.text()
+        return self.editor.text()
 
 
 class LiveThemeEditor(QWidget):
@@ -285,7 +286,7 @@ class LiveThemeEditor(QWidget):
                 theme_name = theme.get("name", theme.get("id", "Unknown"))
                 self.theme_combo.addItem(theme_name, theme)
         except Exception as e:
-            logger.exception(f"Error loading themes: {e}")
+            logger.exception("Error loading themes")
 
     def _on_theme_selected(self, theme_name: str) -> None:
         """Handle theme selection."""
@@ -296,7 +297,7 @@ class LiveThemeEditor(QWidget):
                 if isinstance(theme_data, dict):
                     self._load_theme_properties(theme_data)
         except Exception as e:
-            logger.exception(f"Error selecting theme: {e}")
+            logger.exception("Error selecting theme")
 
     def _load_theme_properties(self, theme: dict[str, Any]) -> None:
         """Load theme properties into editors.
@@ -368,7 +369,7 @@ class LiveThemeEditor(QWidget):
 
             self.themeApplied.emit(self.current_theme)
         except Exception as e:
-            logger.exception(f"Error applying theme change: {e}")
+            logger.exception("Error applying theme change")
 
     def _on_reset(self) -> None:
         """Reset theme to original."""
@@ -376,7 +377,7 @@ class LiveThemeEditor(QWidget):
             self._load_themes()
             self._on_theme_selected(self.theme_combo.currentText())
         except Exception as e:
-            logger.exception(f"Error resetting theme: {e}")
+            logger.exception("Error resetting theme")
 
     def _on_save(self) -> None:
         """Save current theme."""
@@ -394,9 +395,9 @@ class LiveThemeEditor(QWidget):
                         break
 
                 themes_file.write_text(json.dumps(themes, indent=2), encoding="utf-8")
-                logger.info(f"Theme saved: {theme_name}")
+                logger.info("Theme saved: %s", theme_name)
         except Exception as e:
-            logger.exception(f"Error saving theme: {e}")
+            logger.exception("Error saving theme")
 
     def _on_export(self) -> None:
         """Export current theme."""
@@ -415,9 +416,9 @@ class LiveThemeEditor(QWidget):
                     json.dumps(self.current_theme, indent=2),
                     encoding="utf-8",
                 )
-                logger.info(f"Theme exported: {file_path}")
+                logger.info("Theme exported: %s", file_path)
         except Exception as e:
-            logger.exception(f"Error exporting theme: {e}")
+            logger.exception("Error exporting theme")
 
 
 class ThemeEditorDialog(QDialog):

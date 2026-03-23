@@ -28,7 +28,8 @@ from widgetsystem.factories.theme_factory import (
 )
 from widgetsystem.factories.ui_config_factory import UIConfigFactory
 
-__all__ = [
+
+__all__ = [  # noqa: RUF022
     # All 10 Factories
     "DnDFactory",
     "I18nFactory",

@@ -1,12 +1,12 @@
 """Main application entry point with full factory integration."""
 
-import sys
 from collections.abc import Iterable
+import logging
 from pathlib import Path
+import sys
 from typing import Any
 
-import PySide6QtAds as QtAds
-from PySide6.QtCore import QByteArray, QSize, Qt, QTimer
+from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QAction, QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QAbstractButton,
@@ -19,8 +19,8 @@ from PySide6.QtWidgets import (
     QToolButton,
     QWidget,
 )
+import PySide6QtAds as QtAds
 
-from widgetsystem.core import Theme, ThemeManager, get_gradient_renderer
 from widgetsystem.controllers import (
     DnDController,
     DockController,
@@ -30,7 +30,9 @@ from widgetsystem.controllers import (
     TabSubsystem,
     ThemeController,
 )
-from widgetsystem.enums import ActionName, DockArea, ResponsiveAction
+from widgetsystem.core import Theme, ThemeManager, get_gradient_renderer
+from widgetsystem.core.plugin_system import PluginManager, PluginRegistry
+from widgetsystem.enums import ActionName, DockArea
 from widgetsystem.factories.dnd_factory import DnDFactory
 from widgetsystem.factories.i18n_factory import I18nFactory
 from widgetsystem.factories.layout_factory import LayoutDefinition, LayoutFactory
@@ -41,8 +43,11 @@ from widgetsystem.factories.responsive_factory import ResponsiveFactory
 from widgetsystem.factories.tabs_factory import Tab, TabGroup, TabsFactory
 from widgetsystem.factories.theme_factory import ThemeDefinition, ThemeFactory
 from widgetsystem.factories.ui_config_factory import UIConfigFactory
-from widgetsystem.core.plugin_system import PluginManager, PluginRegistry
 from widgetsystem.ui import ConfigurationPanel, InlayTitleBarController, PluginManagerDialog
+
+
+logger = logging.getLogger(__name__)
+
 
 # Import constants from inlay_titlebar
 try:
@@ -320,7 +325,7 @@ class MainWindow(QMainWindow):
         if isinstance(app, QApplication) and hasattr(self, "dock_manager") and self.dock_manager:
             # Re-apply current stylesheet to dock manager for better override
             self.dock_manager.setStyleSheet(app.styleSheet())
-            print("[+] Theme stylesheet re-applied to dock manager")
+            logger.info("Theme stylesheet re-applied to dock manager")
 
     def _create_empty_dock(
         self,
@@ -361,7 +366,7 @@ class MainWindow(QMainWindow):
             for panel in panels:
                 self._create_panel_dock(panel)
         except Exception as e:
-            print(f"Warning: Failed to load panels from factory: {e}")
+            logger.warning("Failed to load panels from factory: %s", e)
             self._create_default_panels()
 
     def _create_default_panels(self) -> None:
@@ -377,7 +382,7 @@ class MainWindow(QMainWindow):
             for tab_group in tab_groups:
                 self._create_tab_group_dock(tab_group)
         except Exception as e:
-            print(f"Warning: Failed to load tab groups from factory: {e}")
+            logger.warning("Failed to load tab groups from factory: %s", e)
 
     def _create_tab_group_dock(self, tab_group: TabGroup) -> None:
         """Create a dock widget containing a tab group with nested tabs."""
@@ -546,7 +551,6 @@ class MainWindow(QMainWindow):
     def _apply_responsive_rules(self, breakpoint_id: str) -> None:
         """Apply panel visibility rules (handled by ResponsiveController)."""
         # ResponsiveController handles this internally via update_for_width()
-        pass
 
     def _find_dock_by_panel_id(self, panel_id: str) -> Any:
         """Find a dock widget by panel ID (delegates to DockController)."""
@@ -580,7 +584,7 @@ class MainWindow(QMainWindow):
             for menu_item in menus:
                 self._register_menu_item_actions(menu_item)
         except Exception as e:
-            print(f"Warning: Failed to load menus from factory: {e}")
+            logger.warning("Failed to load menus from factory: %s", e)
 
         # Register built-in fallback shortcuts only when not provided by config
         if "save_layout" not in self.registered_action_names:
@@ -703,14 +707,14 @@ class MainWindow(QMainWindow):
 
         The title bar always stays on top and never shifts toolbar/dock content.
         """
-        print("[TITLEBAR] Creating InlayTitleBar (overlay mode)...")
+        logger.debug("Creating InlayTitleBar (overlay mode)...")
         self._inlay_controller = InlayTitleBarController(self)
         self._inlay_controller.install()
         self._inlay_controller.set_title("WidgetSystem - Advanced Docking")
 
         if self._inlay_controller.titlebar:
             tb = self._inlay_controller.titlebar
-            print(f"[TITLEBAR] TitleBar created: {type(tb).__name__}")
+            logger.debug("TitleBar created: %s", type(tb).__name__)
             
             # Set initial geometry
             tb_height = tb.height()
@@ -721,10 +725,10 @@ class MainWindow(QMainWindow):
             tb.setVisible(True)
             tb.update()
 
-            print(f"[TITLEBAR] Geometry: {tb.geometry()}, Visible: {tb.isVisible()}")
-            print("[TITLEBAR] OK - overlay mode, no layout shift on expand")
+            logger.debug("Geometry: %s, Visible: %s", tb.geometry(), tb.isVisible())
+            logger.debug("OK - overlay mode, no layout shift on expand")
         else:
-            print("[TITLEBAR] ERROR: titlebar is None!")
+            logger.error("titlebar is None!")
 
         # Initial layout sync only. Content does not react to hover expansion.
         self._sync_content_geometry(COLLAPSED_HEIGHT)
@@ -761,7 +765,7 @@ class MainWindow(QMainWindow):
             self.width(),
             max(0, self.height() - content_top),
         )
-        print(f"[LAYOUT] DockManager positioned once at Y={content_top} (static)")
+        logger.debug("DockManager positioned once at Y=%s (static)", content_top)
 
     def resizeEvent(self, event: Any) -> None:
         """Handle window resize without hover-based layout shifts."""
@@ -1183,85 +1187,126 @@ class MainWindow(QMainWindow):
         if plugins_dir.exists():
             self.plugin_manager.load_all_plugins()
 
-        print(f"[+] Plugin system initialized with {len(self.plugin_registry.factories)} factories")
+        logger.info(
+            "Plugin system initialized with %s factories",
+            len(self.plugin_registry.factories),
+        )
 
     def _on_plugin_loaded(self, plugin_name: str) -> None:
         """Handle plugin loaded event."""
-        print(f"[+] Plugin loaded: {plugin_name}")
+        logger.info("Plugin loaded: %s", plugin_name)
 
     def _on_plugin_unloaded(self, plugin_name: str) -> None:
         """Handle plugin unloaded event."""
-        print(f"[+] Plugin unloaded: {plugin_name}")
+        logger.info("Plugin unloaded: %s", plugin_name)
 
     def _on_factory_registered(self, factory_name: str) -> None:
         """Handle factory registered event."""
-        print(f"  -> Factory registered: {factory_name}")
+        logger.info("Factory registered: %s", factory_name)
 
     def _on_plugin_error(self, error_msg: str) -> None:
         """Handle plugin error event."""
-        print(f"[!] Plugin error: {error_msg}")
+        logger.error("Plugin error: %s", error_msg)
 
-    def _register_theme_profiles(self) -> None:
-        """Register all available theme profiles with ThemeManager."""
-        # Register legacy QSS themes (if supported by ThemeFactory implementation)
+    def _register_legacy_themes(self) -> None:
+        """Register legacy QSS themes from ThemeFactory, if supported."""
         list_themes = getattr(self.theme_factory, "list_themes", None)
-        if callable(list_themes):
-            theme_defs = list_themes()
-            if not isinstance(theme_defs, Iterable):
-                theme_defs = []
+        if not callable(list_themes):
+            return
 
-            for theme_def in theme_defs:
-                theme = Theme(theme_def.theme_id, theme_def.name)
-                try:
-                    if theme_def.file_path.exists():
-                        theme.set_stylesheet(theme_def.file_path.read_text(encoding="utf-8"))
-                        theme.set_property("tab_active_color", theme_def.tab_active_color)
-                        theme.set_property("tab_inactive_color", theme_def.tab_inactive_color)
-                        self.theme_manager.register_theme(theme)
-                        print(f"[+] Registered legacy theme: {theme_def.name}")
-                except Exception as e:
-                    print(f"Failed to register legacy theme '{theme_def.name}': {e}")
+        theme_defs = list_themes()
+        if not isinstance(theme_defs, Iterable):
+            return
 
-        # Register new theme profiles (if supported by ThemeFactory implementation)
+        for theme_def in theme_defs:
+            self._register_single_legacy_theme(theme_def)
+
+    def _register_single_legacy_theme(self, theme_def: ThemeDefinition) -> None:
+        """Register a single legacy theme definition."""
+        theme = Theme(theme_def.theme_id, theme_def.name)
+        try:
+            if not theme_def.file_path.exists():
+                return
+
+            theme.set_stylesheet(theme_def.file_path.read_text(encoding="utf-8"))
+            theme.set_property("tab_active_color", theme_def.tab_active_color)
+            theme.set_property("tab_inactive_color", theme_def.tab_inactive_color)
+            self.theme_manager.register_theme(theme)
+            logger.info("Registered legacy theme: %s", theme_def.name)
+        except Exception:
+            logger.exception("Failed to register legacy theme '%s'", theme_def.name)
+
+    def _safe_generate_profile_qss(self, generate_qss: Any, profile_id: str) -> str | None:
+        """Safely generate QSS content from a profile callable."""
+        try:
+            qss_content = generate_qss()
+        except Exception:
+            logger.exception("Failed to generate QSS for profile '%s'", profile_id)
+            return None
+
+        if isinstance(qss_content, str):
+            return qss_content
+        return None
+
+    def _register_single_profile_theme(self, profile_id: str, load_profile: Any) -> None:
+        """Register a single profile-backed theme."""
+        try:
+            profile = load_profile(profile_id)
+            if not profile:
+                return
+
+            profile_name = getattr(profile, "name", None)
+            if not isinstance(profile_name, str):
+                return
+
+            generate_qss = getattr(profile, "generate_qss", None)
+            if not callable(generate_qss):
+                return
+
+            qss_content = self._safe_generate_profile_qss(generate_qss, profile_id)
+            if not isinstance(qss_content, str):
+                return
+
+            theme = Theme(f"profile_{profile_id}", profile_name)
+            theme.set_stylesheet(qss_content)
+            theme.set_property("is_profile", True)
+            theme.set_property("profile_id", profile_id)
+            self.theme_manager.register_theme(theme)
+            logger.info("Registered profile theme: %s", profile_name)
+        except Exception:
+            logger.exception("Failed to register profile theme '%s'", profile_id)
+
+    def _register_profile_themes(self) -> None:
+        """Register profile-based themes from ThemeFactory, if supported."""
         list_profiles = getattr(self.theme_factory, "list_profiles", None)
         load_profile = getattr(self.theme_factory, "load_profile", None)
-        if callable(list_profiles) and callable(load_profile):
-            profile_ids = list_profiles()
-            if isinstance(profile_ids, Iterable):
-                for profile_id in profile_ids:
-                    try:
-                        profile = load_profile(profile_id)
-                        if not profile:
-                            continue
-                        profile_name = getattr(profile, "name", None)
-                        if not isinstance(profile_name, str):
-                            continue
-                        generate_qss = getattr(profile, "generate_qss", None)
-                        if not callable(generate_qss):
-                            continue
-                        theme = Theme(f"profile_{profile_id}", profile_name)
-                        qss_content = None
-                        try:
-                            qss_content = generate_qss()
-                        except Exception as e:
-                            print(f"[!] Failed to generate QSS for profile '{profile_id}': {e}")
-                            qss_content = None
-                        if isinstance(qss_content, str):
-                            theme.set_stylesheet(qss_content)
-                            theme.set_property("is_profile", True)
-                            theme.set_property("profile_id", profile_id)
-                            self.theme_manager.register_theme(theme)
-                            print(f"[+] Registered profile theme: {profile_name}")
-                    except Exception as e:
-                        print(f"[!] Failed to register profile theme '{profile_id}': {e}")
+        if not (callable(list_profiles) and callable(load_profile)):
+            return
 
-        # Set default theme
+        profile_ids = list_profiles()
+        if not isinstance(profile_ids, Iterable):
+            return
+
+        for profile_id in profile_ids:
+            if isinstance(profile_id, str):
+                self._register_single_profile_theme(profile_id, load_profile)
+
+    def _set_default_registered_theme(self) -> None:
+        """Set factory default theme or fallback to first available theme."""
         default_theme_id = self.theme_factory.get_default_theme_id()
         if default_theme_id:
             self.theme_manager.set_current_theme(default_theme_id)
-        elif self.theme_manager.theme_names():
-            # Fallback to first available theme
-            self.theme_manager.set_current_theme(self.theme_manager.theme_names()[0])
+            return
+
+        theme_names = self.theme_manager.theme_names()
+        if theme_names:
+            self.theme_manager.set_current_theme(theme_names[0])
+
+    def _register_theme_profiles(self) -> None:
+        """Register all available theme profiles with ThemeManager."""
+        self._register_legacy_themes()
+        self._register_profile_themes()
+        self._set_default_registered_theme()
 
     def _on_theme_changed(self, theme: Theme) -> None:
         """Handle theme change signal from ThemeManager.
@@ -1290,11 +1335,11 @@ class MainWindow(QMainWindow):
                 self._tab_color_controller.inactive_color = tab_inactive
                 self._tab_color_controller.apply()
 
-                print(f"[+] Theme applied: {theme.name}")
-                print(f"  Stylesheet length: {len(theme.stylesheet)} chars")
-                print(f"  Has rgba colors: {'rgba(' in theme.stylesheet}")
+                logger.info("Theme applied: %s", theme.name)
+                logger.debug("Stylesheet length: %s chars", len(theme.stylesheet))
+                logger.debug("Has rgba colors: %s", "rgba(" in theme.stylesheet)
         except Exception as e:
-            print(f"[!] Failed to apply theme '{theme.name}': {e}")
+            logger.exception("Failed to apply theme '%s'", theme.name)
 
     def _apply_theme_profile(self, profile_id: str) -> None:
         """Apply a theme profile by ID.
@@ -1413,18 +1458,18 @@ class MainWindow(QMainWindow):
         try:
             if category == "menus":
                 self.menu_factory = MenuFactory(Path("config"))
-                print("[+] Menus configuration reloaded")
+                logger.info("Menus configuration reloaded")
             elif category == "lists":
                 self.list_factory = ListFactory(Path("config"))
-                print("[+] Lists configuration reloaded")
+                logger.info("Lists configuration reloaded")
             elif category == "tabs":
                 self.tabs_factory = TabsFactory(Path("config"))
-                print("[+] Tabs configuration reloaded")
+                logger.info("Tabs configuration reloaded")
             elif category == "panels":
                 self.panel_factory = PanelFactory(Path("config"))
-                print("[+] Panels configuration reloaded")
+                logger.info("Panels configuration reloaded")
         except Exception as e:
-            print(f"Warning: Failed to reload {category} configuration: {e}")
+            logger.warning("Failed to reload %s configuration: %s", category, e)
 
     # ------------------------------------------------------------------
     # Phase 5: Advanced Features
@@ -1432,29 +1477,29 @@ class MainWindow(QMainWindow):
 
     def _show_theme_editor(self) -> None:
         """Show live theme editor dialog."""
-        print("🎨 Öffne Theme-Editor...")
+        logger.info("🎨 Öffne Theme-Editor...")
         try:
             from widgetsystem.ui.theme_editor import ThemeEditorDialog
             dialog = ThemeEditorDialog(Path("config"))
             dialog.exec()
-            print("  [+] Theme-Editor geschlossen")
+            logger.info("Theme-Editor geschlossen")
         except Exception as e:
             QMessageBox.critical(
                 self,
                 self.i18n_factory.translate("message.error", default="Error"),
                 f"Theme-Editor konnte nicht geöffnet werden:\n{e}",
             )
-            print(f"  [X] Fehler beim Oeffnen des Theme-Editors: {e}")
+            logger.exception("Fehler beim Oeffnen des Theme-Editors")
 
     def _show_color_picker(self) -> None:
         """Show ARGB color picker dialog."""
-        print("🖌️ Öffne ARGB Color-Picker...")
+        logger.info("🖌️ Öffne ARGB Color-Picker...")
         try:
             from widgetsystem.ui.argb_color_picker import ARGBColorPickerDialog
             dialog = ARGBColorPickerDialog("#FFFF0000")
             if dialog.exec():
                 color = dialog.get_color()
-                print(f"  [+] Farbe ausgewaehlt: {color}")
+                logger.info("Farbe ausgewaehlt: %s", color)
                 # Copy to clipboard for easy use
                 from PySide6.QtWidgets import QApplication
                 clipboard = QApplication.clipboard()
@@ -1465,34 +1510,34 @@ class MainWindow(QMainWindow):
                     f"Farbe in Zwischenablage kopiert:\n{color}",
                 )
             else:
-                print("  ℹ️ Color-Picker abgebrochen")
+                logger.info("Color-Picker abgebrochen")
         except Exception as e:
             QMessageBox.critical(
                 self,
                 self.i18n_factory.translate("message.error", default="Error"),
                 f"Color-Picker konnte nicht geöffnet werden:\n{e}",
             )
-            print(f"  [X] Fehler beim Oeffnen des Color-Pickers: {e}")
+            logger.exception("Fehler beim Oeffnen des Color-Pickers")
 
     def _show_widget_features_editor(self) -> None:
         """Show widget features editor dialog."""
-        print("⚙️ Öffne Widget-Features Editor...")
+        logger.info("⚙️ Öffne Widget-Features Editor...")
         try:
             from widgetsystem.ui.widget_features_editor import WidgetFeaturesEditorDialog
             dialog = WidgetFeaturesEditorDialog(Path("config"))
             dialog.exec()
-            print("  [+] Widget-Features Editor geschlossen")
+            logger.info("Widget-Features Editor geschlossen")
         except Exception as e:
             QMessageBox.critical(
                 self,
                 self.i18n_factory.translate("message.error", default="Error"),
                 f"Widget-Features Editor konnte nicht geöffnet werden:\n{e}",
             )
-            print(f"  [X] Fehler beim Oeffnen des Widget-Features Editors: {e}")
+            logger.exception("Fehler beim Oeffnen des Widget-Features Editors")
 
     def _show_plugin_manager(self) -> None:
         """Show plugin system information using PluginManagerDialog."""
-        print("[+] Zeige Plugin-System Informationen...")
+        logger.info("Zeige Plugin-System Informationen...")
         try:
             dialog = PluginManagerDialog(
                 self.plugin_registry,
@@ -1500,14 +1545,14 @@ class MainWindow(QMainWindow):
                 parent=self,
             )
             dialog.exec()
-            print("  [+] Plugin-System Dialog geschlossen")
+            logger.info("Plugin-System Dialog geschlossen")
         except Exception as e:
             QMessageBox.critical(
                 self,
                 self.i18n_factory.translate("message.error", default="Error"),
                 f"Plugin-System konnte nicht geöffnet werden:\n{e}",
             )
-            print(f"  [X] Fehler beim Oeffnen des Plugin-Systems: {e}")
+            logger.exception("Fehler beim Oeffnen des Plugin-Systems")
 
 
 # ------------------------------------------------------------------
@@ -1524,7 +1569,7 @@ def main() -> None:
         if stylesheet:
             app.setStyleSheet(stylesheet)
     except Exception as e:
-        print(f"Warning: Failed to load default theme: {e}")
+        logger.warning("Failed to load default theme: %s", e)
 
     window = MainWindow()
     window.show()

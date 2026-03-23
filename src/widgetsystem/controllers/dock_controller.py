@@ -4,13 +4,17 @@ This controller encapsulates all dock widget creation, registration,
 and lifecycle operations that were previously scattered across MainWindow.
 """
 
+import logging
 from typing import Any
 
-import PySide6QtAds as QtAds
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QTabWidget, QWidget
+import PySide6QtAds as QtAds
 
 from widgetsystem.enums import DockArea
+
+
+logger = logging.getLogger(__name__)
 
 
 class DockController(QObject):
@@ -258,7 +262,7 @@ class DockController(QObject):
             for panel in panels:
                 self._create_panel_from_config(panel)
         except Exception as e:
-            print(f"Warning: Failed to load panels from factory: {e}")
+            logger.warning("Failed to load panels from factory: %s", e)
             self._create_default_panels()
 
         # Create tab groups
@@ -267,7 +271,7 @@ class DockController(QObject):
             for tab_group in tab_groups:
                 self.create_tab_group(tab_group)
         except Exception as e:
-            print(f"Warning: Failed to load tab groups from factory: {e}")
+            logger.warning("Failed to load tab groups from factory: %s", e)
 
     def _create_panel_from_config(self, panel: Any) -> None:
         """Create a dock widget from PanelConfig."""

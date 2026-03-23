@@ -3,11 +3,15 @@
 This controller manages drop zones and movement rules for dock panels.
 """
 
+import logging
 from typing import Any
 
 from PySide6.QtCore import QObject, Signal
 
 from widgetsystem.enums import DockArea
+
+
+logger = logging.getLogger(__name__)
 
 
 class DnDController(QObject):
@@ -62,7 +66,7 @@ class DnDController(QObject):
             for zone in drop_zones:
                 self._drop_zones[zone.area] = zone
                 self.zoneRegistered.emit(zone.id)
-                print(f"DnD: Registered drop zone '{zone.id}' for area '{zone.area}'")
+                logger.info("DnD: Registered drop zone '%s' for area '%s'", zone.id, zone.area)
 
             # Load DnD rules
             dnd_rules = self._dnd_factory.load_dnd_rules()
@@ -71,17 +75,21 @@ class DnDController(QObject):
                     self._rules[rule.panel_id] = {}
                 self._rules[rule.panel_id][rule.source_area] = rule.allowed_target_areas
                 self.ruleRegistered.emit(rule.id)
-                print(
-                    f"DnD: Registered rule '{rule.id}' - {rule.panel_id} "
-                    f"from {rule.source_area} -> {rule.allowed_target_areas}"
+                logger.info(
+                    "DnD: Registered rule '%s' - %s from %s -> %s",
+                    rule.id,
+                    rule.panel_id,
+                    rule.source_area,
+                    rule.allowed_target_areas,
                 )
 
-            print(
-                f"[+] DnD System initialized: "
-                f"{len(self._drop_zones)} zones, {len(self._rules)} panels"
+            logger.info(
+                "DnD System initialized: %s zones, %s panels",
+                len(self._drop_zones),
+                len(self._rules),
             )
         except Exception as e:
-            print(f"[!] Warning: Failed to load DnD configuration: {e}")
+            logger.warning("Failed to load DnD configuration: %s", e)
 
     def is_move_allowed(
         self,

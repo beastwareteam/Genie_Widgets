@@ -12,11 +12,12 @@ import importlib.util
 import inspect
 import json
 import logging
-import sys
 from pathlib import Path
+import sys
 from typing import Any
 
 from PySide6.QtCore import QObject, Signal
+
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +68,7 @@ class PluginRegistry(QObject):
 
         self.factories[factory_name] = factory_class
         self.factoryRegistered.emit(factory_name)
-        logger.info(f"Factory registered: {factory_name}")
+        logger.info("Factory registered: %s", factory_name)
 
     def unregister_factory(self, factory_name: str) -> None:
         """Unregister a factory.
@@ -77,7 +78,7 @@ class PluginRegistry(QObject):
         """
         if factory_name in self.factories:
             del self.factories[factory_name]
-            logger.info(f"Factory unregistered: {factory_name}")
+            logger.info("Factory unregistered: %s", factory_name)
 
     def get_factory(self, factory_name: str) -> type[Any] | None:
         """Get registered factory.
@@ -118,7 +119,7 @@ class PluginRegistry(QObject):
             spec = importlib.util.spec_from_file_location(module_name, plugin_path)
 
             if spec is None or spec.loader is None:
-                raise ImportError(f"Cannot load spec for {plugin_path}")
+                raise ImportError(f"Cannot load spec for {plugin_path}")  # noqa: TRY301
 
             module = importlib.util.module_from_spec(spec)
             sys.modules[module_name] = module
@@ -126,7 +127,7 @@ class PluginRegistry(QObject):
 
             # Check for plugin definition
             if not hasattr(module, "plugin_name"):
-                raise ValueError("Plugin must define 'plugin_name'")
+                raise ValueError("Plugin must define 'plugin_name'")  # noqa: TRY301
 
             plugin_name = module.plugin_name
             plugin_config = self._extract_plugin_config(module)
@@ -139,7 +140,7 @@ class PluginRegistry(QObject):
             self.plugin_instances[plugin_name] = module
 
             self.pluginLoaded.emit(plugin_name)
-            logger.info(f"Plugin loaded: {plugin_name} from {plugin_path}")
+            logger.info("Plugin loaded: %s from %s", plugin_name, plugin_path)
 
             return plugin_name
 
@@ -159,7 +160,7 @@ class PluginRegistry(QObject):
             Success status
         """
         if plugin_name not in self.plugins:
-            logger.warning(f"Plugin not found: {plugin_name}")
+            logger.warning("Plugin not found: %s", plugin_name)
             return False
 
         try:
@@ -181,7 +182,7 @@ class PluginRegistry(QObject):
                 del self.plugin_instances[plugin_name]
 
             self.pluginUnloaded.emit(plugin_name)
-            logger.info(f"Plugin unloaded: {plugin_name}")
+            logger.info("Plugin unloaded: %s", plugin_name)
 
             return True
 
@@ -264,7 +265,7 @@ class PluginManager:
         self.plugin_dirs = plugin_dirs or []
         self.registry = registry or PluginRegistry()
         self.config_path: Path | None = None
-        logger.debug(f"PluginManager initialized with {len(self.plugin_dirs)} dirs")
+        logger.debug("PluginManager initialized with %s dirs", len(self.plugin_dirs))
 
     def add_plugin_directory(self, plugin_dir: Path) -> None:
         """Add plugin directory.
@@ -280,7 +281,7 @@ class PluginManager:
 
         if plugin_dir not in self.plugin_dirs:
             self.plugin_dirs.append(plugin_dir)
-            logger.info(f"Plugin directory added: {plugin_dir}")
+            logger.info("Plugin directory added: %s", plugin_dir)
 
     def discover_plugins(self) -> list[Path]:
         """Discover plugins in configured directories.
@@ -292,7 +293,7 @@ class PluginManager:
 
         for plugin_dir in self.plugin_dirs:
             if not plugin_dir.exists():
-                logger.warning(f"Plugin directory not found: {plugin_dir}")
+                logger.warning("Plugin directory not found: %s", plugin_dir)
                 continue
 
             # Find .py files
@@ -307,7 +308,7 @@ class PluginManager:
                     if init_file.exists():
                         plugins.append(init_file)
 
-        logger.debug(f"Discovered {len(plugins)} plugins")
+        logger.debug("Discovered %s plugins", len(plugins))
         return plugins
 
     def load_all_plugins(self) -> dict[str, str | None]:
@@ -324,7 +325,7 @@ class PluginManager:
                 plugin_name = self.registry.load_plugin(plugin_path)
                 loaded[str(plugin_path)] = plugin_name
             except Exception as exc:
-                logger.error(f"Failed to load {plugin_path}: {exc}")
+                logger.exception("Failed to load %s", plugin_path)
                 loaded[str(plugin_path)] = None
 
         return loaded
@@ -349,10 +350,10 @@ class PluginManager:
             with open(config_path, "w", encoding="utf-8") as f:
                 json.dump(config, f, indent=2, ensure_ascii=False)
 
-            logger.info(f"Plugin configuration saved to {config_path}")
+            logger.info("Plugin configuration saved to %s", config_path)
 
         except Exception as exc:
-            logger.exception(f"Error saving plugin config: {exc}")
+            logger.exception("Error saving plugin config")
 
     def load_plugin_config(self, config_path: Path) -> dict[str, Any]:
         """Load plugin configuration from file.
@@ -366,14 +367,14 @@ class PluginManager:
         self.config_path = config_path
 
         try:
-            with open(config_path, "r", encoding="utf-8") as f:
+            with open(config_path, encoding="utf-8") as f:
                 config = json.load(f)
 
-            logger.info(f"Plugin configuration loaded from {config_path}")
-            return config
+            logger.info("Plugin configuration loaded from %s", config_path)
+            return config  # type: ignore[no-any-return]
 
         except Exception as exc:
-            logger.exception(f"Error loading plugin config: {exc}")
+            logger.exception("Error loading plugin config")
             return {}
 
     def reload_plugin(self, plugin_name: str) -> bool:
@@ -387,7 +388,7 @@ class PluginManager:
         """
         plugin_info = self.registry.get_plugin(plugin_name)
         if not plugin_info:
-            logger.warning(f"Plugin not found for reload: {plugin_name}")
+            logger.warning("Plugin not found for reload: %s", plugin_name)
             return False
 
         plugin_path = plugin_info["path"]
@@ -401,10 +402,10 @@ class PluginManager:
             new_name = self.registry.load_plugin(plugin_path)
             success = new_name is not None
             if success:
-                logger.info(f"Plugin reloaded: {plugin_name}")
+                logger.info("Plugin reloaded: %s", plugin_name)
             return success
         except Exception as exc:
-            logger.exception(f"Error reloading plugin {plugin_name}: {exc}")
+            logger.exception("Error reloading plugin %s", plugin_name)
             return False
 
     def get_registry(self) -> PluginRegistry:
@@ -429,4 +430,4 @@ class PluginManager:
             return []
 
         config = plugin_info.get("config", {})
-        return config.get("factories", [])
+        return config.get("factories", [])  # type: ignore[no-any-return]

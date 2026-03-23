@@ -17,17 +17,17 @@ Architecture:
 """
 
 # Phase 2 Controllers
+# Phase 4 Controllers
+from widgetsystem.controllers.dnd_controller import DnDController
 from widgetsystem.controllers.dock_controller import DockController
-from widgetsystem.controllers.tab_subsystem import TabSubsystem
 
 # Phase 3 Controllers
 from widgetsystem.controllers.layout_controller import LayoutController
-from widgetsystem.controllers.theme_controller import ThemeController
-
-# Phase 4 Controllers
-from widgetsystem.controllers.dnd_controller import DnDController
 from widgetsystem.controllers.responsive_controller import ResponsiveController
 from widgetsystem.controllers.shortcut_controller import ShortcutController
+from widgetsystem.controllers.tab_subsystem import TabSubsystem
+from widgetsystem.controllers.theme_controller import ThemeController
+
 
 __all__ = [
     "DnDController",

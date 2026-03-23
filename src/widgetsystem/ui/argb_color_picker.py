@@ -8,8 +8,8 @@ Provides a comprehensive color selection interface with:
 - Quick color buttons
 """
 
+from collections.abc import Callable
 import logging
-from typing import Callable
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QFont
@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +80,7 @@ class ARGBColorPicker(QWidget):
         self.apply_callback = apply_callback
         self._setup_ui()
         self._set_color(initial_color)
-        logger.debug(f"ARGBColorPicker initialized with color: {initial_color}")
+        logger.debug("ARGBColorPicker initialized with color: %s", initial_color)
 
     def _setup_ui(self) -> None:
         """Set up user interface."""
@@ -231,7 +232,7 @@ class ARGBColorPicker(QWidget):
             try:
                 self._set_color(f"#{text}")
             except ValueError as exc:
-                logger.debug(f"Invalid hex input: {text} - {exc}")
+                logger.debug("Invalid hex input: %s - %s", text, exc)
 
     def _on_slider_changed(self) -> None:
         """Handle slider value change."""
@@ -381,7 +382,7 @@ class ARGBColorPicker(QWidget):
             try:
                 self.apply_callback(color)
             except Exception as exc:
-                logger.exception(f"Error in apply_callback: {exc}")
+                logger.exception("Error in apply_callback")
 
     def get_color(self) -> str:
         """Get current color.
@@ -403,7 +404,7 @@ class ARGBColorPicker(QWidget):
         try:
             self._set_color(color)
         except ValueError as exc:
-            logger.error(f"Failed to set color: {exc}")
+            logger.exception("Failed to set color")
 
 
 class ARGBColorPickerDialog(QDialog):
@@ -443,7 +444,7 @@ class ARGBColorPickerDialog(QDialog):
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
 
-        logger.debug(f"ARGBColorPickerDialog created with color: {initial_color}")
+        logger.debug("ARGBColorPickerDialog created with color: %s", initial_color)
 
     def get_color(self) -> str:
         """Get selected color.

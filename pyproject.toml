@@ -144,8 +144,6 @@ ignore = [
     "D103",   # Missing docstring in public function (many in existing code)
     
     # Type annotations - handled by mypy
-    "ANN101", # Missing type annotation for self
-    "ANN102", # Missing type annotation for cls
     "ANN401", # Dynamically typed Any
     
     # Specific patterns we use

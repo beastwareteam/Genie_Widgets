@@ -5,11 +5,12 @@ correctly when panels are undocked and re-docked. QtAds recreates title bars on
 docking operations, which can cause button states to be lost.
 """
 
-import logging
 from collections.abc import Callable
+import logging
 from typing import Any
 
 from PySide6.QtCore import QObject, QTimer, Slot
+
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,7 @@ class FloatingStateTracker(QObject):
                 self.dock_manager.dockWidgetAdded.connect(self._on_dock_widget_added)
 
         except Exception as e:
-            logger.warning(f"Unable to connect floating state signals: {e}")
+            logger.warning("Unable to connect floating state signals: %s", e)
 
     @Slot(object)
     def _on_widget_about_to_float(self, dock_widget: Any) -> None:
@@ -73,9 +74,9 @@ class FloatingStateTracker(QObject):
                 dock_widget.objectName() if hasattr(dock_widget, "objectName") else str(widget_id)
             )
             self._floating_widgets[widget_id] = True
-            logger.debug(f"Widget about to float: {widget_name} (id={widget_id})")
+            logger.debug("Widget about to float: %s (id=%s)", widget_name, widget_id)
         except Exception as e:
-            logger.exception(f"Error in _on_widget_about_to_float: {e}")
+            logger.exception("Error in _on_widget_about_to_float")
 
     @Slot(object)
     def _on_floating_widget_created(self, floating_container: Any) -> None:
@@ -88,7 +89,7 @@ class FloatingStateTracker(QObject):
             # Nothing specific to do here, tracking is done per widget
             pass
         except Exception as e:
-            logger.exception(f"Error in _on_floating_widget_created: {e}")
+            logger.exception("Error in _on_floating_widget_created")
 
     @Slot(object)
     def _on_dock_widget_added(self, dock_widget: Any) -> None:
@@ -106,7 +107,7 @@ class FloatingStateTracker(QObject):
             # Check if this widget was previously floating
             was_floating = self._floating_widgets.get(widget_id, False)
 
-            logger.debug(f"dockWidgetAdded: {widget_name}, was_floating={was_floating}")
+            logger.debug("dockWidgetAdded: %s, was_floating=%s", widget_name, was_floating)
 
             if was_floating:
                 # Mark as no longer floating
@@ -115,11 +116,11 @@ class FloatingStateTracker(QObject):
                 # Schedule title bar refresh after short delay
                 # (allows QtAds to complete internal setup)
                 self._pending_refreshes.add(widget_id)
-                logger.debug(f"Scheduling title bar refresh for {widget_name} in 100ms")
+                logger.debug("Scheduling title bar refresh for %s in 100ms", widget_name)
                 QTimer.singleShot(100, lambda: self._refresh_title_bar(dock_widget))
 
         except Exception as e:
-            logger.exception(f"Error in _on_dock_widget_added: {e}")
+            logger.exception("Error in _on_dock_widget_added")
 
     def _refresh_title_bar(self, dock_widget: Any) -> None:
         """Refresh title bar buttons for a dock widget.
@@ -135,20 +136,20 @@ class FloatingStateTracker(QObject):
 
             # Only refresh if still pending
             if widget_id not in self._pending_refreshes:
-                logger.debug(f"Skipping refresh for {widget_name} - not pending")
+                logger.debug("Skipping refresh for %s - not pending", widget_name)
                 return
 
             self._pending_refreshes.remove(widget_id)
-            logger.debug(f"Executing title bar refresh for {widget_name}")
+            logger.debug("Executing title bar refresh for %s", widget_name)
 
             # Get the dock area widget
             if not hasattr(dock_widget, "dockAreaWidget"):
-                logger.debug(f"No dockAreaWidget method on {widget_name}")
+                logger.debug("No dockAreaWidget method on %s", widget_name)
                 return
 
             area = dock_widget.dockAreaWidget()
             if not area:
-                logger.debug(f"No dock area found for {widget_name}")
+                logger.debug("No dock area found for %s", widget_name)
                 return
 
             # Get the title bar
@@ -161,7 +162,7 @@ class FloatingStateTracker(QObject):
                 logger.debug("No title bar found")
                 return
 
-            logger.debug(f"Toggling title bar visibility for {widget_name}")
+            logger.debug("Toggling title bar visibility for %s", widget_name)
 
             # Force title bar update by toggling visibility
             # This ensures all buttons are recreated with correct state
@@ -172,19 +173,26 @@ class FloatingStateTracker(QObject):
             if hasattr(title_bar, "update"):
                 title_bar.update()
 
-            logger.debug(f"Calling {len(self._post_refresh_callbacks)} post-refresh callbacks")
+            logger.debug(
+                "Calling %s post-refresh callbacks",
+                len(self._post_refresh_callbacks),
+            )
 
             # Execute post-refresh callbacks
             # This allows other systems (e.g., TabSelectorVisibility) to reapply their state
             for i, callback in enumerate(self._post_refresh_callbacks):
                 try:
-                    logger.debug(f"Executing callback {i + 1}/{len(self._post_refresh_callbacks)}")
+                    logger.debug(
+                        "Executing callback %s/%s",
+                        i + 1,
+                        len(self._post_refresh_callbacks),
+                    )
                     callback(area)
                 except Exception as cb_error:
-                    logger.exception(f"Error in post-refresh callback: {cb_error}")
+                    logger.exception("Error in post-refresh callback")
 
         except Exception as e:
-            logger.exception(f"Error in _refresh_title_bar: {e}")
+            logger.exception("Error in _refresh_title_bar")
 
     def register_post_refresh_callback(self, callback: Callable[[Any], None]) -> None:
         """Register a callback to be executed after title bar refresh.
@@ -222,12 +230,12 @@ class FloatingStateTracker(QObject):
                         self._on_widget_toplevel_changed(w, name, is_floating)
                     ),
                 )
-                logger.debug(f"Tracking widget: {widget_name} (id={widget_id})")
+                logger.debug("Tracking widget: %s (id=%s)", widget_name, widget_id)
             else:
-                logger.warning(f"Widget {widget_name} has no topLevelChanged signal")
+                logger.warning("Widget %s has no topLevelChanged signal", widget_name)
 
         except Exception as e:
-            logger.exception(f"Error tracking dock widget {widget_name}: {e}")
+            logger.exception("Error tracking dock widget %s", widget_name)
 
     def _on_widget_toplevel_changed(
         self,
@@ -246,22 +254,27 @@ class FloatingStateTracker(QObject):
             widget_id = id(dock_widget)
             was_floating = self._floating_widgets.get(widget_id, False)
 
-            logger.debug(f"topLevelChanged: {widget_name}, is_floating={is_floating}, was={was_floating}")
+            logger.debug(
+                "topLevelChanged: %s, is_floating=%s, was=%s",
+                widget_name,
+                is_floating,
+                was_floating,
+            )
 
             # Update state
             self._floating_widgets[widget_id] = is_floating
 
             # If widget just re-docked (was floating, now not)
             if was_floating and not is_floating:
-                logger.debug(f"Widget {widget_name} re-docked! Scheduling refresh...")
+                logger.debug("Widget %s re-docked! Scheduling refresh...", widget_name)
                 # Schedule title bar refresh after short delay
                 self._pending_refreshes.add(widget_id)
                 QTimer.singleShot(100, lambda: self._refresh_title_bar(dock_widget))
             elif not was_floating and is_floating:
-                logger.debug(f"Widget {widget_name} became floating")
+                logger.debug("Widget %s became floating", widget_name)
 
         except Exception as e:
-            logger.exception(f"Error in _on_widget_toplevel_changed: {e}")
+            logger.exception("Error in _on_widget_toplevel_changed")
 
     def is_widget_floating(self, dock_widget: Any) -> bool:
         """Check if a widget is currently floating.

@@ -6,12 +6,16 @@ the dual code paths that previously existed.
 """
 
 from collections.abc import Iterable
+import logging
 from typing import Any
 
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QApplication
 
 from widgetsystem.core import Theme, ThemeManager
+
+
+logger = logging.getLogger(__name__)
 
 
 class ThemeController(QObject):
@@ -110,9 +114,9 @@ class ThemeController(QObject):
                     )
                     self._theme_manager.register_theme(theme)
                     self.themeRegistered.emit(theme_def.theme_id)
-                    print(f"[+] Registered legacy theme: {theme_def.name}")
+                    logger.info("Registered legacy theme: %s", theme_def.name)
             except Exception as e:
-                print(f"Failed to register legacy theme '{theme_def.name}': {e}")
+                logger.exception("Failed to register legacy theme '%s'", theme_def.name)
                 self.themeError.emit(f"Failed to register '{theme_def.name}': {e}")
 
     def _register_profile_themes(self) -> None:
@@ -146,7 +150,7 @@ class ThemeController(QObject):
                 try:
                     qss_content = generate_qss()
                 except Exception as e:
-                    print(f"[!] Failed to generate QSS for profile '{profile_id}': {e}")
+                    logger.exception("Failed to generate QSS for profile '%s'", profile_id)
                     continue
 
                 if isinstance(qss_content, str):
@@ -155,10 +159,10 @@ class ThemeController(QObject):
                     theme.set_property("profile_id", profile_id)
                     self._theme_manager.register_theme(theme)
                     self.themeRegistered.emit(f"profile_{profile_id}")
-                    print(f"[+] Registered profile theme: {profile_name}")
+                    logger.info("Registered profile theme: %s", profile_name)
 
             except Exception as e:
-                print(f"[!] Failed to register profile theme '{profile_id}': {e}")
+                logger.exception("Failed to register profile theme '%s'", profile_id)
                 self.themeError.emit(f"Failed to register profile '{profile_id}': {e}")
 
     def _set_default_theme(self) -> None:
@@ -242,12 +246,12 @@ class ThemeController(QObject):
                 self._tab_color_controller.inactive_color = tab_inactive
                 self._tab_color_controller.apply()
 
-            print(f"[+] Theme applied: {theme.name}")
-            print(f"  Stylesheet length: {len(theme.stylesheet)} chars")
-            print(f"  Has rgba colors: {'rgba(' in theme.stylesheet}")
+            logger.info("Theme applied: %s", theme.name)
+            logger.debug("Stylesheet length: %s chars", len(theme.stylesheet))
+            logger.debug("Has rgba colors: %s", "rgba(" in theme.stylesheet)
 
             self.themeApplied.emit(theme.theme_id, theme.name)
 
         except Exception as e:
-            print(f"[!] Failed to apply theme '{theme.name}': {e}")
+            logger.exception("Failed to apply theme '%s'", theme.name)
             self.themeError.emit(f"Failed to apply '{theme.name}': {e}")

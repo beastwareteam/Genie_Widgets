@@ -4,11 +4,15 @@ This controller manages window width breakpoints and applies
 panel visibility rules based on current breakpoint.
 """
 
+import logging
 from typing import Any
 
 from PySide6.QtCore import QObject, Signal
 
 from widgetsystem.enums import ResponsiveAction
+
+
+logger = logging.getLogger(__name__)
 
 
 class ResponsiveController(QObject):
@@ -63,18 +67,21 @@ class ResponsiveController(QObject):
             breakpoints = self._responsive_factory.load_breakpoints()
             for bp in breakpoints:
                 self._width_ranges[bp.id] = (bp.min_width, bp.max_width)
-                print(
-                    f"Responsive: Registered breakpoint '{bp.id}' "
-                    f"({bp.min_width}-{bp.max_width}px)"
+                logger.info(
+                    "Responsive: Registered breakpoint '%s' (%s-%spx)",
+                    bp.id,
+                    bp.min_width,
+                    bp.max_width,
                 )
 
             rules = self._responsive_factory.load_responsive_rules()
-            print(
-                f"[+] Responsive System initialized: "
-                f"{len(breakpoints)} breakpoints, {len(rules)} rules"
+            logger.info(
+                "Responsive System initialized: %s breakpoints, %s rules",
+                len(breakpoints),
+                len(rules),
             )
         except Exception as e:
-            print(f"[!] Warning: Failed to load responsive configuration: {e}")
+            logger.warning("Failed to load responsive configuration: %s", e)
 
     def get_breakpoint_for_width(self, width: int) -> str | None:
         """Determine breakpoint for a given width.
@@ -100,8 +107,10 @@ class ResponsiveController(QObject):
 
         if new_breakpoint and new_breakpoint != self._current_breakpoint:
             old_breakpoint = self._current_breakpoint
-            print(
-                f"Responsive: Breakpoint changed to '{new_breakpoint}' (width={width}px)"
+            logger.info(
+                "Responsive: Breakpoint changed to '%s' (width=%spx)",
+                new_breakpoint,
+                width,
             )
 
             self._current_breakpoint = new_breakpoint
@@ -142,7 +151,7 @@ class ResponsiveController(QObject):
                 self.ruleApplied.emit(rule.id)
 
         except Exception as e:
-            print(f"Warning: Failed to apply responsive rules: {e}")
+            logger.warning("Failed to apply responsive rules: %s", e)
 
     def reset(self) -> None:
         """Reset responsive state."""

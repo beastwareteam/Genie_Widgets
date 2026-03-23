@@ -12,6 +12,7 @@ from PySide6.QtCore import QObject, Slot
 
 from widgetsystem.ui.tab_selector_monitor import TabSelectorMonitor
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -63,7 +64,7 @@ class TabSelectorEventHandler(QObject):
                 self.dock_manager.floatingWidgetCreated.connect(self._on_floating_widget_created)
 
         except Exception as e:
-            logger.warning(f"Unable to connect all CDockManager signals: {e}")
+            logger.warning("Unable to connect all CDockManager signals: %s", e)
 
     @Slot(object)
     def _on_dock_area_created(self, area_widget: Any) -> None:
@@ -84,7 +85,7 @@ class TabSelectorEventHandler(QObject):
                 if hasattr(area_widget, "setObjectName"):
                     area_widget.setObjectName(area_id)
 
-            logger.debug(f"dock_area_created: {area_id}")
+            logger.debug("dock_area_created: %s", area_id)
 
             self.tab_monitor.register_dock_area(area_id, area_widget)
 
@@ -92,13 +93,13 @@ class TabSelectorEventHandler(QObject):
             count = self.tab_monitor._count_tabs_in_area(area_widget)
             self.tab_monitor._area_tab_counts[area_id] = count
 
-            logger.debug(f"Initial tab count for {area_id}: {count}")
+            logger.debug("Initial tab count for %s: %s", area_id, count)
 
             # Trigger initial visibility update
             self.tab_monitor.tab_count_changed.emit(area_id, count)
 
         except Exception as e:
-            logger.exception(f"Error in _on_dock_area_created: {e}")
+            logger.exception("Error in _on_dock_area_created")
 
     @Slot(object)
     def _on_dock_widget_added(self, dock_widget: Any) -> None:
@@ -108,20 +109,20 @@ class TabSelectorEventHandler(QObject):
             dock_widget: The added CDockWidget
         """
         try:
-            logger.debug(f"dock_widget_added: {dock_widget}")
+            logger.debug("dock_widget_added: %s", dock_widget)
 
             # Find the parent dock area
             area = self._find_parent_area(dock_widget)
-            logger.debug(f"Found area: {area}")
+            logger.debug("Found area: %s", area)
 
             if area:
                 area_id = self._get_area_id(area)
-                logger.debug(f"Area ID: {area_id}")
+                logger.debug("Area ID: %s", area_id)
 
                 if area_id:
                     # If area not registered yet, register it now
                     if area_id not in self.tab_monitor._monitored_areas:
-                        logger.debug(f"Auto-registering area {area_id}")
+                        logger.debug("Auto-registering area %s", area_id)
                         self.tab_monitor.register_dock_area(area_id, area)
 
                     # IMPORTANT: Connect to widget's signals
@@ -139,7 +140,7 @@ class TabSelectorEventHandler(QObject):
                         dock_widget.closed.connect(lambda w=dock_widget: self._on_widget_closed(w))
 
                     count = self.tab_monitor._count_tabs_in_area(area)
-                    logger.debug(f"Updating tab count for {area_id}: {count}")
+                    logger.debug("Updating tab count for %s: %s", area_id, count)
 
                     # Update via monitor which will emit signal
                     try:
@@ -154,7 +155,7 @@ class TabSelectorEventHandler(QObject):
             else:
                 logger.warning("area is None!")
         except Exception as e:
-            logger.exception(f"Error in _on_dock_widget_added: {e}")
+            logger.exception("Error in _on_dock_widget_added")
 
     @Slot(object)
     def _on_dock_widget_removed(self, dock_widget: Any) -> None:
@@ -164,20 +165,25 @@ class TabSelectorEventHandler(QObject):
             dock_widget: The removed CDockWidget
         """
         try:
-            logger.debug(f"dock_widget_removed: {dock_widget}")
+            logger.debug("dock_widget_removed: %s", dock_widget)
 
             # Find all areas and update their counts
             for area_id, area_widget in list(self.tab_monitor._monitored_areas.items()):
                 count = self.tab_monitor._count_tabs_in_area(area_widget)
                 current_count = self.tab_monitor.get_tab_count(area_id)
 
-                logger.debug(f"Area {area_id}: count={count}, current={current_count}")
+                logger.debug(
+                    "Area %s: count=%s, current=%s",
+                    area_id,
+                    count,
+                    current_count,
+                )
 
                 if count != current_count:
-                    logger.debug(f"Updating {area_id} to count={count}")
+                    logger.debug("Updating %s to count=%s", area_id, count)
                     self.tab_monitor.update_tab_count(area_id, count)
         except Exception as e:
-            logger.exception(f"Error in _on_dock_widget_removed: {e}")
+            logger.exception("Error in _on_dock_widget_removed")
 
     def _on_widget_visibility_changed(self, dock_widget: Any, visible: bool) -> None:
         """Handle widget visibility change (tab switching).
@@ -188,7 +194,7 @@ class TabSelectorEventHandler(QObject):
         """
         try:
             widget_title = dock_widget.windowTitle() if hasattr(dock_widget, "windowTitle") else str(dock_widget)
-            logger.debug(f"widget_visibility_changed: {widget_title}, visible={visible}")
+            logger.debug("widget_visibility_changed: %s, visible=%s", widget_title, visible)
 
             # Just update counts, don't mark as closed
             # (closed is handled by _on_widget_closed)
@@ -197,12 +203,12 @@ class TabSelectorEventHandler(QObject):
                 area_id = self._get_area_id(area)
                 if area_id and area_id in self.tab_monitor._monitored_areas:
                     count = self.tab_monitor._count_tabs_in_area(area)
-                    logger.debug(f"Updating {area_id} count to {count}")
+                    logger.debug("Updating %s count to %s", area_id, count)
                     # Only update if count changed
                     if count != self.tab_monitor.get_tab_count(area_id):
                         self.tab_monitor.update_tab_count(area_id, count)
         except Exception as e:
-            logger.exception(f"Error in _on_widget_visibility_changed: {e}")
+            logger.exception("Error in _on_widget_visibility_changed")
 
     def _on_widget_closed(self, dock_widget: Any) -> None:
         """Handle widget closed signal (permanent close).
@@ -212,7 +218,7 @@ class TabSelectorEventHandler(QObject):
         """
         try:
             widget_title = dock_widget.windowTitle() if hasattr(dock_widget, "windowTitle") else str(dock_widget)
-            logger.debug(f"widget_closed: {widget_title}")
+            logger.debug("widget_closed: %s", widget_title)
 
             # Mark widget as permanently closed
             self.tab_monitor.mark_widget_closed(dock_widget)
@@ -223,10 +229,10 @@ class TabSelectorEventHandler(QObject):
                 area_id = self._get_area_id(area)
                 if area_id and area_id in self.tab_monitor._monitored_areas:
                     count = self.tab_monitor._count_tabs_in_area(area)
-                    logger.debug(f"Updating {area_id} count to {count}")
+                    logger.debug("Updating %s count to %s", area_id, count)
                     self.tab_monitor.update_tab_count(area_id, count)
         except Exception as e:
-            logger.exception(f"Error in _on_widget_closed: {e}")
+            logger.exception("Error in _on_widget_closed")
 
     @Slot(object)
     def _on_floating_widget_created(self, floating_widget: Any) -> None:

@@ -2,8 +2,12 @@
 
 from dataclasses import dataclass
 import json
+import logging
 from pathlib import Path
 from typing import Any, TypedDict, cast
+
+
+logger = logging.getLogger(__name__)
 
 
 class LayoutEntry(TypedDict, total=False):
@@ -84,7 +88,7 @@ class LayoutFactory:
 
             return layouts
         except (OSError, json.JSONDecodeError) as e:
-            print(f"Warning: Failed to load layouts: {e}")
+            logger.warning("Failed to load layouts: %s", e)
             return []
 
     def get_default_layout_id(self) -> str | None:

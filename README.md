@@ -169,7 +169,7 @@ WidgetSystem/
 ├── config/                    # JSON Configuration (11 files)
 ├── schemas/                   # JSON Schemas (10 files)
 ├── themes/                    # QSS Stylesheets (3)
-├── tests/                     # Test Suite (54 modules)
+├── tests/                     # Test Suite (56 modules)
 ├── docs/                      # Documentation (12 files)
 └── examples/                  # Demo Applications
 ```
@@ -200,7 +200,7 @@ WidgetSystem/
 │                    PROJECT METRICS                          │
 ├────────────────────────────────────────────────────────────┤
 │  Source Modules     44   ██████████████████████████████    │
-│  Test Modules       54   ████████████████████████████████  │
+│  Test Modules       56   ████████████████████████████████  │
 │  UI Components      14   ████████████████████              │
 │  Factory Classes    10   ███████                           │
 │  Core Systems        6   ████                              │

@@ -1,6 +1,7 @@
 """Visual Layer - Comprehensive UI viewers for all structural components."""
 
 from dataclasses import dataclass
+import logging
 from pathlib import Path
 
 from PySide6.QtCore import Qt
@@ -24,6 +25,9 @@ from widgetsystem.factories.list_factory import ListFactory, ListItem
 from widgetsystem.factories.menu_factory import MenuFactory, MenuItem
 from widgetsystem.factories.panel_factory import PanelFactory
 from widgetsystem.factories.tabs_factory import TabsFactory
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -478,7 +482,7 @@ class PanelsViewer(QWidget):
             panel = self.panel_factory.get_panel(panel_id)
             if panel:
                 # Update properties (simplified)
-                logger.debug(f"Selected panel: {panel_id}")
+                logger.debug("Selected panel: %s", panel_id)
         except Exception:
             pass
 

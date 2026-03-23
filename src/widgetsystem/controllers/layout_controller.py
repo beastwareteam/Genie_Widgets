@@ -7,11 +7,15 @@ This controller encapsulates all layout-related operations:
 - CDockManager flag configuration
 """
 
+import logging
 from pathlib import Path
 from typing import Any
 
-import PySide6QtAds as QtAds
 from PySide6.QtCore import QByteArray, QObject, Signal
+import PySide6QtAds as QtAds
+
+
+logger = logging.getLogger(__name__)
 
 
 class LayoutController(QObject):
@@ -82,7 +86,7 @@ class LayoutController(QObject):
         if default_layout_id:
             for layout in self._layout_factory.list_layouts():
                 if layout.layout_id == default_layout_id:
-                    return layout.file_path
+                        return layout.file_path  # type: ignore[no-any-return]
 
         return (Path.cwd() / "data" / "layout.xml").resolve()
 
@@ -135,21 +139,21 @@ class LayoutController(QObject):
 
         try:
             state: QByteArray = self._dock_manager.saveState()
-            print(f"[SAVE] State size: {len(state.data())} bytes")
+            logger.debug("State size: %s bytes", len(state.data()))
 
             target_path.parent.mkdir(parents=True, exist_ok=True)
             target_path.write_bytes(state.data())
 
             written_size = target_path.stat().st_size
-            print(f"[SAVE] Written to {target_path}")
-            print(f"[SAVE] Actual file size: {written_size} bytes")
-            print("[SAVE] [+] Save completed successfully")
+            logger.debug("Written to %s", target_path)
+            logger.debug("Actual file size: %s bytes", written_size)
+            logger.debug("Save completed successfully")
 
             self.layoutSaved.emit(str(target_path))
             return True
 
         except Exception as exc:
-            print(f"[SAVE] [X] Error: {exc}")
+            logger.exception("Error")
             return False
 
     def load(self, path: Path | None = None) -> bool:
@@ -164,30 +168,30 @@ class LayoutController(QObject):
         target_path = path or self._layout_file
 
         try:
-            print(f"[LOAD] Attempting to load from {target_path}")
+            logger.debug("Attempting to load from %s", target_path)
 
             if not target_path.exists():
-                print("[LOAD] [X] File does not exist")
+                logger.warning("File does not exist")
                 self.layoutLoadFailed.emit(str(target_path), "File not found")
                 return False
 
             data = target_path.read_bytes()
-            print(f"[LOAD] Read {len(data)} bytes from file")
+            logger.debug("Read %s bytes from file", len(data))
 
             restored = self._dock_manager.restoreState(QByteArray(data))
-            print(f"[LOAD] restoreState returned: {restored}")
+            logger.debug("restoreState returned: %s", restored)
 
             if not restored:
-                print("[LOAD] [X] restoreState failed")
+                logger.error("restoreState failed")
                 self.layoutLoadFailed.emit(str(target_path), "restoreState failed")
                 return False
 
-            print("[LOAD] [+] Layout restored successfully")
+            logger.debug("Layout restored successfully")
             self.layoutLoaded.emit(str(target_path))
             return True
 
         except Exception as exc:
-            print(f"[LOAD] [X] Exception: {exc}")
+            logger.exception("Exception")
             self.layoutLoadFailed.emit(str(target_path), str(exc))
             return False
 
@@ -197,31 +201,31 @@ class LayoutController(QObject):
         Returns:
             True if load succeeded, False otherwise
         """
-        print("[STARTUP_LOAD] Starting layout restoration")
+        logger.debug("Starting layout restoration")
 
         try:
-            print(f"[STARTUP_LOAD] Checking {self._layout_file}")
+            logger.debug("Checking %s", self._layout_file)
 
             if not self._layout_file.exists():
-                print("[STARTUP_LOAD] [!] File does not exist, skipping restore")
+                logger.warning("File does not exist, skipping restore")
                 return False
 
-            print("[STARTUP_LOAD] File exists, attempting restore")
+            logger.debug("File exists, attempting restore")
             data = self._layout_file.read_bytes()
-            print(f"[STARTUP_LOAD] Read {len(data)} bytes")
+            logger.debug("Read %s bytes", len(data))
 
             restored = self._dock_manager.restoreState(QByteArray(data))
-            print(f"[STARTUP_LOAD] restoreState returned: {restored}")
+            logger.debug("restoreState returned: %s", restored)
 
             if not restored:
-                print("[STARTUP_LOAD] [!] restoreState failed")
+                logger.warning("restoreState failed")
                 return False
 
-            print("[STARTUP_LOAD] [+] Restored successfully")
+            logger.debug("Restored successfully")
             return True
 
         except Exception as exc:
-            print(f"[STARTUP_LOAD] [X] Exception: {exc}")
+            logger.exception("Exception")
             return False
 
     def load_named(self, layout: Any) -> bool:
@@ -262,7 +266,7 @@ class LayoutController(QObject):
         Returns:
             List of LayoutDefinition objects
         """
-        return self._layout_factory.list_layouts()
+        return self._layout_factory.list_layouts()  # type: ignore[no-any-return]
 
     def get_default_layout_id(self) -> str | None:
         """Get the default layout ID.
@@ -270,4 +274,4 @@ class LayoutController(QObject):
         Returns:
             Default layout ID or None
         """
-        return self._layout_factory.get_default_layout_id()
+        return self._layout_factory.get_default_layout_id()  # type: ignore[no-any-return]

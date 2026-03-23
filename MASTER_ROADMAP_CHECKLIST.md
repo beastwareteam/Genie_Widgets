@@ -278,10 +278,10 @@ Aus dem vollständigen Projekt-Audit ergänzte Drift-Kandidaten:
 | D-007 | Geltungsbereich | `data/` nicht in Roadmap Sektion 5.1 erfasst | Enthält `layout.xml`, `layout_alt.xml`, `layouts.json`, `themes.json` — teils aktiv genutzt | Offen | Sektion 5.1 ergänzen, Inhalt klären (A-003) |
 | D-008 | Geltungsbereich | `examples/` nicht in Roadmap Sektion 5.1 erfasst | 3 Demo-Dateien; `phase_5_demo.py` undokumentiert | Offen | Sektion 5.1 ergänzen, `phase_5_demo.py` dokumentieren |
 | D-009 | Dokumentation | [PROJECT_STRUCTURE_VERIFICATION.md](PROJECT_STRUCTURE_VERIFICATION.md) nicht in Roadmap verlinkt | Historisches Dokument (07.03.2026), erklärt Herkunft von Debug-Modulen und Test-Skripten | Offen | In Sektion 2 oder 5 als historischen Ankerpunkt aufnehmen |
-| D-010 | README | `README.md` behauptet „27 UI Components" — tatsächlich 14 Module | 14 Python-Dateien in `src/widgetsystem/ui/` bestätigt per Dateisystem-Scan | Offen | README.md + docs/README.md + docs/UI_COMPONENTS.md auf 14 korrigieren |
+| D-010 | README | `README.md` behauptet „27 UI Components" — tatsächlich 14 Module | 14 Python-Dateien in `src/widgetsystem/ui/` bestätigt per Dateisystem-Scan | Bereinigt | README.md + docs/README.md wurden auf 14 korrigiert |
 | D-011 | Daten | Root-`layout.xml` (1375 Bytes) koexistiert mit `data/layout.xml` (999 Bytes) | Beide aktiv genutzt von verschiedenen Code-Stellen — echter Konfigurationssplit | Offen | Mit A-001 zusammenführen: eine kanonische Layout-Quelle festlegen |
 | D-012 | Matrix-Vollständigkeit | Claim: Matrix hat 14 UI-Einträge, README nennt 27 | Befund: Matrix ist vollständig — README-Zahl ist falsch (D-010) | Bereinigt | Kein Matrixhandlungsbedarf — wird durch D-010-Korrektur aufgelöst |
-| D-013 | README | `README.md` behauptet „49 test modules" — tatsächlich 54 Dateien | 54 .py-Dateien in `tests/` bestätigt per Scan | Offen | README.md auf 54 korrigieren |
+| D-013 | README | `README.md` behauptet „49 test modules" — tatsächlich 56 Dateien (47 `test_*.py` + 7 `check_*.py` + 2 `verify_*.py`) | 56 .py-Dateien in `tests/` bestätigt per Scan | Bereinigt | README.md + docs/README.md wurden auf 56 korrigiert |
 | D-014 | Geltungsbereich | `archive/` nicht in Roadmap Sektion 5.1 erfasst | Enthält 5 Profil-JSONs identisch mit aktiven Profilen + 1 identisches QSS | Offen | Als explizit ausgeschlossenen/archivierten Bereich in Checklist vermerken |
 ---
 

@@ -1,5 +1,6 @@
 """Complete Visual Application - Demonstrates all structural elements with full visual layer."""
 
+import logging
 from pathlib import Path
 import sys
 from typing import Any
@@ -36,6 +37,9 @@ from widgetsystem.ui.visual_layer import (
     ViewerConfig,
     VisualDashboard,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class VisualMainWindow(QMainWindow):
@@ -287,19 +291,19 @@ class VisualMainWindow(QMainWindow):
 
     def _show_lists_viewer(self) -> None:
         """Show lists viewer dock."""
-        print("✅ Listen-Viewer angezeigt")
+        logger.info("✅ Listen-Viewer angezeigt")
 
     def _show_menus_viewer(self) -> None:
         """Show menus viewer dock."""
-        print("✅ Menü-Viewer angezeigt")
+        logger.info("✅ Menü-Viewer angezeigt")
 
     def _show_tabs_viewer(self) -> None:
         """Show tabs viewer dock."""
-        print("✅ Tabs-Viewer angezeigt")
+        logger.info("✅ Tabs-Viewer angezeigt")
 
     def _show_panels_viewer(self) -> None:
         """Show panels viewer dock."""
-        print("✅ Panels-Viewer angezeigt")
+        logger.info("✅ Panels-Viewer angezeigt")
 
     def _show_configuration(self) -> None:
         """Show configuration panel."""
@@ -337,9 +341,9 @@ class VisualMainWindow(QMainWindow):
             stylesheet = self.theme_factory.get_default_stylesheet()
             if stylesheet:
                 self.setStyleSheet(stylesheet)
-                print("✅ Standard-Theme angewendet")
+                logger.info("✅ Standard-Theme angewendet")
         except Exception as e:
-            print(f"⚠️  Theme konnte nicht angewendet werden: {e}")
+            logger.exception("Theme konnte nicht angewendet werden")
 
     def _apply_theme_by_id(self, theme_id: str) -> None:
         """Apply theme by ID."""
@@ -349,9 +353,9 @@ class VisualMainWindow(QMainWindow):
             if theme and theme.file_path.exists():
                 stylesheet = theme.file_path.read_text(encoding="utf-8")
                 self.setStyleSheet(stylesheet)
-                print(f"✅ Theme '{theme.name}' angewendet")
+                logger.info("✅ Theme '%s' angewendet", theme.name)
         except Exception as e:
-            print(f"⚠️  Theme konnte nicht angewendet werden: {e}")
+            logger.exception("Theme konnte nicht angewendet werden")
 
     def _on_theme_triggered(self, checked: bool, theme_id: str) -> None:
         """Handle theme selection from menu."""
@@ -385,7 +389,7 @@ class VisualMainWindow(QMainWindow):
                 """Apply theme from editor."""
                 if "stylesheet" in theme_data:
                     self.setStyleSheet(theme_data["stylesheet"])
-                    print("✅ Theme aus Editor angewendet")
+                    logger.info("✅ Theme aus Editor angewendet")
 
             dialog = ThemeEditorDialog(Path("config"), apply_theme, self)
             dialog.exec()
@@ -452,34 +456,34 @@ def main() -> None:
     """Entry point for visual application."""
     app = QApplication(sys.argv)
 
-    print("=" * 70)
-    print("🚀 WidgetSystem - VISUELLE EBENE (Visual Layer)")
-    print("=" * 70)
-    print()
-    print("✅ Anwendung wird gestartet...")
-    print("✅ Alle Factories werden initialisiert...")
-    print("✅ Viewer werden erstellt...")
-    print("✅ Docking-System wird konfiguriert...")
-    print()
+    logger.info("=" * 70)
+    logger.info("🚀 WidgetSystem - VISUELLE EBENE (Visual Layer)")
+    logger.info("=" * 70)
+    logger.info("")
+    logger.info("Anwendung wird gestartet...")
+    logger.info("Alle Factories werden initialisiert...")
+    logger.info("Viewer werden erstellt...")
+    logger.info("Docking-System wird konfiguriert...")
+    logger.info("")
 
     window = VisualMainWindow()
     window.show()
 
-    print("=" * 70)
-    print("✨ VISUELLE EBENE IST AKTIV")
-    print("=" * 70)
-    print()
-    print("Verfügbare Komponenten:")
-    print("  📋 Listen-Viewer (Links)")
-    print("  📝 Menü-Viewer (Links)")
-    print("  📑 Tabs-Viewer (Rechts)")
-    print("  📦 Panels-Viewer (Rechts)")
-    print()
-    print("Aktionen:")
-    print("  🎨 Themes im Toolbar wählbar")
-    print("  ⚙️  Konfigurationspanel erreichbar")
-    print("  📊 Dashboard für Übersicht verfügbar")
-    print()
+    logger.info("=" * 70)
+    logger.info("✨ VISUELLE EBENE IST AKTIV")
+    logger.info("=" * 70)
+    logger.info("")
+    logger.info("Verfügbare Komponenten:")
+    logger.info("  📋 Listen-Viewer (Links)")
+    logger.info("  📝 Menü-Viewer (Links)")
+    logger.info("  📑 Tabs-Viewer (Rechts)")
+    logger.info("  📦 Panels-Viewer (Rechts)")
+    logger.info("")
+    logger.info("Aktionen:")
+    logger.info("  🎨 Themes im Toolbar wählbar")
+    logger.info("  ⚙️  Konfigurationspanel erreichbar")
+    logger.info("  📊 Dashboard für Übersicht verfügbar")
+    logger.info("")
 
     sys.exit(app.exec())
 

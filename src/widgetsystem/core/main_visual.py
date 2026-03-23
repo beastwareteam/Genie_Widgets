@@ -1,5 +1,6 @@
 """Extended Main Window - Integrates visual layer with configuration system."""
 
+import logging
 from pathlib import Path
 import sys
 from typing import Any
@@ -39,6 +40,9 @@ from widgetsystem.ui.visual_layer import (
     ViewerConfig,
     VisualDashboard,
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 class ExtendedMainWindow(QMainWindow):
@@ -255,7 +259,7 @@ class ExtendedMainWindow(QMainWindow):
     def _toggle_viewer(self, viewer_name: str) -> None:
         """Toggle viewer visibility."""
         if viewer_name in self.viewers:
-            print(f"✅ {viewer_name.capitalize()}-Viewer toggled")
+            logger.info("✅ %s-Viewer toggled", viewer_name.capitalize())
 
     def _show_configuration_panel(self) -> None:
         """Show configuration panel."""
@@ -292,9 +296,9 @@ class ExtendedMainWindow(QMainWindow):
             stylesheet = self.theme_factory.get_default_stylesheet()
             if stylesheet:
                 self.setStyleSheet(stylesheet)
-                print("✅ Standard-Theme angewendet")
+                logger.info("✅ Standard-Theme angewendet")
         except Exception as e:
-            print(f"⚠️  Theme konnte nicht angewendet werden: {e}")
+            logger.exception("Theme konnte nicht angewendet werden")
 
     def _apply_theme_by_id(self, theme_id: str) -> None:
         """Apply theme by ID."""
@@ -304,9 +308,9 @@ class ExtendedMainWindow(QMainWindow):
             if theme and theme.file_path.exists():
                 stylesheet = theme.file_path.read_text(encoding="utf-8")
                 self.setStyleSheet(stylesheet)
-                print(f"✅ Theme '{theme.name}' angewendet")
+                logger.info("✅ Theme '%s' angewendet", theme.name)
         except Exception as e:
-            print(f"⚠️  Theme konnte nicht angewendet werden: {e}")
+            logger.exception("Theme konnte nicht angewendet werden")
 
     def _on_theme_triggered(self, checked: bool, theme_id: str) -> None:
         """Handle theme selection from menu."""
@@ -356,33 +360,33 @@ def main(visual_layer: bool = True) -> None:
     """Entry point."""
     app = QApplication(sys.argv)
 
-    print("=" * 70)
-    print("🚀 WidgetSystem - ERWEITERTE ANWENDUNG")
-    print("=" * 70)
-    print()
-    print("Ebenen:")
-    print("  ✅ Konfigurationsebene (Config + Editor)")
-    print(
+    logger.info("=" * 70)
+    logger.info("🚀 WidgetSystem - ERWEITERTE ANWENDUNG")
+    logger.info("=" * 70)
+    logger.info("")
+    logger.info("Ebenen:")
+    logger.info("  ✅ Konfigurationsebene (Config + Editor)")
+    logger.info(
         "  ✅ Visuelle Ebene (Viewer + Dashboard)"
         if visual_layer
         else "  ❌ Visuelle Ebene (deaktiviert)",
     )
-    print("  ✅ Docking-System (QtAds)")
-    print()
-    print("Komponenten:")
-    print("  ✅ 10 Factories")
-    print("  ✅ 11 JSON-Konfigurationen")
-    print("  ✅ 4 Viewer (Listen, Menüs, Tabs, Panels)")
-    print("  ✅ ConfigurationPanel (6 Tabs)")
-    print()
+    logger.info("  ✅ Docking-System (QtAds)")
+    logger.info("")
+    logger.info("Komponenten:")
+    logger.info("  ✅ 10 Factories")
+    logger.info("  ✅ 11 JSON-Konfigurationen")
+    logger.info("  ✅ 4 Viewer (Listen, Menüs, Tabs, Panels)")
+    logger.info("  ✅ ConfigurationPanel (6 Tabs)")
+    logger.info("")
 
     window = ExtendedMainWindow(enable_visual_layer=visual_layer)
     window.show()
 
-    print("=" * 70)
-    print("✨ ANWENDUNG IST BEREIT")
-    print("=" * 70)
-    print()
+    logger.info("=" * 70)
+    logger.info("✨ ANWENDUNG IST BEREIT")
+    logger.info("=" * 70)
+    logger.info("")
 
     sys.exit(app.exec())
 

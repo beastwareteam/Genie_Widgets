@@ -1,9 +1,9 @@
 """Theme factory for managing theme definitions and loading theme configurations."""
 
 from dataclasses import dataclass
+import json
 from pathlib import Path
 from typing import Any
-import json
 
 
 @dataclass
@@ -57,8 +57,7 @@ class SimpleThemeProfile:
             OSError: If file cannot be read
         """
         data = json.loads(file_path.read_text(encoding="utf-8"))
-        profile = SimpleThemeProfile(data.get("id", ""), data.get("name", ""))
-        return profile
+        return SimpleThemeProfile(data.get("id", ""), data.get("name", ""))
 
     def save_to_file(self, file_path: Path) -> None:
         """Save simple theme profile to a JSON file.
@@ -150,7 +149,7 @@ class ThemeFactory:
 
         for theme in themes_data:
             if not isinstance(theme, dict):
-                continue
+                    continue  # type: ignore[unreachable]
 
             # Check for required fields
             theme_id = theme.get("id")
