@@ -1,0 +1,9 @@
+# Code Owners - Genie Widgets
+# Diese Personen werden automatisch als Reviewer zu PRs hinzugefügt
+
+# Standard: Beide Teammitglieder reviewen alles
+* @beastwareteam
+
+# Optional: Spezifische Bereiche zuweisen
+# /src/widgetsystem/ui/ @user-a
+# /src/widgetsystem/controllers/ @user-b
