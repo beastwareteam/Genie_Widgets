@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 # ── Constants ────────────────────────────────────────────────────────────────
 
 COLLAPSED_HEIGHT: int = 3       # Visual height of the accent strip
-COLLAPSED_HIT_HEIGHT: int = 8  # Hit area when collapsed (larger for easier hover)
+COLLAPSED_HIT_HEIGHT: int = 6   # Hit area when collapsed (small to not overlap toolbar)
 EXPANDED_HEIGHT: int = 36      # Full titlebar height on hover
 ANIMATION_DURATION: int = 160   # ms
 
@@ -209,6 +209,13 @@ class InlayTitleBar(QWidget):
             return
         logger.debug("_collapse() - Starting collapse animation")
         self._expanded = False
+        self._collapse_timer.stop()
+
+        # Hide content immediately
+        self._set_content_visible(False)
+
+        # Allow height to shrink
+        self.setMinimumHeight(0)
 
         self._anim.stop()
         self._anim.setStartValue(self.maximumHeight())
@@ -216,8 +223,6 @@ class InlayTitleBar(QWidget):
         self._anim.start()
 
         self.contentOffsetChanged.emit(COLLAPSED_HEIGHT)
-
-        self._collapse_timer.stop()
 
     def _on_anim_finished(self) -> None:
         if not self._expanded:
@@ -258,20 +263,22 @@ class InlayTitleBar(QWidget):
 
         Uses global screen coordinates so that hovering over child widgets
         (buttons, label) is correctly treated as still being inside the bar.
+        Adds a small margin below to prevent flickering at the edge.
         """
         cursor_pos = QCursor.pos()
 
-        # Build the titlebar rect in global screen coordinates.
+        # Build the titlebar rect in global screen coordinates with extra margin below.
         # mapToGlobal(QPoint(0, 0)) gives us the top-left corner on screen;
         # combining it with the widget's current size covers every child widget too.
+        # Add 8px margin below to prevent collapse when cursor is near edge
         titlebar_global_rect = QRect(
             self.mapToGlobal(QPoint(0, 0)),
-            QSize(self.width(), self.height()),
+            QSize(self.width(), self.height() + 8),
         )
 
         is_inside = titlebar_global_rect.contains(cursor_pos)
         logger.debug(f"_check_collapse() - Cursor inside: {is_inside}")
-        
+
         if not is_inside:
             logger.debug("_check_collapse() - Cursor outside, collapsing...")
             self._collapse_timer.stop()

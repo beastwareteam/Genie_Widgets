@@ -42,7 +42,12 @@ from widgetsystem.factories.tabs_factory import Tab, TabGroup, TabsFactory
 from widgetsystem.factories.theme_factory import ThemeDefinition, ThemeFactory
 from widgetsystem.factories.ui_config_factory import UIConfigFactory
 from widgetsystem.core.plugin_system import PluginManager, PluginRegistry
-from widgetsystem.ui import ConfigurationPanel, InlayTitleBarController, PluginManagerDialog
+from widgetsystem.ui import (
+    ConfigurationPanel,
+    EnhancedTabWidget,
+    PluginManagerDialog,
+    TabDropIndicatorController,
+)
 
 # Import constants from inlay_titlebar
 try:
@@ -189,6 +194,9 @@ class MainWindow(QMainWindow):
         self.theme_ctrl = ThemeController(self.theme_factory)
         self.theme_ctrl.set_tab_color_controller(self.tab_sys.tab_color_controller)
 
+        # TabDropIndicator - visual feedback for tab drag & drop
+        self._tab_drop_indicator: TabDropIndicatorController | None = None
+
         # =================================================================
         # Legacy compatibility - keep old references for gradual migration
         # =================================================================
@@ -207,8 +215,8 @@ class MainWindow(QMainWindow):
         
         # Create Toolbar and dock areas FIRST
         self._create_toolbar()
-        self._create_dock_areas()
-        self._create_tab_groups()
+        # Use DockController for unified dock/tab creation with full features
+        self.dock_ctrl.build_from_config()
         
         # Create inlay titlebar LAST (so it's on top)
         self._create_inlay_title_bar()
@@ -269,6 +277,9 @@ class MainWindow(QMainWindow):
         )
         QtAds.CDockManager.setConfigFlag(
             QtAds.CDockManager.eConfigFlag.DockAreaHasUndockButton, True
+        )
+        QtAds.CDockManager.setConfigFlag(
+            QtAds.CDockManager.eConfigFlag.DisableTabTextEliding, True
         )
         # Use Qt custom title bar for floating containers (not Windows native)
         QtAds.CDockManager.setConfigFlag(
@@ -372,6 +383,9 @@ class MainWindow(QMainWindow):
 
     def _create_tab_groups(self) -> None:
         """Create dock panels from TabsFactory configuration (nested tabs)."""
+        # Initialize drop indicator controller for visual DnD feedback
+        self._tab_drop_indicator = TabDropIndicatorController(self)
+
         try:
             tab_groups = self.tabs_factory.load_tab_groups()
             for tab_group in tab_groups:
@@ -385,10 +399,14 @@ class MainWindow(QMainWindow):
         if area is None:
             return
 
-        # Create tab widget
-        tab_widget = QTabWidget()
-        tab_widget.setDocumentMode(True)
-        tab_widget.setTabsClosable(True)
+        # Create enhanced tab widget with full DnD, nesting, and undo/redo support
+        tab_widget = EnhancedTabWidget()
+        tab_widget.setObjectName(f"tab_group_{tab_group.id}")
+
+        # Connect drop zone signals for visual indicator
+        tab_widget.dropZoneChanged.connect(self._on_tab_drop_zone_changed)
+        tab_widget.tabNested.connect(self._on_tab_nested)
+        tab_widget.tabFloated.connect(self._on_tab_floated)
 
         # Add tabs recursively
         for tab in tab_group.tabs:
@@ -436,27 +454,50 @@ class MainWindow(QMainWindow):
                 close_btn.setIconSize(QSize(10, 10))
                 close_btn.setFixedSize(QSize(14, 14))
 
-    def _add_tab_recursive(self, parent_widget: QTabWidget, tab: Tab, depth: int = 0) -> None:
+    def _add_tab_recursive(
+        self, parent_widget: EnhancedTabWidget, tab: Tab, depth: int = 0
+    ) -> None:
         """Recursively add tabs (handling nested children)."""
         # Translate tab name using i18n
         tab_name = self.i18n_factory.translate(tab.title_key, default=tab.id)
 
         if tab.children:
             # Tab has nested children - create sub-tab widget
-            sub_tab_widget = QTabWidget()
-            sub_tab_widget.setDocumentMode(True)
-            sub_tab_widget.setTabsClosable(True)
+            sub_tab_widget = EnhancedTabWidget()
+            sub_tab_widget.setObjectName(f"nested_{tab.id}")
+            sub_tab_widget.setProperty("parent_tab_id", tab.id)
+
+            # Connect signals for nested widget
+            sub_tab_widget.dropZoneChanged.connect(self._on_tab_drop_zone_changed)
+            sub_tab_widget.tabNested.connect(self._on_tab_nested)
+            sub_tab_widget.tabFloated.connect(self._on_tab_floated)
 
             for child_tab in tab.children:
                 self._add_tab_recursive(sub_tab_widget, child_tab, depth=depth + 1)
 
-            parent_widget.addTab(sub_tab_widget, tab_name)
+            # Add container tab with count indicator
+            parent_widget.addTab(
+                sub_tab_widget,
+                f"[{sub_tab_widget.count()}]",
+                tab_id=tab.id,
+                closable=tab.closable,
+                movable=tab.movable,
+                floatable=tab.floatable,
+            )
             # Style close buttons after tabs are added
             self._style_tab_widget(sub_tab_widget)
         else:
-            # Leaf tab - add placeholder content
+            # Leaf tab - add placeholder content with full metadata
             content_widget = QWidget()
-            parent_widget.addTab(content_widget, tab_name)
+            content_widget.setObjectName(f"content_{tab.id}")
+            parent_widget.addTab(
+                content_widget,
+                tab_name,
+                tab_id=tab.id,
+                closable=tab.closable,
+                movable=tab.movable,
+                floatable=tab.floatable,
+            )
 
         # Set active tab if specified
         if tab.active and depth == 0:
@@ -663,6 +704,75 @@ class MainWindow(QMainWindow):
             shortcut.activated.connect(handler)
             self.global_shortcuts.append(shortcut)
 
+        # Undo/Redo shortcuts for tab operations
+        undo_shortcut = QShortcut(QKeySequence("Ctrl+Z"), self)
+        undo_shortcut.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        undo_shortcut.activated.connect(self._on_undo)
+        self.global_shortcuts.append(undo_shortcut)
+
+        redo_shortcut = QShortcut(QKeySequence("Ctrl+Y"), self)
+        redo_shortcut.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        redo_shortcut.activated.connect(self._on_redo)
+        self.global_shortcuts.append(redo_shortcut)
+
+    # ------------------------------------------------------------------
+    # Tab Event Handlers (EnhancedTabWidget integration)
+    # ------------------------------------------------------------------
+
+    def _on_tab_drop_zone_changed(
+        self, zone: str, target_index: int, rect: Any
+    ) -> None:
+        """Handle drop zone changes for visual indicator.
+
+        Args:
+            zone: Drop zone type (none, before, into, after, end)
+            target_index: Target tab index
+            rect: Highlight rectangle (QRect or None)
+        """
+        if not self._tab_drop_indicator:
+            return
+
+        # Get the sender (EnhancedTabWidget) and its tab bar
+        sender = self.sender()
+        if sender and hasattr(sender, "tabBar"):
+            tab_bar = sender.tabBar()
+            self._tab_drop_indicator.set_tab_bar(tab_bar)
+            self._tab_drop_indicator.on_drop_zone_changed(zone, target_index, rect)
+
+    def _on_tab_nested(self, nested_tab_id: str, parent_tab_id: str) -> None:
+        """Handle tab nesting event.
+
+        Args:
+            nested_tab_id: ID of the nested tab
+            parent_tab_id: ID of the parent/container tab
+        """
+        print(f"[TAB] Nested '{nested_tab_id}' into '{parent_tab_id}'")
+
+    def _on_tab_floated(self, tab_id: str, widget: QWidget) -> None:
+        """Handle tab float request - create floating window.
+
+        Args:
+            tab_id: ID of the floated tab
+            widget: Content widget to float
+        """
+        print(f"[TAB] Float requested for '{tab_id}'")
+        # TODO: Create floating dock window for the tab content
+        # For now, just log the request
+
+    def _on_undo(self) -> None:
+        """Handle undo shortcut (Ctrl+Z)."""
+        undo_manager = EnhancedTabWidget.get_undo_manager()
+        if undo_manager.can_undo():
+            undo_manager.undo()
+            print("[UNDO] Tab operation undone")
+
+    def _on_redo(self) -> None:
+        """Handle redo shortcut (Ctrl+Y)."""
+        undo_manager = EnhancedTabWidget.get_undo_manager()
+        if undo_manager.can_redo():
+            undo_manager.redo()
+            print("[REDO] Tab operation redone")
+
     def _get_action_handler(self, action_name: str | ActionName) -> Any:
         """Get handler function for named action.
 
@@ -699,35 +809,25 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
 
     def _create_inlay_title_bar(self) -> None:
-        """Install the hover-expand inlay title bar as a pure overlay.
+        """Install the hover-expand inlay title bar as menu widget.
 
-        The title bar always stays on top and never shifts toolbar/dock content.
+        The title bar gets its own space above the toolbar, not overlapping content.
         """
-        print("[TITLEBAR] Creating InlayTitleBar (overlay mode)...")
-        self._inlay_controller = InlayTitleBarController(self)
-        self._inlay_controller.install()
-        self._inlay_controller.set_title("WidgetSystem - Advanced Docking")
+        print("[TITLEBAR] Creating InlayTitleBar (menu widget mode)...")
 
-        if self._inlay_controller.titlebar:
-            tb = self._inlay_controller.titlebar
-            print(f"[TITLEBAR] TitleBar created: {type(tb).__name__}")
-            
-            # Set initial geometry
-            tb_height = tb.height()
-            tb.setGeometry(0, 0, self.width(), tb_height)
+        # Import here to avoid circular imports
+        from widgetsystem.ui.inlay_titlebar import InlayTitleBar
 
-            # Raise to top of Z-order (above toolbar and dock manager)
-            tb.raise_()
-            tb.setVisible(True)
-            tb.update()
+        # Create titlebar directly and set as menu widget
+        self._titlebar = InlayTitleBar(self)
+        self._titlebar.set_title("WidgetSystem - Advanced Docking")
 
-            print(f"[TITLEBAR] Geometry: {tb.geometry()}, Visible: {tb.isVisible()}")
-            print("[TITLEBAR] OK - overlay mode, no layout shift on expand")
-        else:
-            print("[TITLEBAR] ERROR: titlebar is None!")
+        # setMenuWidget places it above toolbar in QMainWindow layout
+        self.setMenuWidget(self._titlebar)
 
-        # Initial layout sync only. Content does not react to hover expansion.
-        self._sync_content_geometry(COLLAPSED_HEIGHT)
+        print(f"[TITLEBAR] TitleBar created: {type(self._titlebar).__name__}")
+        print(f"[TITLEBAR] Height: {self._titlebar.height()}")
+        print("[TITLEBAR] OK - menu widget mode, has its own space")
     
     def _on_titlebar_height_changed(self, new_height: int) -> None:
         """No-op in overlay mode.
@@ -769,11 +869,8 @@ class MainWindow(QMainWindow):
 
         w = self.width()
 
-        # Keep inlay titlebar spanning the full window width.
-        if hasattr(self, "_inlay_controller") and self._inlay_controller.titlebar:
-            tb = self._inlay_controller.titlebar
-            tb.setGeometry(0, 0, w, tb.height())
-            tb.raise_()
+        # Titlebar is now a menu widget - QMainWindow handles its width automatically
+        _ = w  # width handled by QMainWindow layout
 
         # Keep dock manager filling remaining space below toolbar.
         if hasattr(self, "_toolbar") and self._toolbar and hasattr(self, "dock_manager"):
@@ -828,13 +925,12 @@ class MainWindow(QMainWindow):
         """Create toolbar with dock management and menu buttons."""
         toolbar = QToolBar(self.i18n_factory.translate("toolbar.title", default="Dock Tools"))
         
-        # Add top margin to create spacing below InlayTitleBar
-        # TitleBar is 3px (collapsed) or 36px (expanded), we add 2px spacing
-        toolbar.setStyleSheet(f"""
-            QToolBar {{
-                margin-top: {COLLAPSED_HEIGHT + TITLEBAR_SPACING}px;
+        toolbar.setStyleSheet("""
+            QToolBar {
+                margin: 0px;
+                padding: 0px;
                 spacing: 2px;
-            }}
+            }
         """)
         
         # Add toolbar to top area
@@ -1069,9 +1165,18 @@ class MainWindow(QMainWindow):
             # Recreate dock manager
             self.dock_manager = QtAds.CDockManager(self)
 
-            # Rebuild dock areas and tab groups
-            self._create_dock_areas()
-            self._create_tab_groups()
+            # Rebuild dock areas and tab groups via DockController
+            # Re-create DockController with new dock_manager
+            self.dock_ctrl = DockController(
+                self.dock_manager,
+                self.panel_factory,
+                self.tabs_factory,
+                self.i18n_factory,
+            )
+            self.dock_ctrl.dockAdded.connect(
+                lambda dock_id, dock: self.tab_sys.track_dock_widget(dock_id, dock)
+            )
+            self.dock_ctrl.build_from_config()
 
             # Re-initialize tab subsystem controllers
             self._reinitialize_tab_controllers()

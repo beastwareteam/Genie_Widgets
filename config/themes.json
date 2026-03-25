@@ -4,7 +4,21 @@
         {
             "id": "dark",
             "name": "Dark",
-            "stylesheet": "../themes/dark.qss"
+            "stylesheet": "../themes/dark.qss",
+            "tab_colors": {
+                "bar_bg": ["#1E1F21", "#252628"],
+                "bar_border": "#151617",
+                "inactive_gradient": ["#4E5155", "#45484C", "#36393D", "#2E3134"],
+                "active_gradient": ["#5C6066", "#52565B", "#42464A", "#3A3D41"],
+                "hover_gradient": ["#5A5E63", "#505458", "#404448", "#38393D"],
+                "inactive_borders": ["#5A5D62", "#4A4D52", "#28292C"],
+                "active_borders": ["#707580", "#5C6065", "#35383C"],
+                "hover_borders": ["#686D73", "#555A5F", "#303235"],
+                "inactive_text": "#A8A8A8",
+                "active_text": "#FFFFFF",
+                "hover_text": "#E0E0E0",
+                "accent_border": "#5294D6"
+            }
         },
         {
             "id": "light",

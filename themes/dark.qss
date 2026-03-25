@@ -1,5 +1,44 @@
 /* ============================================================================
    DARK THEME - Professional Dark Mode with Optimal Contrast
+   ============================================================================
+
+   COLOR REFERENCE (sync with ThemeColors in theme_profile.py):
+
+   Tab Bar Background:
+     tab_bar_bg_top:      #1E1F21
+     tab_bar_bg_bottom:   #252628
+     tab_bar_border:      #151617
+
+   Inactive Tab Gradient:
+     tab_gradient_top:    #4E5155
+     tab_gradient_upper:  #45484C
+     tab_gradient_lower:  #36393D
+     tab_gradient_bottom: #2E3134
+
+   Active Tab Gradient:
+     tab_active_gradient_top:    #5C6066
+     tab_active_gradient_upper:  #52565B
+     tab_active_gradient_lower:  #42464A
+     tab_active_gradient_bottom: #3A3D41
+
+   Hover Tab Gradient:
+     tab_hover_gradient_top:    #5A5E63
+     tab_hover_gradient_upper:  #505458
+     tab_hover_gradient_lower:  #404448
+     tab_hover_gradient_bottom: #38393D
+
+   Tab Borders (3D effect):
+     Inactive: top #5A5D62, left #4A4D52, right #28292C
+     Active:   top #707580, left #5C6065, right #35383C
+     Hover:    top #686D73, left #555A5F, right #303235
+
+   Tab Text:
+     inactive: #A8A8A8 (tab_inactive_text)
+     active:   #FFFFFF (tab_active_text)
+     hover:    #E0E0E0 (tab_hover_text)
+
+   Accent Border: #5294D6 (tab_active_border)
+
    ============================================================================ */
 
 /* Main Window & General */
@@ -93,16 +132,14 @@ ads--CDockWidgetTab {
                                 stop:0.95 #36393D,
                                 stop:1 #2E3134);
     color: #A8A8A8;
-    padding: 3px 10px;
-    margin: 3px 3px 0px 0px;
+    padding: 2px;
+    margin: 2px 1px 0px 2px;
     border-top: 1px solid #5A5D62;
     border-left: 1px solid #4A4D52;
     border-right: 1px solid #28292C;
     border-bottom: none;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
-    min-height: 18px;
-    max-height: 18px;
 }
 
 /* Hover - etwas heller */
@@ -196,13 +233,11 @@ QTabBar {
     color: #E0E0E0;
     border: none;
     border-top: 1px solid #151617;
-    min-height: 26px;
-    max-height: 26px;
 }
 
 /* QTabWidget Header-Bereich */
 QTabWidget::tab-bar {
-    left: 4px;
+    left: 0px;
 }
 
 /* Inaktive Subtabs - erhaben, 3D-Effekt mit Licht von oben */
@@ -213,17 +248,14 @@ QTabBar::tab {
                                 stop:0.95 #36393D,
                                 stop:1 #2E3134);
     color: #A8A8A8;
-    padding: 3px 8px 3px 10px;
-    margin: 3px 3px 0px 0px;
+    padding: 2px 4px;
+    margin: 2px 1px 0px 2px;
     border-top: 1px solid #5A5D62;
     border-left: 1px solid #4A4D52;
     border-right: 1px solid #28292C;
     border-bottom: none;
     border-top-left-radius: 4px;
     border-top-right-radius: 4px;
-    min-width: 50px;
-    min-height: 18px;
-    max-height: 18px;
     font-size: 11px;
 }
 
@@ -240,7 +272,7 @@ QTabBar::tab:hover {
     border-right: 1px solid #303235;
 }
 
-/* Aktiver Subtab - am hellsten, Akzent-Border zur Unterscheidung */
+/* Aktiver Subtab - identisch mit Dock Tabs */
 QTabBar::tab:selected {
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                                 stop:0 #5C6066,
@@ -249,7 +281,7 @@ QTabBar::tab:selected {
                                 stop:1 #3A3D41);
     color: #FFFFFF;
     border-top: 1px solid #707580;
-    border-left: 1px solid #6A90B0;
+    border-left: 1px solid #5C6065;
     border-right: 1px solid #35383C;
     border-bottom: 2px solid #5294D6;
     font-weight: normal;
@@ -587,7 +619,7 @@ QMessageBox QLabel {
 
 QMessageBox QPushButton {
     min-width: 60px;
-    padding: 6px 16px;
+    padding: 2px 2px;
 }
 
 /* ============================================================================
@@ -597,16 +629,17 @@ QMessageBox QPushButton {
 QTabWidget QTabBar::close-button {
     background: transparent;
     border: none;
-    border-radius: 3px;
     padding: 0px;
-    margin: 0px;
+    margin: 2px 2px 2px 2px;
     min-width: 14px;
     max-width: 14px;
     min-height: 14px;
     max-height: 14px;
+    image: url(themes/icons/close.svg);
 }
 
 QTabWidget QTabBar::close-button:hover {
     background: rgba(255, 90, 90, 0.4);
+    border-radius: 3px;
 }
 

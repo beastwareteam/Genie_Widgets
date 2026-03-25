@@ -1,37 +1,112 @@
 {
   "tab_groups": [
     {
-      "id": "main_tabs",
-      "title_key": "tabs.main",
+      "id": "workspace_group",
+      "title_key": "tabs.workspace",
       "dock_area": "center",
       "orientation": "horizontal",
       "tabs": [
         {
-          "id": "tab_overview",
-          "title_key": "tab.overview",
-          "component": "overview",
+          "id": "editor_tab",
+          "title_key": "tab.editor",
+          "component": "editor",
           "closable": false,
-          "active": true
-        },
-        {
-          "id": "tab_analytics",
-          "title_key": "tab.analytics",
-          "component": "analytics",
-          "closable": true,
-          "active": false,
+          "movable": true,
+          "floatable": true,
+          "active": true,
           "children": [
             {
-              "id": "subtab_charts",
-              "title_key": "tab.charts",
-              "component": "charts",
+              "id": "file_alpha",
+              "title_key": "tab.file.alpha",
+              "component": "code_editor",
               "closable": true,
+              "movable": true,
+              "floatable": true,
+              "active": true
+            },
+            {
+              "id": "file_beta",
+              "title_key": "tab.file.beta",
+              "component": "code_editor",
+              "closable": true,
+              "movable": true,
+              "floatable": true,
               "active": false
             },
             {
-              "id": "subtab_tables",
-              "title_key": "tab.tables",
-              "component": "tables",
+              "id": "file_gamma",
+              "title_key": "tab.file.gamma",
+              "component": "code_editor",
               "closable": true,
+              "movable": true,
+              "floatable": true,
+              "active": false
+            }
+          ]
+        },
+        {
+          "id": "preview_tab",
+          "title_key": "tab.preview",
+          "component": "preview",
+          "closable": true,
+          "movable": true,
+          "floatable": true,
+          "active": false
+        },
+        {
+          "id": "settings_tab",
+          "title_key": "tab.settings",
+          "component": "settings",
+          "closable": true,
+          "movable": true,
+          "floatable": true,
+          "active": false,
+          "children": [
+            {
+              "id": "settings_general",
+              "title_key": "tab.settings.general",
+              "component": "settings_general",
+              "closable": false,
+              "movable": true,
+              "floatable": false,
+              "active": true
+            },
+            {
+              "id": "settings_appearance",
+              "title_key": "tab.settings.appearance",
+              "component": "settings_appearance",
+              "closable": false,
+              "movable": true,
+              "floatable": false,
+              "active": false,
+              "children": [
+                {
+                  "id": "appearance_colors",
+                  "title_key": "tab.appearance.colors",
+                  "component": "color_picker",
+                  "closable": false,
+                  "movable": true,
+                  "floatable": true,
+                  "active": true
+                },
+                {
+                  "id": "appearance_fonts",
+                  "title_key": "tab.appearance.fonts",
+                  "component": "font_picker",
+                  "closable": false,
+                  "movable": true,
+                  "floatable": true,
+                  "active": false
+                }
+              ]
+            },
+            {
+              "id": "settings_advanced",
+              "title_key": "tab.settings.advanced",
+              "component": "settings_advanced",
+              "closable": false,
+              "movable": true,
+              "floatable": false,
               "active": false
             }
           ]
@@ -39,11 +114,59 @@
       ]
     },
     {
-      "id": "tabwidget",
-      "title_key": "tabs.tabwidget.title",
-      "dock_area": "center",
+      "id": "tools_group",
+      "title_key": "tabs.tools",
+      "dock_area": "bottom",
       "orientation": "horizontal",
-      "tabs": []
+      "tabs": [
+        {
+          "id": "terminal_tab",
+          "title_key": "tab.terminal",
+          "component": "terminal",
+          "closable": true,
+          "movable": true,
+          "floatable": true,
+          "active": true
+        },
+        {
+          "id": "output_tab",
+          "title_key": "tab.output",
+          "component": "output",
+          "closable": true,
+          "movable": true,
+          "floatable": true,
+          "active": false,
+          "children": [
+            {
+              "id": "output_build",
+              "title_key": "tab.output.build",
+              "component": "build_output",
+              "closable": true,
+              "movable": true,
+              "floatable": true,
+              "active": true
+            },
+            {
+              "id": "output_debug",
+              "title_key": "tab.output.debug",
+              "component": "debug_output",
+              "closable": true,
+              "movable": true,
+              "floatable": true,
+              "active": false
+            }
+          ]
+        },
+        {
+          "id": "problems_tab",
+          "title_key": "tab.problems",
+          "component": "problems",
+          "closable": true,
+          "movable": true,
+          "floatable": true,
+          "active": false
+        }
+      ]
     }
   ]
 }

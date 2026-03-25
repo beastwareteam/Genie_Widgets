@@ -251,6 +251,48 @@
       ]
     },
     {
+      "id": "undo_redo_config",
+      "title_key": "config.undo_redo.title",
+      "description_key": "config.undo_redo.description",
+      "category": "advanced",
+      "icon": "history",
+      "order": 6,
+      "widgets": [
+        {
+          "id": "undo_redo_settings",
+          "type": "custom",
+          "label_key": "config.undo_redo.settings.label",
+          "dnd_enabled": false,
+          "movable": false,
+          "resizable": false,
+          "container": false,
+          "properties": {
+            "max_history": {
+              "type": "number",
+              "label_key": "config.undo_redo.max_history",
+              "default": 100,
+              "min": 10,
+              "max": 1000,
+              "step": 10
+            },
+            "undo_count": {
+              "type": "readonly",
+              "label_key": "config.undo_redo.undo_count"
+            },
+            "redo_count": {
+              "type": "readonly",
+              "label_key": "config.undo_redo.redo_count"
+            },
+            "clear_history": {
+              "type": "button",
+              "label_key": "config.undo_redo.clear_history",
+              "action": "clear_undo_redo"
+            }
+          }
+        }
+      ]
+    },
+    {
       "id": "advanced_config",
       "title_key": "config.advanced.title",
       "description_key": "config.advanced.description",
