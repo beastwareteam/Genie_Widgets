@@ -115,6 +115,11 @@ class MainWindow(QMainWindow):
         self.responsive_applied_rules: set[str] = set()
         self._layout_file: Path | None = None
 
+        # Tab controller references (initialized in _reinitialize_tab_controllers)
+        self._tab_monitor: Any = None
+        self._tab_event_handler: Any = None
+        self._tab_visibility: Any = None
+
         # Initialize custom gradient system (replaces QtAds default gradients)
         self.gradient_renderer = get_gradient_renderer()
 
@@ -165,9 +170,7 @@ class MainWindow(QMainWindow):
             self.i18n_factory,
         )
         # Connect dock events to TabSubsystem
-        self.dock_ctrl.dockAdded.connect(
-            lambda dock_id, dock: self.tab_sys.track_dock_widget(dock_id, dock)
-        )
+        self.dock_ctrl.dockAdded.connect(self.tab_sys.track_dock_widget)
 
         # LayoutController - layout persistence
         self.layout_ctrl = LayoutController(
@@ -1177,9 +1180,7 @@ class MainWindow(QMainWindow):
                 self.tabs_factory,
                 self.i18n_factory,
             )
-            self.dock_ctrl.dockAdded.connect(
-                lambda dock_id, dock: self.tab_sys.track_dock_widget(dock_id, dock)
-            )
+            self.dock_ctrl.dockAdded.connect(self.tab_sys.track_dock_widget)
             self.dock_ctrl.build_from_config()
 
             # Re-initialize tab subsystem controllers
@@ -1565,7 +1566,6 @@ class MainWindow(QMainWindow):
                 color = dialog.get_color()
                 print(f"  [+] Farbe ausgewaehlt: {color}")
                 # Copy to clipboard for easy use
-                from PySide6.QtWidgets import QApplication
                 clipboard = QApplication.clipboard()
                 clipboard.setText(color)
                 QMessageBox.information(
