@@ -4,8 +4,6 @@ Provides programmatic control over nested QTabWidget hierarchies,
 including navigation, activation, and state tracking.
 """
 
-from typing import Any
-
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QTabWidget, QWidget

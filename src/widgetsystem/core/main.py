@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import PySide6QtAds as QtAds
-from PySide6.QtCore import QByteArray, QSize, Qt, QTimer
+from PySide6.QtCore import QSize, Qt, QTimer
 from PySide6.QtGui import QAction, QIcon, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QAbstractButton,
@@ -30,7 +30,7 @@ from widgetsystem.controllers import (
     TabSubsystem,
     ThemeController,
 )
-from widgetsystem.enums import ActionName, DockArea, ResponsiveAction
+from widgetsystem.enums import ActionName, DockArea
 from widgetsystem.factories.dnd_factory import DnDFactory
 from widgetsystem.factories.i18n_factory import I18nFactory
 from widgetsystem.factories.layout_factory import LayoutDefinition, LayoutFactory
@@ -211,12 +211,12 @@ class MainWindow(QMainWindow):
         self._create_menu()
         self._create_global_shortcuts()
         self.menuBar().hide()
-        
+
         # Create Toolbar and dock areas FIRST
         self._create_toolbar()
         # Use DockController for unified dock/tab creation with full features
         self.dock_ctrl.build_from_config()
-        
+
         # Create inlay titlebar LAST (so it's on top)
         self._create_inlay_title_bar()
         # Load persisted layout AFTER all docks are created
@@ -585,9 +585,13 @@ class MainWindow(QMainWindow):
         return self.responsive_ctrl.get_breakpoint_for_width(width)
 
     def _apply_responsive_rules(self, breakpoint_id: str) -> None:
-        """Apply panel visibility rules (handled by ResponsiveController)."""
+        """Apply panel visibility rules (handled by ResponsiveController).
+
+        Args:
+            breakpoint_id: The breakpoint identifier (unused, handled internally)
+        """
         # ResponsiveController handles this internally via update_for_width()
-        pass
+        _ = breakpoint_id  # Explicitly mark as intentionally unused
 
     def _find_dock_by_panel_id(self, panel_id: str) -> Any:
         """Find a dock widget by panel ID (delegates to DockController)."""
@@ -753,11 +757,11 @@ class MainWindow(QMainWindow):
 
         Args:
             tab_id: ID of the floated tab
-            widget: Content widget to float
+            widget: Content widget to float (stored for future use)
         """
+        _ = widget  # Will be used when floating dock windows are implemented
         print(f"[TAB] Float requested for '{tab_id}'")
-        # TODO: Create floating dock window for the tab content
-        # For now, just log the request
+        # Future: Create floating dock window for the tab content
 
     def _on_undo(self) -> None:
         """Handle undo shortcut (Ctrl+Z)."""
@@ -828,7 +832,7 @@ class MainWindow(QMainWindow):
         print(f"[TITLEBAR] TitleBar created: {type(self._titlebar).__name__}")
         print(f"[TITLEBAR] Height: {self._titlebar.height()}")
         print("[TITLEBAR] OK - menu widget mode, has its own space")
-    
+
     def _on_titlebar_height_changed(self, new_height: int) -> None:
         """No-op in overlay mode.
 
@@ -924,7 +928,7 @@ class MainWindow(QMainWindow):
     def _create_toolbar(self) -> None:
         """Create toolbar with dock management and menu buttons."""
         toolbar = QToolBar(self.i18n_factory.translate("toolbar.title", default="Dock Tools"))
-        
+
         toolbar.setStyleSheet("""
             QToolBar {
                 margin: 0px;
@@ -932,7 +936,7 @@ class MainWindow(QMainWindow):
                 spacing: 2px;
             }
         """)
-        
+
         # Add toolbar to top area
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, toolbar)
         # Store reference for positioning
@@ -1621,6 +1625,7 @@ class MainWindow(QMainWindow):
 
 
 def main() -> None:
+    """Application entry point."""
     app = QApplication(sys.argv)
 
     try:

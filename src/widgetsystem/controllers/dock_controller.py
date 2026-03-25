@@ -7,7 +7,7 @@ and lifecycle operations that were previously scattered across MainWindow.
 from typing import Any
 
 import PySide6QtAds as QtAds
-from PySide6.QtCore import QObject, QSize, Signal
+from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QWidget
 
 from widgetsystem.enums import DockArea
@@ -303,7 +303,14 @@ class DockController(QObject):
             parent_widget.setCurrentIndex(parent_widget.count() - 1)
 
     def _on_tab_floated(self, tab_id: str, widget: QWidget, source_id: str) -> None:
-        """Handle tab float - create new dock widget for floated tab."""
+        """Handle tab float - create new dock widget for floated tab.
+
+        Args:
+            tab_id: ID of the floated tab
+            widget: Content widget to float
+            source_id: ID of source container (reserved for future use)
+        """
+        _ = source_id  # Reserved for tracking float origin
         self._floated_tab_counter += 1
         dock_id = f"floated_{tab_id}_{self._floated_tab_counter}"
 

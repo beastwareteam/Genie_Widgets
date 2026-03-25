@@ -409,7 +409,7 @@ User Drag Action
     "margin_left": 2,
     "border_radius": 4,
     "font_size": 11,
-    "max_nesting_depth": 2,
+    "max_nesting_depth": 255,
     "auto_dissolve_empty_folders": true,
     "close_button": {
       "size": 14,

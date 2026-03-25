@@ -181,7 +181,7 @@ class ConfigurationExporter(QObject):
                 "w",
                 compression=zipfile.ZIP_DEFLATED if options.compress else zipfile.ZIP_STORED,
             ) as archive:
-                for idx, (key, filename) in enumerate(files_to_export):
+                for idx, (_, filename) in enumerate(files_to_export):
                     file_path = self.config_path / filename
                     if file_path.exists():
                         archive.write(file_path, filename)
@@ -590,8 +590,8 @@ class BackupManager:
                 logger.error(f"Backup not found: {backup_path}")
                 return False
 
-            # Create safety backup of current state
-            safety_backup = self.create_backup("pre_restore")
+            # Create safety backup of current state before restore
+            self.create_backup("pre_restore")
 
             # Remove current config
             shutil.rmtree(self.config_path)

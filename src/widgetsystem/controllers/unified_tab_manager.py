@@ -231,9 +231,10 @@ class UnifiedTabManager(QObject):
         """Handle tab config change.
 
         Args:
-            tab_id: Tab that changed
-            config: New configuration
+            tab_id: Tab that changed (logged for debugging)
+            config: New configuration (used during sync)
         """
+        _ = tab_id, config  # Used indirectly via _sync_config
         self._sync_config()
 
     def _sync_config(self) -> None:

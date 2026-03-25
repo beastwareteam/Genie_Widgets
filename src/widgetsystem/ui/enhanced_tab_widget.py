@@ -867,7 +867,13 @@ class EnhancedTabWidget(QTabWidget):
         self.get_undo_manager().execute(cmd)
 
     def _on_float_requested(self, index: int, global_pos: QPoint) -> None:
-        """Handle float request from tab bar."""
+        """Handle float request from tab bar.
+
+        Args:
+            index: Tab index to float
+            global_pos: Global position for window placement (reserved)
+        """
+        _ = global_pos  # Reserved for floating window positioning
         if not self.is_tab_floatable(index):
             return
 
@@ -902,7 +908,14 @@ class EnhancedTabWidget(QTabWidget):
             return
 
         # Check for NEST operation (drop INTO center zone)
-        if zone == DropZone.INTO.value and target_index >= 0 and target_tab_id and source_tab_id and source_tab_id != target_tab_id:
+        is_nest_op = (
+            zone == DropZone.INTO.value
+            and target_index >= 0
+            and target_tab_id
+            and source_tab_id
+            and source_tab_id != target_tab_id
+        )
+        if is_nest_op:
             self._nest_tab_into(source_widget, source_index, target_index)
             return
 
