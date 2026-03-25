@@ -49,14 +49,10 @@ from widgetsystem.ui import (
     TabDropIndicatorController,
 )
 
-# Import constants from inlay_titlebar
-try:
-    from widgetsystem.ui.inlay_titlebar import COLLAPSED_HEIGHT
-except ImportError:
-    COLLAPSED_HEIGHT = 3
+# Load UI dimensions from config
+from widgetsystem.factories.ui_dimensions_factory import UIDimensionsFactory
 
-# Spacing between titlebar and toolbar to prevent overlap
-TITLEBAR_SPACING = 2  # pixels
+_ui_dims = UIDimensionsFactory.get_instance().get()
 
 
 class MainWindow(QMainWindow):
@@ -66,6 +62,9 @@ class MainWindow(QMainWindow):
         """Initialize main window with all factories and UI components."""
         super().__init__()
 
+        # Load dimensions from config
+        self._dims = _ui_dims
+
         # Enable FULL window transparency with frameless window
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Window)
@@ -73,8 +72,8 @@ class MainWindow(QMainWindow):
         # Track drag position for window movement
         self._drag_pos: tuple[int, int] | None = None
 
-        self.setWindowTitle("ADS Docking System - Transparent Themes")
-        self.setMinimumSize(1200, 800)
+        self.setWindowTitle("WidgetSystem")
+        self.setMinimumSize(self._dims.window.min_width, self._dims.window.min_height)
 
         # Initialize all factories
         self.layout_factory = LayoutFactory(Path("config"))
@@ -850,7 +849,7 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "dock_manager") or self.dock_manager is None:
             return
 
-        content_top = COLLAPSED_HEIGHT + TITLEBAR_SPACING
+        content_top = self._dims.titlebar.collapsed_height
         if hasattr(self, "_toolbar") and self._toolbar:
             toolbar_rect = self._toolbar.geometry()
             content_top = toolbar_rect.bottom() + 1
