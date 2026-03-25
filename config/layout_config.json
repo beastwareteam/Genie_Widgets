@@ -1,0 +1,42 @@
+{
+  "titlebar": {
+    "collapsed_height": 3,
+    "collapsed_hit_height": 6,
+    "expanded_height": 36,
+    "animation_duration_ms": 160
+  },
+  "toolbar": {
+    "margin": 0,
+    "padding": 0,
+    "spacing": 2,
+    "button_size": 24
+  },
+  "tabs": {
+    "padding_vertical": 2,
+    "padding_horizontal": 4,
+    "margin_top": 2,
+    "margin_right": 1,
+    "margin_bottom": 0,
+    "margin_left": 2,
+    "border_radius": 4,
+    "font_size": 11,
+    "close_button": {
+      "size": 14,
+      "margin_top": 2,
+      "margin_right": 2,
+      "margin_bottom": 2,
+      "margin_left": 2,
+      "border_radius": 3
+    }
+  },
+  "dock": {
+    "splitter_width": 2,
+    "title_bar_height": 26
+  },
+  "window": {
+    "min_width": 800,
+    "min_height": 600,
+    "default_width": 1200,
+    "default_height": 800
+  }
+}

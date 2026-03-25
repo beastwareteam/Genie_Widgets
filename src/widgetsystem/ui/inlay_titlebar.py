@@ -37,12 +37,27 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# ── Constants ────────────────────────────────────────────────────────────────
+# ── Load dimensions from config ──────────────────────────────────────────────
 
-COLLAPSED_HEIGHT: int = 3       # Visual height of the accent strip
-COLLAPSED_HIT_HEIGHT: int = 6   # Hit area when collapsed (small to not overlap toolbar)
-EXPANDED_HEIGHT: int = 36      # Full titlebar height on hover
-ANIMATION_DURATION: int = 160   # ms
+def _load_titlebar_dimensions() -> tuple[int, int, int, int]:
+    """Load titlebar dimensions from config."""
+    try:
+        from widgetsystem.factories.ui_dimensions_factory import UIDimensionsFactory
+        dims = UIDimensionsFactory.get_instance().get()
+        return (
+            dims.titlebar.collapsed_height,
+            dims.titlebar.collapsed_hit_height,
+            dims.titlebar.expanded_height,
+            dims.titlebar.animation_duration_ms,
+        )
+    except Exception:
+        return (3, 6, 36, 160)
+
+_dims = _load_titlebar_dimensions()
+COLLAPSED_HEIGHT: int = _dims[0]
+COLLAPSED_HIT_HEIGHT: int = _dims[1]
+EXPANDED_HEIGHT: int = _dims[2]
+ANIMATION_DURATION: int = _dims[3]
 
 
 # ── Inlay Title Bar Widget ────────────────────────────────────────────────────
