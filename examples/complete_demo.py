@@ -40,7 +40,7 @@ class FullDemoWindow(QMainWindow):
     def __init__(self) -> None:
         """Initialize complete demo window."""
         super().__init__()
-        self.setWindowTitle("🎯 WidgetSystem - VOLLSTÄNDIGE DEMO (Alle Ebenen Funktionsfähig)")
+        self.setWindowTitle("[START] WidgetSystem - VOLLSTÄNDIGE DEMO (Alle Ebenen Funktionsfähig)")
         self.setMinimumSize(1600, 1000)
 
         # Initialize factories
@@ -108,7 +108,7 @@ class FullDemoWindow(QMainWindow):
         self.addToolBar(toolbar)
 
         # Title
-        title = QLabel("✨ DEMO: Alle Systeme Funktionsfähig")
+        title = QLabel("[DONE] DEMO: Alle Systeme Funktionsfähig")
         title_font = QFont()
         title_font.setBold(True)
         title_font.setPointSize(11)
@@ -118,21 +118,21 @@ class FullDemoWindow(QMainWindow):
         toolbar.addSeparator()
 
         # Dashboard button
-        dashboard_btn = QPushButton("📊 Dashboard (Alle 4 Viewer)")
+        dashboard_btn = QPushButton("[DASH] Dashboard (Alle 4 Viewer)")
         dashboard_btn.clicked.connect(self._show_dashboard)
         toolbar.addWidget(dashboard_btn)
 
         toolbar.addSeparator()
 
         # Configuration button
-        config_btn = QPushButton("⚙️  Konfiguration (Live-Edit)")
+        config_btn = QPushButton("[CONFIG]  Konfiguration (Live-Edit)")
         config_btn.clicked.connect(self._show_configuration)
         toolbar.addWidget(config_btn)
 
         toolbar.addSeparator()
 
         # Refresh button
-        refresh_btn = QPushButton("🔄 Aktualisieren")
+        refresh_btn = QPushButton("[REFRESH] Aktualisieren")
         refresh_btn.clicked.connect(self._refresh_all)
         toolbar.addWidget(refresh_btn)
 
@@ -182,7 +182,7 @@ class FullDemoWindow(QMainWindow):
     def _create_viewers(self) -> None:
         """Create all visual layer viewers."""
         print("=" * 70)
-        print("📌 VIEWER WERDEN ERSTELLT")
+        print("[INFO] VIEWER WERDEN ERSTELLT")
         print("=" * 70)
 
         config = ViewerConfig(show_properties=True, editable=False)
@@ -195,9 +195,9 @@ class FullDemoWindow(QMainWindow):
             lists_dock.setWidget(self.lists_viewer)
             self.dock_manager.addDockWidget(QtAds.LeftDockWidgetArea, lists_dock)
             self.docks.append(lists_dock)
-            print("     ✅ Listen-Viewer erstellt und platziert")
+            print("     [OK] Listen-Viewer erstellt und platziert")
         except Exception as e:
-            print(f"     ❌ Fehler: {e}")
+            print(f"     [ERROR] Fehler: {e}")
 
         # Menus Viewer
         print("  2. Menü-Viewer wird geladen...")
@@ -207,9 +207,9 @@ class FullDemoWindow(QMainWindow):
             menus_dock.setWidget(self.menus_viewer)
             self.dock_manager.addDockWidget(QtAds.LeftDockWidgetArea, menus_dock)
             self.docks.append(menus_dock)
-            print("     ✅ Menü-Viewer erstellt und platziert")
+            print("     [OK] Menü-Viewer erstellt und platziert")
         except Exception as e:
-            print(f"     ❌ Fehler: {e}")
+            print(f"     [ERROR] Fehler: {e}")
 
         # Tabs Viewer
         print("  3. Tabs-Viewer wird geladen...")
@@ -219,9 +219,9 @@ class FullDemoWindow(QMainWindow):
             tabs_dock.setWidget(self.tabs_viewer)
             self.dock_manager.addDockWidget(QtAds.RightDockWidgetArea, tabs_dock)
             self.docks.append(tabs_dock)
-            print("     ✅ Tabs-Viewer erstellt und platziert")
+            print("     [OK] Tabs-Viewer erstellt und platziert")
         except Exception as e:
-            print(f"     ❌ Fehler: {e}")
+            print(f"     [ERROR] Fehler: {e}")
 
         # Panels Viewer
         print("  4. Panels-Viewer wird geladen...")
@@ -231,43 +231,43 @@ class FullDemoWindow(QMainWindow):
             panels_dock.setWidget(self.panels_viewer)
             self.dock_manager.addDockWidget(QtAds.RightDockWidgetArea, panels_dock)
             self.docks.append(panels_dock)
-            print("     ✅ Panels-Viewer erstellt und platziert")
+            print("     [OK] Panels-Viewer erstellt und platziert")
         except Exception as e:
-            print(f"     ❌ Fehler: {e}")
+            print(f"     [ERROR] Fehler: {e}")
 
         print()
         print("=" * 70)
-        print("✅ ALLE 4 VIEWER ERFOLGREICH ERSTELLT UND PLATZIERT")
+        print("[OK] ALLE 4 VIEWER ERFOLGREICH ERSTELLT UND PLATZIERT")
         print("=" * 70)
         print()
 
     def _show_dashboard(self) -> None:
         """Show comprehensive dashboard."""
-        print("📊 Dashboard wird geöffnet...")
+        print("[DASH] Dashboard wird geöffnet...")
         try:
             dashboard = VisualDashboard(Path("config"), self.i18n_factory)
             dashboard.show()
-            print("  ✅ Dashboard erfolgreich geöffnet")
+            print("  [OK] Dashboard erfolgreich geöffnet")
         except Exception as e:
             QMessageBox.critical(self, "Fehler", f"Dashboard konnte nicht geöffnet werden:\n{e}")
-            print(f"  ❌ Dashboard-Fehler: {e}")
+            print(f"  [ERROR] Dashboard-Fehler: {e}")
 
     def _show_configuration(self) -> None:
         """Show configuration panel."""
-        print("⚙️  Konfigurationspanel wird geöffnet...")
+        print("[CONFIG]  Konfigurationspanel wird geöffnet...")
         try:
             config_panel = ConfigurationPanel(Path("config"), self.i18n_factory)
-            config_panel.setWindowTitle("⚙️  Konfigurationspanel - Live-Bearbeitung")
+            config_panel.setWindowTitle("[CONFIG]  Konfigurationspanel - Live-Bearbeitung")
             config_panel.resize(1200, 700)
             config_panel.show()
-            print("  ✅ Konfigurationspanel erfolgreich geöffnet")
+            print("  [OK] Konfigurationspanel erfolgreich geöffnet")
         except Exception as e:
             QMessageBox.critical(
                 self,
                 "Fehler",
                 f"Konfigurationspanel konnte nicht geöffnet werden:\n{e}",
             )
-            print(f"  ❌ Konfigurationspanel-Fehler: {e}")
+            print(f"  [ERROR] Konfigurationspanel-Fehler: {e}")
 
     def _show_lists(self) -> None:
         """Show lists viewer."""
@@ -287,7 +287,7 @@ class FullDemoWindow(QMainWindow):
 
     def _refresh_all(self) -> None:
         """Refresh all viewers."""
-        print("🔄 Alle Viewer werden aktualisiert...")
+        print("[REFRESH] Alle Viewer werden aktualisiert...")
         if hasattr(self, "lists_viewer"):
             self.lists_viewer.refresh()
         if hasattr(self, "menus_viewer"):
@@ -296,8 +296,8 @@ class FullDemoWindow(QMainWindow):
             self.tabs_viewer.refresh()
         if hasattr(self, "panels_viewer"):
             self.panels_viewer.refresh()
-        print("  ✅ Alle Viewer aktualisiert")
-        QMessageBox.information(self, "✅ Erfolg", "Alle Viewer wurden aktualisiert!")
+        print("  [OK] Alle Viewer aktualisiert")
+        QMessageBox.information(self, "[OK] Erfolg", "Alle Viewer wurden aktualisiert!")
 
     def _apply_theme(self) -> None:
         """Apply default theme."""
@@ -305,9 +305,9 @@ class FullDemoWindow(QMainWindow):
             stylesheet = self.theme_factory.get_default_stylesheet()
             if stylesheet:
                 self.setStyleSheet(stylesheet)
-                print("✅ Light-Theme angewendet")
+                print("[OK] Light-Theme angewendet")
         except Exception as e:
-            print(f"⚠️  Theme konnte nicht angewendet werden: {e}")
+            print(f"[WARN]  Theme konnte nicht angewendet werden: {e}")
 
     def _apply_theme_by_id(self, theme_id: str) -> None:
         """Apply theme by ID."""
@@ -317,9 +317,9 @@ class FullDemoWindow(QMainWindow):
             if theme and theme.file_path.exists():
                 stylesheet = theme.file_path.read_text(encoding="utf-8")
                 self.setStyleSheet(stylesheet)
-                print(f"✅ Theme '{theme.name}' angewendet")
+                print(f"[OK] Theme '{theme.name}' angewendet")
         except Exception as e:
-            print(f"⚠️  Theme konnte nicht angewendet werden: {e}")
+            print(f"[WARN]  Theme konnte nicht angewendet werden: {e}")
 
     def _on_theme_triggered(self, checked: bool, theme_id: str) -> None:
         """Handle theme selection from menu."""
@@ -332,18 +332,18 @@ class FullDemoWindow(QMainWindow):
             1000,
             lambda: QMessageBox.information(
                 self,
-                "🎯 Willkommen zur Vollständigen Demo!",
+                "[START] Willkommen zur Vollständigen Demo!",
                 "ALLE SYSTEME SIND FUNKTIONSFÄHIG:\n\n"
-                "✅ VISUELLE EBENE:\n"
+                "[OK] VISUELLE EBENE:\n"
                 "   • Listen-Viewer (Hierarchie)\n"
                 "   • Menü-Viewer (Struktur)\n"
                 "   • Tabs-Viewer (Gruppen)\n"
                 "   • Panels-Viewer (Konfiguration)\n\n"
-                "✅ KONFIGURATIONSEBENE:\n"
+                "[OK] KONFIGURATIONSEBENE:\n"
                 "   • Live-Bearbeitung aller Elemente\n"
                 "   • Automatische JSON-Speicherung\n"
                 "   • Sofortige UI-Refresh\n\n"
-                "✅ WEITERE SYSTEME:\n"
+                "[OK] WEITERE SYSTEME:\n"
                 "   • 10 Factories (alle funktional)\n"
                 "   • Theme-System (Light/Dark)\n"
                 "   • i18n (Deutsch/English)\n"
@@ -356,15 +356,15 @@ class FullDemoWindow(QMainWindow):
     def _show_status(self) -> None:
         """Show system status."""
         status = "SYSTEM-STATUS:\n\n"
-        status += "✅ Konfigurationsebene: AKTIV\n"
-        status += "✅ Listenviewer: FUNKTIONSFÄHIG\n"
-        status += "✅ Menüviewer: FUNKTIONSFÄHIG\n"
-        status += "✅ Tabs-Viewer: FUNKTIONSFÄHIG\n"
-        status += "✅ Panels-Viewer: FUNKTIONSFÄHIG\n"
-        status += "✅ Konfigurationspanel: FUNKTIONSFÄHIG\n"
-        status += "✅ Theme-System: FUNKTIONSFÄHIG\n"
-        status += "✅ i18n-System: FUNKTIONSFÄHIG\n"
-        status += "✅ Persistierung: FUNKTIONSFÄHIG\n"
+        status += "[OK] Konfigurationsebene: AKTIV\n"
+        status += "[OK] Listenviewer: FUNKTIONSFÄHIG\n"
+        status += "[OK] Menüviewer: FUNKTIONSFÄHIG\n"
+        status += "[OK] Tabs-Viewer: FUNKTIONSFÄHIG\n"
+        status += "[OK] Panels-Viewer: FUNKTIONSFÄHIG\n"
+        status += "[OK] Konfigurationspanel: FUNKTIONSFÄHIG\n"
+        status += "[OK] Theme-System: FUNKTIONSFÄHIG\n"
+        status += "[OK] i18n-System: FUNKTIONSFÄHIG\n"
+        status += "[OK] Persistierung: FUNKTIONSFÄHIG\n"
         QMessageBox.information(self, "System Status", status)
 
     def _show_about(self) -> None:
@@ -373,17 +373,17 @@ class FullDemoWindow(QMainWindow):
             self,
             "Über WidgetSystem - Vollständige Demo",
             "WidgetSystem v1.0 - VOLLSTÄNDIG FUNKTIONSFÄHIG\n\n"
-            "🎯 ALLE EBENEN INTEGRIERT:\n"
-            "✅ Visuelle Ebene (Visual Layer)\n"
-            "✅ Konfigurationsebene (Config Layer)\n"
-            "✅ Factory-Schicht (10 Factories)\n"
-            "✅ Persistierung (JSON)\n\n"
+            "[START] ALLE EBENEN INTEGRIERT:\n"
+            "[OK] Visuelle Ebene (Visual Layer)\n"
+            "[OK] Konfigurationsebene (Config Layer)\n"
+            "[OK] Factory-Schicht (10 Factories)\n"
+            "[OK] Persistierung (JSON)\n\n"
             "📚 KOMPONENTEN:\n"
-            "✅ 4 Viewer (Listen/Menüs/Tabs/Panels)\n"
-            "✅ ConfigurationPanel (6 Tabs)\n"
-            "✅ Dashboard (Übersicht)\n"
-            "✅ Theme-System\n"
-            "✅ i18n (DE/EN)\n\n"
+            "[OK] 4 Viewer (Listen/Menüs/Tabs/Panels)\n"
+            "[OK] ConfigurationPanel (6 Tabs)\n"
+            "[OK] Dashboard (Übersicht)\n"
+            "[OK] Theme-System\n"
+            "[OK] i18n (DE/EN)\n\n"
             "© 2026 Maximale Funktionalität",
         )
 
@@ -394,29 +394,29 @@ def main() -> None:
 
     print()
     print("=" * 70)
-    print("🎯 WidgetSystem - VOLLSTÄNDIGE DEMO")
+    print("WidgetSystem - VOLLSTAENDIGE DEMO")
     print("=" * 70)
     print()
     print("ALLE EBENEN:")
-    print("  ✅ Konfigurationsebene (Config + Editor)")
-    print("  ✅ Visuelle Ebene (4 Viewer + Dashboard)")
-    print("  ✅ Factory-Schicht (10 Factories)")
-    print("  ✅ Persistierung (JSON)")
+    print("  - Konfigurationsebene (Config + Editor)")
+    print("  - Visuelle Ebene (4 Viewer + Dashboard)")
+    print("  - Factory-Schicht (10 Factories)")
+    print("  - Persistierung (JSON)")
     print()
     print("KOMPONENTEN:")
-    print("  ✅ Listen-Viewer - Hierarchische Darstellung")
-    print("  ✅ Menü-Viewer - Strukturen mit Typen")
-    print("  ✅ Tabs-Viewer - Gruppen und Tabs")
-    print("  ✅ Panels-Viewer - Konfigurationen")
-    print("  ✅ Dashboard - Kombiniert alle 4")
-    print("  ✅ ConfigurationPanel - Live-Bearbeitung")
+    print("  - Listen-Viewer - Hierarchische Darstellung")
+    print("  - Menu-Viewer - Strukturen mit Typen")
+    print("  - Tabs-Viewer - Gruppen und Tabs")
+    print("  - Panels-Viewer - Konfigurationen")
+    print("  - Dashboard - Kombiniert alle 4")
+    print("  - ConfigurationPanel - Live-Bearbeitung")
     print()
 
     window = FullDemoWindow()
     window.show()
 
     print("=" * 70)
-    print("✨ DEMO IST BEREIT")
+    print("DEMO IST BEREIT")
     print("=" * 70)
     print()
 

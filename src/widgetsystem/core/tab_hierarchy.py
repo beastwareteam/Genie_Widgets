@@ -14,24 +14,36 @@ if TYPE_CHECKING:
     from widgetsystem.ui.enhanced_tab_widget import EnhancedTabWidget
 
 
+def _load_tab_config() -> tuple[int, bool]:
+    """Load tab nesting config from layout_config.json."""
+    try:
+        from widgetsystem.factories.ui_dimensions_factory import UIDimensionsFactory
+        dims = UIDimensionsFactory.get_instance().get()
+        return dims.tabs.max_nesting_depth, dims.tabs.auto_dissolve_empty_folders
+    except Exception:
+        return 2, True
+
+
 class TabHierarchyValidator:
     """Validates tab hierarchy operations to prevent invalid states.
 
     Enforces:
     - No circular nesting (A -> B -> A)
-    - Maximum nesting depth (default: 3)
+    - Maximum nesting depth (from config, default: 2)
     - Valid parent-child relationships
+    - Auto-dissolve empty folders (from config)
     """
 
-    DEFAULT_MAX_DEPTH = 3
-
-    def __init__(self, max_depth: int = DEFAULT_MAX_DEPTH) -> None:
+    def __init__(self, max_depth: int | None = None, auto_dissolve: bool | None = None) -> None:
         """Initialize validator.
 
         Args:
-            max_depth: Maximum allowed nesting depth (1 = no nesting)
+            max_depth: Maximum allowed nesting depth (None = load from config)
+            auto_dissolve: Auto-dissolve empty folders (None = load from config)
         """
-        self.max_depth = max_depth
+        config_depth, config_dissolve = _load_tab_config()
+        self.max_depth = max_depth if max_depth is not None else config_depth
+        self.auto_dissolve_empty_folders = auto_dissolve if auto_dissolve is not None else config_dissolve
         # Registry: tab_id -> parent_tab_id (None if root)
         self._parent_map: dict[str, str | None] = {}
         # Registry: tab_id -> EnhancedTabWidget containing it
@@ -220,6 +232,31 @@ class TabHierarchyValidator:
         """Clear all registry data."""
         self._parent_map.clear()
         self._container_map.clear()
+
+    def should_dissolve_folder(self, folder_id: str) -> bool:
+        """Check if a folder should be dissolved (has 0 or 1 children).
+
+        Args:
+            folder_id: The folder/container tab ID
+
+        Returns:
+            True if folder should be dissolved
+        """
+        if not self.auto_dissolve_empty_folders:
+            return False
+        children = self.get_children(folder_id)
+        return len(children) <= 1
+
+    def can_nest_here(self, target_depth: int) -> bool:
+        """Check if nesting is allowed at the given depth.
+
+        Args:
+            target_depth: Current depth of the target
+
+        Returns:
+            True if another level of nesting is allowed
+        """
+        return target_depth < self.max_depth - 1
 
     def get_container(self, tab_id: str) -> EnhancedTabWidget | None:
         """Get the container widget for a tab.

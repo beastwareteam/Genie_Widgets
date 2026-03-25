@@ -427,6 +427,34 @@ class UndoRedoManager(QObject):
         self.undoAvailable.emit(self.can_undo())
         self.redoAvailable.emit(self.can_redo())
 
+    def set_max_history(self, max_history: int) -> None:
+        """Change the maximum history size.
+
+        Args:
+            max_history: New maximum (existing items beyond this are dropped)
+        """
+        self.max_history = max_history
+        # Recreate deques with new maxlen (keeps existing items up to new limit)
+        self._undo_stack = deque(self._undo_stack, maxlen=max_history)
+        self._redo_stack = deque(self._redo_stack, maxlen=max_history)
+        self._emit_availability_signals()
+        self.stackChanged.emit()
+        logger.debug(f"Max history changed to {max_history}")
+
+    def get_status(self) -> dict:
+        """Get current undo/redo status.
+
+        Returns:
+            Dict with undo_count, redo_count, max_history, next_undo, next_redo
+        """
+        return {
+            "undo_count": len(self._undo_stack),
+            "redo_count": len(self._redo_stack),
+            "max_history": self.max_history,
+            "next_undo": self.get_undo_description(),
+            "next_redo": self.get_redo_description(),
+        }
+
 
 class ConfigurationUndoManager(UndoRedoManager):
     """Specialized undo/redo manager for configuration editing.

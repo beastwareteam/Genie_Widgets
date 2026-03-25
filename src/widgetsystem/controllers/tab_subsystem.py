@@ -178,8 +178,9 @@ class TabSubsystem(QObject):
 
     def refresh_visibility(self) -> None:
         """Refresh tab selector visibility for all dock areas."""
-        if self._tab_visibility:
-            self._tab_visibility.refresh_area_visibility()
+        if self._tab_visibility and self._tab_monitor:
+            for area_widget in self._tab_monitor._monitored_areas.values():
+                self._tab_visibility.refresh_area_visibility(area_widget)
             self.visibilityRefreshed.emit()
 
     def register_post_refresh_callback(self, callback: Any) -> None:

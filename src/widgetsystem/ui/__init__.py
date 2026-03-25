@@ -38,6 +38,10 @@ from widgetsystem.ui.widget_features_editor import (
     WidgetPropertyEditor,
 )
 from widgetsystem.ui.plugin_manager_dialog import PluginManagerDialog
+from widgetsystem.ui.enhanced_tab_widget import EnhancedTabBar, EnhancedTabWidget
+from widgetsystem.ui.tab_drop_indicator import TabDropIndicator, TabDropIndicatorController
+from widgetsystem.ui.unified_tab_item import UnifiedTabItem
+from widgetsystem.ui.undo_redo_widget import UndoRedoWidget, UndoRedoToolbar
 
 
 __all__ = [
@@ -46,6 +50,8 @@ __all__ = [
     "ARGBColorPickerDialog",
     "ConfigurationPanel",
     "CustomFloatingTitleBar",
+    "EnhancedTabBar",
+    "EnhancedTabWidget",
     "FloatingStateTracker",
     "FloatingWindowPatcher",
     "InlayTitleBar",
@@ -54,13 +60,19 @@ __all__ = [
     "LiveThemeEditor",
     "MenusViewer",
     "PanelsViewer",
+    "PluginManagerDialog",
     "TabColorController",
+    "TabDropIndicator",
+    "TabDropIndicatorController",
     "TabSelectorEventHandler",
     "TabSelectorMonitor",
     "TabSelectorVisibilityController",
     "TabsViewer",
     "ThemeEditorDialog",
     "ThemePropertyEditor",
+    "UndoRedoToolbar",
+    "UndoRedoWidget",
+    "UnifiedTabItem",
     "ViewerConfig",
     "VisualDashboard",
     "VisualMainWindow",
@@ -68,5 +80,4 @@ __all__ = [
     "WidgetFeaturesEditorDialog",
     "WidgetPropertyEditor",
     "WindowMoveHandle",
-    "PluginManagerDialog",
 ]

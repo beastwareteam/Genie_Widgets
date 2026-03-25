@@ -44,6 +44,8 @@ class TabsDimensions:
     margin_left: int = 2
     border_radius: int = 4
     font_size: int = 11
+    max_nesting_depth: int = 2
+    auto_dissolve_empty_folders: bool = True
     close_button: CloseButtonDimensions = field(default_factory=CloseButtonDimensions)
 
 

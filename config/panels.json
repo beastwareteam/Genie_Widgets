@@ -9,7 +9,9 @@
       "floatable": true,
       "delete_on_close": false,
       "dnd_enabled": true,
-      "responsive_hidden_at": ["mobile"]
+      "responsive_hidden_at": [
+        "mobile"
+      ]
     },
     {
       "id": "properties",
@@ -20,7 +22,9 @@
       "floatable": true,
       "delete_on_close": false,
       "dnd_enabled": true,
-      "responsive_hidden_at": ["mobile"]
+      "responsive_hidden_at": [
+        "mobile"
+      ]
     },
     {
       "id": "editor",
@@ -53,7 +57,9 @@
       "floatable": true,
       "delete_on_close": false,
       "dnd_enabled": true,
-      "responsive_hidden_at": ["mobile"]
+      "responsive_hidden_at": [
+        "mobile"
+      ]
     },
     {
       "id": "output",
@@ -64,7 +70,42 @@
       "floatable": true,
       "delete_on_close": false,
       "dnd_enabled": true,
-      "responsive_hidden_at": ["mobile"]
+      "responsive_hidden_at": [
+        "mobile"
+      ]
+    },
+    {
+      "id": "dynamic_panel_1",
+      "name_key": "panel.dynamic_1",
+      "area": "center",
+      "closable": true,
+      "movable": true,
+      "floatable": false,
+      "delete_on_close": false,
+      "dnd_enabled": true,
+      "responsive_hidden_at": []
+    },
+    {
+      "id": "dynamic_panel_2",
+      "name_key": "panel.dynamic_2",
+      "area": "center",
+      "closable": true,
+      "movable": true,
+      "floatable": false,
+      "delete_on_close": false,
+      "dnd_enabled": true,
+      "responsive_hidden_at": []
+    },
+    {
+      "id": "dynamic_panel_3",
+      "name_key": "panel.dynamic_3",
+      "area": "center",
+      "closable": true,
+      "movable": true,
+      "floatable": false,
+      "delete_on_close": false,
+      "dnd_enabled": true,
+      "responsive_hidden_at": []
     }
   ]
 }

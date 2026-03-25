@@ -678,6 +678,88 @@ class EnhancedTabWidget(QTabWidget):
                 new_meta[idx] = meta
         self._tab_meta = new_meta
 
+        # Auto-dissolve: if this is a nested widget with only 1 tab left,
+        # signal parent to dissolve this container
+        self._check_auto_dissolve()
+
+    def _check_auto_dissolve(self) -> None:
+        """Check if this container should dissolve (1 or 0 children)."""
+        validator = get_hierarchy_validator()
+        if not validator.auto_dissolve_empty_folders:
+            return
+
+        # Only dissolve if we're a nested container (have parent_tab_id)
+        parent_tab_id = self.property("parent_tab_id")
+        if not parent_tab_id:
+            return
+
+        # Dissolve if 0 or 1 tabs remaining
+        if self.count() <= 1:
+            self._dissolve_container()
+
+    def _dissolve_container(self) -> None:
+        """Dissolve this container, replacing it with remaining content.
+
+        Called when a nested container has 0 or 1 tabs left.
+        - 0 tabs: Remove the container tab from parent entirely
+        - 1 tab: Replace the container with the remaining tab's content
+        """
+        parent_tab_id = self.property("parent_tab_id")
+        if not parent_tab_id:
+            return
+
+        # Find parent widget that contains this container
+        parent_widget = self.parent()
+        while parent_widget and not isinstance(parent_widget, EnhancedTabWidget):
+            parent_widget = parent_widget.parent()
+
+        if not isinstance(parent_widget, EnhancedTabWidget):
+            return
+
+        # Find this container's index in parent
+        container_index = -1
+        for i in range(parent_widget.count()):
+            if parent_widget.widget(i) is self:
+                container_index = i
+                break
+
+        if container_index < 0:
+            return
+
+        if self.count() == 0:
+            # No tabs left - just remove the container
+            parent_widget.removeTab(container_index)
+        elif self.count() == 1:
+            # One tab left - extract it and replace container
+            remaining_content = self.widget(0)
+            remaining_label = self.tabText(0)
+            remaining_meta = self._tab_meta.get(0, {}).copy()
+            remaining_tab_id = remaining_meta.get("tab_id", f"tab_{id(remaining_content)}")
+
+            # Check if this is the _content tab - restore original ID
+            if remaining_tab_id.endswith("_content"):
+                remaining_tab_id = remaining_tab_id[:-8]  # Remove "_content" suffix
+                remaining_label = parent_widget.tabText(container_index)
+
+            # Keep widget alive by removing without destroying
+            super(EnhancedTabWidget, self).removeTab(0)
+
+            # Remove container from parent
+            parent_widget.removeTab(container_index)
+
+            # Insert the extracted content at the same position
+            parent_widget.insertTab(
+                container_index,
+                remaining_content,
+                remaining_label,
+                tab_id=remaining_tab_id,
+                closable=remaining_meta.get("closable", True),
+                movable=remaining_meta.get("movable", True),
+                floatable=remaining_meta.get("floatable", True),
+            )
+
+            parent_widget.setCurrentIndex(container_index)
+
     def _remove_tab_keep_widget(self, index: int) -> QWidget | None:
         """Remove tab but keep widget alive (for undo).
 

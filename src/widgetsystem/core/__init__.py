@@ -40,6 +40,17 @@ from widgetsystem.core.template_system import (
     TemplateMetadata,
 )
 from widgetsystem.core.theme_profile import ThemeColors, ThemeProfile
+from widgetsystem.core.tab_hierarchy import (
+    TabHierarchyValidator,
+    get_hierarchy_validator,
+    reset_hierarchy_validator,
+)
+from widgetsystem.core.config_validator import (
+    ConfigValidator,
+    ConfigValidationError,
+    CONFIG_SCHEMAS,
+    get_validator,
+)
 
 
 __all__ = [
@@ -76,4 +87,13 @@ __all__ = [
     "ConfigurationTemplate",
     "TemplateManager",
     "TemplateMetadata",
+    # Tab Hierarchy
+    "TabHierarchyValidator",
+    "get_hierarchy_validator",
+    "reset_hierarchy_validator",
+    # Config Validation
+    "ConfigValidator",
+    "ConfigValidationError",
+    "CONFIG_SCHEMAS",
+    "get_validator",
 ]

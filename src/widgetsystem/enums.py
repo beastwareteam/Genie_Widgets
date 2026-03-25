@@ -40,6 +40,14 @@ class ActionName(str, Enum):
     SHOW_WIDGET_FEATURES_EDITOR = "show_widget_features_editor"
     SHOW_PLUGIN_MANAGER = "show_plugin_manager"
 
+    # Tab operations (CLI automation)
+    MOVE_TAB = "move_tab"
+    NEST_TAB = "nest_tab"
+    UNNEST_TAB = "unnest_tab"
+    FLOAT_TAB = "float_tab"
+    CLOSE_TAB = "close_tab"
+    ACTIVATE_TAB = "activate_tab"
+
 
 class ResponsiveAction(str, Enum):
     """Actions applied to panels at responsive breakpoints."""

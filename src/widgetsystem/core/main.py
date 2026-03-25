@@ -465,6 +465,7 @@ class MainWindow(QMainWindow):
             sub_tab_widget = EnhancedTabWidget()
             sub_tab_widget.setObjectName(f"nested_{tab.id}")
             sub_tab_widget.setProperty("parent_tab_id", tab.id)
+            sub_tab_widget.setProperty("nesting_depth", depth + 1)
 
             # Connect signals for nested widget
             sub_tab_widget.dropZoneChanged.connect(self._on_tab_drop_zone_changed)

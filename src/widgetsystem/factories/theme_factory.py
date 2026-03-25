@@ -1,26 +1,92 @@
 """Theme factory for managing theme definitions and loading theme configurations."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 import json
 
 
 @dataclass
+class TabColors:
+    """Complete tab color configuration for unified Dock/QTabBar styling.
+
+    All colors are stored as hex strings (#RRGGBB or #AARRGGBB).
+    Gradients are stored as lists [top, upper, lower, bottom].
+    Borders are stored as lists [top, left, right].
+    """
+
+    # Tab bar background gradient [top, bottom]
+    bar_bg: list[str] = field(default_factory=lambda: ["#1E1F21", "#252628"])
+    bar_border: str = "#151617"
+
+    # Tab gradients [top, upper, lower, bottom]
+    inactive_gradient: list[str] = field(
+        default_factory=lambda: ["#4E5155", "#45484C", "#36393D", "#2E3134"]
+    )
+    active_gradient: list[str] = field(
+        default_factory=lambda: ["#5C6066", "#52565B", "#42464A", "#3A3D41"]
+    )
+    hover_gradient: list[str] = field(
+        default_factory=lambda: ["#5A5E63", "#505458", "#404448", "#38393D"]
+    )
+
+    # Tab borders [top, left, right] for 3D effect
+    inactive_borders: list[str] = field(
+        default_factory=lambda: ["#5A5D62", "#4A4D52", "#28292C"]
+    )
+    active_borders: list[str] = field(
+        default_factory=lambda: ["#707580", "#5C6065", "#35383C"]
+    )
+    hover_borders: list[str] = field(
+        default_factory=lambda: ["#686D73", "#555A5F", "#303235"]
+    )
+
+    # Text colors
+    inactive_text: str = "#A8A8A8"
+    active_text: str = "#FFFFFF"
+    hover_text: str = "#E0E0E0"
+
+    # Accent border (bottom of active tab)
+    accent_border: str = "#5294D6"
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "TabColors":
+        """Create TabColors from dictionary (e.g., from JSON)."""
+        defaults = cls()
+        return cls(
+            bar_bg=data.get("bar_bg", defaults.bar_bg),
+            bar_border=data.get("bar_border", defaults.bar_border),
+            inactive_gradient=data.get("inactive_gradient", defaults.inactive_gradient),
+            active_gradient=data.get("active_gradient", defaults.active_gradient),
+            hover_gradient=data.get("hover_gradient", defaults.hover_gradient),
+            inactive_borders=data.get("inactive_borders", defaults.inactive_borders),
+            active_borders=data.get("active_borders", defaults.active_borders),
+            hover_borders=data.get("hover_borders", defaults.hover_borders),
+            inactive_text=data.get("inactive_text", defaults.inactive_text),
+            active_text=data.get("active_text", defaults.active_text),
+            hover_text=data.get("hover_text", defaults.hover_text),
+            accent_border=data.get("accent_border", defaults.accent_border),
+        )
+
+
+@dataclass
 class ThemeDefinition:
     """Represents a theme definition.
-    
+
     Attributes:
         theme_id: Unique identifier for the theme
         name: Display name for the theme
         file_path: Path to the theme stylesheet file
-        tab_active_color: Color for active tabs (hex format)
-        tab_inactive_color: Color for inactive tabs (hex format)
+        tab_colors: Complete tab color configuration
+        tab_active_color: Legacy - color for active tabs (hex format)
+        tab_inactive_color: Legacy - color for inactive tabs (hex format)
     """
 
     theme_id: str
     name: str
     file_path: Path
+    tab_colors: TabColors = field(default_factory=TabColors)
+    # Legacy fields for backwards compatibility
     tab_active_color: str = "#E0E0E0"
     tab_inactive_color: str = "#BDBDBD"
 
@@ -150,18 +216,23 @@ class ThemeFactory:
             resolved_path = (self.config_path / file_path).resolve()
 
             # Get tab colors with defaults
-            tab_colors = theme.get("tab_colors", {})
-            if not isinstance(tab_colors, dict):
-                tab_colors = {}
+            tab_colors_data = theme.get("tab_colors", {})
+            if not isinstance(tab_colors_data, dict):
+                tab_colors_data = {}
 
-            tab_active = tab_colors.get("active", "#E0E0E0")
-            tab_inactive = tab_colors.get("inactive", "#BDBDBD")
+            # Parse into TabColors dataclass
+            tab_colors = TabColors.from_dict(tab_colors_data)
+
+            # Legacy fields for backwards compatibility
+            tab_active = tab_colors_data.get("active_text", tab_colors.active_text)
+            tab_inactive = tab_colors_data.get("inactive_text", tab_colors.inactive_text)
 
             themes.append(
                 ThemeDefinition(
                     theme_id=theme_id,
                     name=name,
                     file_path=resolved_path,
+                    tab_colors=tab_colors,
                     tab_active_color=tab_active,
                     tab_inactive_color=tab_inactive,
                 )
@@ -222,7 +293,7 @@ class ThemeFactory:
         return ""
 
     def get_tab_colors(self) -> tuple[str, str]:
-        """Get tab colors from the default theme.
+        """Get tab colors from the default theme (legacy).
 
         Returns:
             Tuple of (active_color, inactive_color)
@@ -231,6 +302,77 @@ class ThemeFactory:
         if theme:
             return (theme.tab_active_color, theme.tab_inactive_color)
         return ("#E0E0E0", "#BDBDBD")
+
+    def get_full_tab_colors(self) -> TabColors:
+        """Get complete tab color configuration from the default theme.
+
+        Returns:
+            TabColors instance with all tab styling colors
+        """
+        theme = self.get_default_theme()
+        if theme:
+            return theme.tab_colors
+        return TabColors()
+
+    def apply_tab_colors_to_theme_colors(self, theme_colors: Any) -> None:
+        """Apply TabColors from config to a ThemeColors instance.
+
+        This synchronizes the JSON-based tab colors with the ThemeProfile's
+        ThemeColors dataclass for unified styling.
+
+        Args:
+            theme_colors: ThemeColors instance from theme_profile.py
+        """
+        tab = self.get_full_tab_colors()
+
+        # Map TabColors to ThemeColors attributes
+        if len(tab.bar_bg) >= 2:
+            theme_colors.tab_bar_bg_top = tab.bar_bg[0]
+            theme_colors.tab_bar_bg_bottom = tab.bar_bg[1]
+        theme_colors.tab_bar_border = tab.bar_border
+
+        # Inactive gradient
+        if len(tab.inactive_gradient) >= 4:
+            theme_colors.tab_gradient_top = tab.inactive_gradient[0]
+            theme_colors.tab_gradient_upper = tab.inactive_gradient[1]
+            theme_colors.tab_gradient_lower = tab.inactive_gradient[2]
+            theme_colors.tab_gradient_bottom = tab.inactive_gradient[3]
+
+        # Active gradient
+        if len(tab.active_gradient) >= 4:
+            theme_colors.tab_active_gradient_top = tab.active_gradient[0]
+            theme_colors.tab_active_gradient_upper = tab.active_gradient[1]
+            theme_colors.tab_active_gradient_lower = tab.active_gradient[2]
+            theme_colors.tab_active_gradient_bottom = tab.active_gradient[3]
+
+        # Hover gradient
+        if len(tab.hover_gradient) >= 4:
+            theme_colors.tab_hover_gradient_top = tab.hover_gradient[0]
+            theme_colors.tab_hover_gradient_upper = tab.hover_gradient[1]
+            theme_colors.tab_hover_gradient_lower = tab.hover_gradient[2]
+            theme_colors.tab_hover_gradient_bottom = tab.hover_gradient[3]
+
+        # Borders (3D effect)
+        if len(tab.inactive_borders) >= 3:
+            theme_colors.tab_border_highlight = tab.inactive_borders[0]
+            theme_colors.tab_border_left = tab.inactive_borders[1]
+            theme_colors.tab_border_shadow = tab.inactive_borders[2]
+
+        if len(tab.active_borders) >= 3:
+            theme_colors.tab_active_border_highlight = tab.active_borders[0]
+            theme_colors.tab_active_border_left = tab.active_borders[1]
+            theme_colors.tab_active_border_shadow = tab.active_borders[2]
+
+        if len(tab.hover_borders) >= 3:
+            theme_colors.tab_hover_border_highlight = tab.hover_borders[0]
+            theme_colors.tab_hover_border_left = tab.hover_borders[1]
+            theme_colors.tab_hover_border_shadow = tab.hover_borders[2]
+
+        # Text colors
+        theme_colors.tab_inactive_text = tab.inactive_text
+        theme_colors.tab_active_text = tab.active_text
+        theme_colors.tab_hover_text = tab.hover_text
+        theme_colors.tab_active_border = tab.accent_border
 
     def list_profiles(self) -> list[str]:
         """List all available profile IDs.

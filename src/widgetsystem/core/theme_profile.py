@@ -20,14 +20,55 @@ class ThemeColors:
     splitter_handle: str = "#ff3c4043"  # Solid gray
     splitter_width: int = 2
 
-    # Tabs & Navigation
+    # Tabs & Navigation - Unified for Dock Tabs AND QTabBar
     tab_active_bg: str = "#cc3c4043"  # 80% opacity
     tab_active_border: str = "#ff8ab4f8"  # Blue border
     tab_active_text: str = "#ff8ab4f8"  # Blue text
     tab_inactive_bg: str = "#cc2d2e31"  # 80% opacity
     tab_inactive_text: str = "#ffbdc1c6"  # Gray text
+    tab_hover_text: str = "#ffE0E0E0"  # Light text on hover
     tab_padding: int = 4
-    tab_border_radius: int = 0
+    tab_border_radius: int = 4
+
+    # Tab 3D Gradient Colors (for raised/embossed effect)
+    # Inactive tab gradient (top to bottom)
+    tab_gradient_top: str = "#ff4E5155"  # Highlight at top
+    tab_gradient_upper: str = "#ff45484C"  # Upper section
+    tab_gradient_lower: str = "#ff36393D"  # Lower section
+    tab_gradient_bottom: str = "#ff2E3134"  # Shadow at bottom
+
+    # Active tab gradient (brighter)
+    tab_active_gradient_top: str = "#ff5C6066"
+    tab_active_gradient_upper: str = "#ff52565B"
+    tab_active_gradient_lower: str = "#ff42464A"
+    tab_active_gradient_bottom: str = "#ff3A3D41"
+
+    # Hover tab gradient
+    tab_hover_gradient_top: str = "#ff5A5E63"
+    tab_hover_gradient_upper: str = "#ff505458"
+    tab_hover_gradient_lower: str = "#ff404448"
+    tab_hover_gradient_bottom: str = "#ff38393D"
+
+    # Tab border colors (3D effect - light top/left, dark right/bottom)
+    tab_border_highlight: str = "#ff5A5D62"  # Top border (light)
+    tab_border_left: str = "#ff4A4D52"  # Left border
+    tab_border_shadow: str = "#ff28292C"  # Right border (dark)
+    tab_active_border_highlight: str = "#ff707580"  # Active top
+    tab_active_border_left: str = "#ff5C6065"  # Active left
+    tab_active_border_shadow: str = "#ff35383C"  # Active right
+    tab_hover_border_highlight: str = "#ff686D73"  # Hover top
+    tab_hover_border_left: str = "#ff555A5F"  # Hover left
+    tab_hover_border_shadow: str = "#ff303235"  # Hover right
+
+    # Tab bar background (darker than tabs for depth)
+    tab_bar_bg_top: str = "#ff1E1F21"
+    tab_bar_bg_bottom: str = "#ff252628"
+    tab_bar_border: str = "#ff151617"
+
+    # Tab dimensions
+    tab_min_height: int = 18
+    tab_max_height: int = 18
+    tab_font_size: int = 11
 
     # Titlebars & Buttons
     titlebar_bg: str = "#cc2d2e31"  # 80% opacity
@@ -50,6 +91,13 @@ class ThemeColors:
     overlay_cross_color: str = "#ff8ab4f8"  # Solid blue
     overlay_border_color: str = "#ff8ab4f8"  # Solid blue
     overlay_border_width: int = 2
+
+    # Tab Drop Indicator (DnD visual feedback)
+    tab_drop_insert_color: str = "#ff5294D6"  # Blue insert line
+    tab_drop_nest_border_color: str = "#ff5294D6"  # Blue border for nest zone
+    tab_drop_nest_fill_color: str = "#205294D6"  # 12% opacity blue fill
+    tab_drop_insert_width: int = 3
+    tab_drop_nest_border_width: int = 2
 
 
 class ThemeProfile:
@@ -175,86 +223,127 @@ ads--CDockSplitter {{
     padding: 0px;
 }}
 
-/* 4. Tabs */
-ads--CDockWidgetTab {{
-    background: {qss_color("tab_inactive_bg")};
-    color: {qss_color("tab_inactive_text")};
-    padding: {c.tab_padding}px;
-    border: 1px solid {qss_color("splitter_handle")};
-    border-bottom: none;
-    border-radius: {c.tab_border_radius}px {c.tab_border_radius}px 0 0;
-    margin-right: 2px;
-}}
+/* 4. Unified Tab Styling - Dock Tabs AND QTabBar use identical colors */
 
-ads--CDockWidgetTab[activeTab="true"] {{
-    background: {qss_color("tab_active_bg")};
-    color: {qss_color("tab_active_text")};
-    border-bottom: 2px solid {qss_color("tab_active_border")};
-    font-weight: bold;
-}}
-
-ads--CDockWidgetTab:hover {{
-    background: {self.as_qss_color("#40ffffff")};
-}}
-
-QTabBar {{
-    background: {qss_color("window_bg")};
-}}
-
-QTabBar::tab {{
+/* ---- Title Bar Background (container for tabs) ---- */
+ads--CDockAreaTitleBar {{
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #4E5155,
-                                stop:0.05 #45484C,
-                                stop:0.95 #36393D,
-                                stop:1 #2E3134);
+                                stop:0 {qss_color("tab_bar_bg_top")},
+                                stop:1 {qss_color("tab_bar_bg_bottom")});
+    border: none;
+    border-top: 1px solid {qss_color("tab_bar_border")};
+    padding: 0px;
+    margin: 0px;
+    min-height: 26px;
+    max-height: 26px;
+}}
+
+/* ---- Dock Widget Tabs (QtAds) ---- */
+ads--CDockWidgetTab {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 {qss_color("tab_gradient_top")},
+                                stop:0.05 {qss_color("tab_gradient_upper")},
+                                stop:0.95 {qss_color("tab_gradient_lower")},
+                                stop:1 {qss_color("tab_gradient_bottom")});
     color: {qss_color("tab_inactive_text")};
     padding: 3px 10px;
     margin: 3px 3px 0px 0px;
-    border-top: 1px solid #5A5D62;
-    border-left: 1px solid #4A4D52;
-    border-right: 1px solid #28292C;
+    border-top: 1px solid {qss_color("tab_border_highlight")};
+    border-left: 1px solid {qss_color("tab_border_left")};
+    border-right: 1px solid {qss_color("tab_border_shadow")};
     border-bottom: none;
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
-    min-height: 18px;
-    max-height: 18px;
-    font-size: 11px;
+    border-top-left-radius: {c.tab_border_radius}px;
+    border-top-right-radius: {c.tab_border_radius}px;
+    min-height: {c.tab_min_height}px;
+    max-height: {c.tab_max_height}px;
 }}
 
-QTabBar::tab:selected {{
+ads--CDockWidgetTab:hover {{
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #5C6066,
-                                stop:0.05 #52565B,
-                                stop:0.95 #42464A,
-                                stop:1 #3A3D41);
+                                stop:0 {qss_color("tab_hover_gradient_top")},
+                                stop:0.05 {qss_color("tab_hover_gradient_upper")},
+                                stop:0.95 {qss_color("tab_hover_gradient_lower")},
+                                stop:1 {qss_color("tab_hover_gradient_bottom")});
+    color: {qss_color("tab_hover_text")};
+    border-top: 1px solid {qss_color("tab_hover_border_highlight")};
+    border-left: 1px solid {qss_color("tab_hover_border_left")};
+    border-right: 1px solid {qss_color("tab_hover_border_shadow")};
+}}
+
+ads--CDockWidgetTab[activeTab="true"] {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 {qss_color("tab_active_gradient_top")},
+                                stop:0.05 {qss_color("tab_active_gradient_upper")},
+                                stop:0.95 {qss_color("tab_active_gradient_lower")},
+                                stop:1 {qss_color("tab_active_gradient_bottom")});
     color: {qss_color("tab_active_text")};
-    border-top: 1px solid #707580;
-    border-left: 1px solid #5C6065;
-    border-right: 1px solid #35383C;
+    border-top: 1px solid {qss_color("tab_active_border_highlight")};
+    border-left: 1px solid {qss_color("tab_active_border_left")};
+    border-right: 1px solid {qss_color("tab_active_border_shadow")};
     border-bottom: 2px solid {qss_color("tab_active_border")};
     font-weight: normal;
 }}
 
+/* ---- QTabBar (Nested/Sub Tabs) - Identical styling ---- */
+QTabBar {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 {qss_color("tab_bar_bg_top")},
+                                stop:1 {qss_color("tab_bar_bg_bottom")});
+    color: {qss_color("tab_inactive_text")};
+    border: none;
+    border-top: 1px solid {qss_color("tab_bar_border")};
+    min-height: 26px;
+    max-height: 26px;
+}}
+
+QTabBar::tab {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 {qss_color("tab_gradient_top")},
+                                stop:0.05 {qss_color("tab_gradient_upper")},
+                                stop:0.95 {qss_color("tab_gradient_lower")},
+                                stop:1 {qss_color("tab_gradient_bottom")});
+    color: {qss_color("tab_inactive_text")};
+    padding: 3px 8px 3px 10px;
+    margin: 3px 3px 0px 0px;
+    border-top: 1px solid {qss_color("tab_border_highlight")};
+    border-left: 1px solid {qss_color("tab_border_left")};
+    border-right: 1px solid {qss_color("tab_border_shadow")};
+    border-bottom: none;
+    border-top-left-radius: {c.tab_border_radius}px;
+    border-top-right-radius: {c.tab_border_radius}px;
+    min-width: 50px;
+    min-height: {c.tab_min_height}px;
+    max-height: {c.tab_max_height}px;
+    font-size: {c.tab_font_size}px;
+}}
+
 QTabBar::tab:hover {{
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #5A5E63,
-                                stop:0.05 #505458,
-                                stop:0.95 #404448,
-                                stop:1 #38393D);
-    color: #E0E0E0;
-    border-top: 1px solid #686D73;
-    border-left: 1px solid #555A5F;
-    border-right: 1px solid #303235;
+                                stop:0 {qss_color("tab_hover_gradient_top")},
+                                stop:0.05 {qss_color("tab_hover_gradient_upper")},
+                                stop:0.95 {qss_color("tab_hover_gradient_lower")},
+                                stop:1 {qss_color("tab_hover_gradient_bottom")});
+    color: {qss_color("tab_hover_text")};
+    border-top: 1px solid {qss_color("tab_hover_border_highlight")};
+    border-left: 1px solid {qss_color("tab_hover_border_left")};
+    border-right: 1px solid {qss_color("tab_hover_border_shadow")};
 }}
 
-/* 5. Titlebars */
-ads--CDockAreaTitleBar {{
-    background: {qss_color("titlebar_bg")};
-    border-bottom: 1px solid {qss_color("splitter_handle")};
-    padding: 0px 4px;
-    margin: 0px;
+QTabBar::tab:selected {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                stop:0 {qss_color("tab_active_gradient_top")},
+                                stop:0.05 {qss_color("tab_active_gradient_upper")},
+                                stop:0.95 {qss_color("tab_active_gradient_lower")},
+                                stop:1 {qss_color("tab_active_gradient_bottom")});
+    color: {qss_color("tab_active_text")};
+    border-top: 1px solid {qss_color("tab_active_border_highlight")};
+    border-left: 1px solid {qss_color("tab_active_border_left")};
+    border-right: 1px solid {qss_color("tab_active_border_shadow")};
+    border-bottom: 2px solid {qss_color("tab_active_border")};
+    font-weight: normal;
 }}
 
+/* 5. Title Bar Buttons */
 ads--CDockAreaTitleBar ads--CTitleBarButton {{
     padding: 4px 8px;
     margin: 0px;

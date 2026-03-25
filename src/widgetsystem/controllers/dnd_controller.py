@@ -166,3 +166,130 @@ class DnDController(QObject):
         """Reset DnD state."""
         self._drop_zones.clear()
         self._rules.clear()
+
+    # ------------------------------------------------------------------
+    # Free X/Y Drag Navigation
+    # ------------------------------------------------------------------
+
+    def calculate_drop_area_from_position(
+        self,
+        x: int,
+        y: int,
+        container_width: int,
+        container_height: int,
+        edge_threshold: float = 0.2,
+    ) -> str:
+        """Calculate target dock area from cursor position.
+
+        Divides the container into zones:
+        - Edges (20% from each side) → corresponding dock area
+        - Center (remaining 60%) → center area
+
+        Args:
+            x: Cursor X position
+            y: Cursor Y position
+            container_width: Container width
+            container_height: Container height
+            edge_threshold: Edge zone threshold (0.0-0.5)
+
+        Returns:
+            Dock area name (left, right, top, bottom, center)
+        """
+        # Calculate relative position (0.0 to 1.0)
+        rel_x = x / container_width if container_width > 0 else 0.5
+        rel_y = y / container_height if container_height > 0 else 0.5
+
+        # Check edges (priority: corners go to horizontal)
+        if rel_x < edge_threshold:
+            return "left"
+        elif rel_x > (1.0 - edge_threshold):
+            return "right"
+        elif rel_y < edge_threshold:
+            return "top"
+        elif rel_y > (1.0 - edge_threshold):
+            return "bottom"
+        else:
+            return "center"
+
+    def get_drop_zone_rect(
+        self,
+        area: str,
+        container_width: int,
+        container_height: int,
+        edge_threshold: float = 0.2,
+    ) -> tuple[int, int, int, int]:
+        """Get rectangle for a drop zone area.
+
+        Args:
+            area: Dock area name
+            container_width: Container width
+            container_height: Container height
+            edge_threshold: Edge zone threshold
+
+        Returns:
+            Tuple of (x, y, width, height)
+        """
+        edge_w = int(container_width * edge_threshold)
+        edge_h = int(container_height * edge_threshold)
+
+        if area == "left":
+            return (0, 0, edge_w, container_height)
+        elif area == "right":
+            return (container_width - edge_w, 0, edge_w, container_height)
+        elif area == "top":
+            return (edge_w, 0, container_width - 2 * edge_w, edge_h)
+        elif area == "bottom":
+            return (edge_w, container_height - edge_h, container_width - 2 * edge_w, edge_h)
+        else:  # center
+            return (edge_w, edge_h, container_width - 2 * edge_w, container_height - 2 * edge_h)
+
+    def get_all_drop_zone_rects(
+        self,
+        container_width: int,
+        container_height: int,
+        edge_threshold: float = 0.2,
+    ) -> dict[str, tuple[int, int, int, int]]:
+        """Get all drop zone rectangles.
+
+        Args:
+            container_width: Container width
+            container_height: Container height
+            edge_threshold: Edge zone threshold
+
+        Returns:
+            Dict mapping area names to (x, y, width, height) tuples
+        """
+        return {
+            area: self.get_drop_zone_rect(area, container_width, container_height, edge_threshold)
+            for area in ["left", "right", "top", "bottom", "center"]
+        }
+
+    def validate_drop(
+        self,
+        panel_id: str,
+        source_area: str,
+        target_x: int,
+        target_y: int,
+        container_width: int,
+        container_height: int,
+    ) -> tuple[bool, str]:
+        """Validate a drop operation and return target area.
+
+        Args:
+            panel_id: Panel being dragged
+            source_area: Original dock area
+            target_x: Drop X position
+            target_y: Drop Y position
+            container_width: Container width
+            container_height: Container height
+
+        Returns:
+            Tuple of (is_valid, target_area)
+        """
+        target_area = self.calculate_drop_area_from_position(
+            target_x, target_y, container_width, container_height
+        )
+
+        is_valid = self.is_move_allowed(panel_id, source_area, target_area)
+
+        return (is_valid, target_area)

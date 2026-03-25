@@ -2,8 +2,13 @@
 
 from dataclasses import dataclass
 import json
+import logging
 from pathlib import Path
 from typing import Any, TypedDict, cast
+
+from widgetsystem.core.config_validator import ConfigValidator
+
+logger = logging.getLogger(__name__)
 
 
 class PanelDefinition(TypedDict, total=False):
@@ -52,14 +57,20 @@ class PanelFactory:
         self.config_path = Path(config_path)
         self.panels_file = self.config_path / "panels.json"
         self._panels_cache: dict[str, PanelConfig] | None = None
+        self._validator = ConfigValidator(self.config_path)
 
     def load_panels(self) -> list[PanelConfig]:
-        """Load and parse all panels from config."""
+        """Load and parse all panels from config with failsafe backup support."""
         if not self.panels_file.exists():
             raise FileNotFoundError(f"Panels configuration file not found: {self.panels_file}")
 
-        with open(self.panels_file, encoding="utf-8") as f:
-            raw_data_temp: Any = json.load(f)
+        # Use failsafe loading (auto-recovers from backup if main file is corrupted)
+        try:
+            raw_data_temp: Any = self._validator.load_with_failsafe(self.panels_file)
+        except Exception as e:
+            logger.warning(f"Failsafe load failed, trying direct load: {e}")
+            with open(self.panels_file, encoding="utf-8") as f:
+                raw_data_temp = json.load(f)
 
         if not isinstance(raw_data_temp, dict):
             raise ValueError("Panels configuration must be a JSON object")

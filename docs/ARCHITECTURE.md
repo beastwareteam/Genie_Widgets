@@ -64,7 +64,8 @@ src/widgetsystem/
 │   ├── responsive_factory.py # Responsive layouts
 │   ├── i18n_factory.py      # Internationalization
 │   ├── list_factory.py      # Nested lists
-│   └── ui_config_factory.py # UI configuration
+│   ├── ui_config_factory.py # UI configuration
+│   └── ui_dimensions_factory.py # Centralized UI dimensions
 │
 └── ui/                      # UI components
     ├── __init__.py          # UI exports
@@ -212,3 +213,267 @@ Consistent factory structure:
 - No dynamic code execution from configuration
 - Backup system prevents data loss
 - Export/import validates data integrity
+
+---
+
+## Tab System Architecture (Enhanced)
+
+### Quality Gates & Implementation Phases
+
+#### Phase 1: Core Infrastructure (DONE)
+| Component | Status | Quality Gate |
+|-----------|--------|--------------|
+| `EnhancedTabWidget` | Done | Drag & Drop, Nesting, Close |
+| `TabDropIndicator` | Done | Zone detection (BEFORE/INTO/AFTER) |
+| `DockController` | Done | Integration tests |
+| `TabsFactory` | Done | Config validation |
+
+#### Phase 2: Command System (DONE)
+| Component | Status | Quality Gate |
+|-----------|--------|--------------|
+| `TabCommandController` | Done | Undo/Redo tests |
+| `CommandRegistry` | Done | CLI automation tests |
+| `tab_commands.py` | Done | All commands reversible |
+| `CloseTabUndoCommand` | Done | Full state restore |
+| `NestTabUndoCommand` | Done | Hierarchy restore |
+
+#### Phase 3: Integration Layer (DONE)
+| Component | Status | Quality Gate |
+|-----------|--------|--------------|
+| QtAds ↔ EnhancedTabWidget | Done | Float/Dock round-trip |
+| Nested DnD | Done | Cross-container transfer |
+| Visual Feedback | Done | Zone highlighting |
+
+#### Phase 4: Polish & Hardening (DONE)
+| Component | Status | Quality Gate |
+|-----------|--------|--------------|
+| Circular nesting prevention | Done | TabHierarchyValidator |
+| Max depth limiter | Done | Config-driven (layout_config.json) |
+| Auto-dissolve empty folders | Done | Config-driven |
+| UIDimensionsFactory | Done | Centralized dimensions |
+
+### Tab Component Registry
+
+```
+widgetsystem/
+├── ui/
+│   ├── enhanced_tab_widget.py    # EnhancedTabWidget, EnhancedTabBar, DropZone
+│   ├── tab_drop_indicator.py     # TabDropIndicator, TabDropIndicatorController
+│   └── unified_tab_item.py       # UnifiedTabItem (metadata container)
+├── controllers/
+│   ├── dock_controller.py        # DockController (QtAds integration)
+│   ├── tab_command_controller.py # TabCommandController (CLI operations)
+│   └── unified_tab_manager.py    # UnifiedTabManager (central registry)
+├── core/
+│   ├── tab_commands.py           # Command classes (undo/redo)
+│   ├── command_registry.py       # CommandRegistry (CLI dispatch)
+│   └── undo_redo.py              # UndoRedoManager
+└── factories/
+    └── tabs_factory.py           # TabsFactory (JSON → widgets)
+```
+
+### Required Helpers & Utilities
+
+#### 1. Tab Hierarchy Validator (Implemented)
+```python
+# src/widgetsystem/core/tab_hierarchy.py
+class TabHierarchyValidator:
+    def __init__(self, max_depth: int | None = None, auto_dissolve: bool | None = None):
+        """Load config from layout_config.json if not provided."""
+
+    def validate_nesting(self, source_id: str, target_id: str) -> tuple[bool, str]:
+        """Prevent circular nesting and enforce depth limit."""
+
+    def get_nesting_depth(self, tab_id: str) -> int:
+        """Calculate current nesting depth (0 = root)."""
+
+    def get_ancestor_chain(self, tab_id: str) -> list[str]:
+        """Return all parent tab IDs up to root."""
+
+    def should_dissolve_folder(self, folder_id: str) -> bool:
+        """Check if folder should auto-dissolve (0-1 children)."""
+
+    def can_nest_here(self, target_depth: int) -> bool:
+        """Check if nesting allowed at given depth."""
+```
+
+#### 2. Tab State Serializer
+```python
+class TabStateSerializer:
+    def serialize_hierarchy(self, root_widget: EnhancedTabWidget) -> dict:
+        """Export complete tab tree to JSON."""
+
+    def restore_hierarchy(self, state: dict, factory: TabsFactory) -> EnhancedTabWidget:
+        """Rebuild tab tree from serialized state."""
+```
+
+#### 3. Memory Monitor (Debug)
+```python
+class TabMemoryMonitor:
+    def track_widget(self, widget: QWidget, name: str) -> None:
+        """Track widget for leak detection."""
+
+    def report_leaks(self) -> list[str]:
+        """Return list of widgets not properly cleaned up."""
+```
+
+### Signal Flow (Tab DnD)
+
+```
+User Drag Action
+       │
+       ▼
+┌──────────────────┐
+│ EnhancedTabBar   │
+│ mouseMoveEvent() │
+└────────┬─────────┘
+         │ QDrag started
+         ▼
+┌──────────────────┐
+│ dragMoveEvent()  │──────► dropZoneChanged Signal
+└────────┬─────────┘              │
+         │                        ▼
+         │              ┌─────────────────────┐
+         │              │ TabDropIndicator    │
+         │              │ show_*_indicator()  │
+         │              └─────────────────────┘
+         ▼
+┌──────────────────┐
+│ dropEvent()      │
+└────────┬─────────┘
+         │
+    ┌────┴────┐
+    │ Zone?   │
+    └────┬────┘
+         │
+    ┌────┼────┬────┐
+    ▼    ▼    ▼    ▼
+ BEFORE INTO AFTER END
+    │    │    │    │
+    ▼    ▼    ▼    ▼
+┌──────────────────┐
+│ TabCommand       │
+│ execute()        │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ UndoRedoManager  │
+│ push(command)    │
+└──────────────────┘
+```
+
+### QtAds Integration Workarounds
+
+1. **CDockOverlay Size**: QtAds overlay is C++ rendered, not QSS customizable
+   - Solution: Use custom `TabDropIndicator` for tab-level DnD
+   - QtAds overlay only for dock-level operations
+
+2. **Float Window Title Bar**: QtAds uses native or custom title bar
+   - Solution: `FloatingWindowPatcher` already implemented
+   - Hooks into `CDockManager.floatingWidgetCreated`
+
+3. **Dock Area Synchronization**: Keep tab state synced with dock state
+   - Solution: `DockController._on_dock_closed()` cleanup handler
+   - `_on_tab_floated()` creates new CDockWidget
+
+### Integration Checklist
+- [x] Tab float → CDockWidget creation
+- [x] CDockWidget close → Tab cleanup
+- [x] Tab nesting (folder-like behavior)
+- [x] Auto-dissolve empty folders
+- [x] Max nesting depth enforcement
+- [x] Circular nesting prevention
+- [x] Undo/Redo for close and nest operations
+- [ ] Dock split → Tab transfer
+- [ ] Floating window → Tab float back
+- [ ] Dock area restore → Tab state restore
+
+### Configuration Schema (Extended)
+
+#### layout_config.json (UI Dimensions)
+```json
+{
+  "titlebar": {
+    "collapsed_height": 3,
+    "collapsed_hit_height": 6,
+    "expanded_height": 36,
+    "animation_duration_ms": 160
+  },
+  "tabs": {
+    "padding_vertical": 2,
+    "padding_horizontal": 4,
+    "margin_top": 2,
+    "margin_right": 1,
+    "margin_bottom": 0,
+    "margin_left": 2,
+    "border_radius": 4,
+    "font_size": 11,
+    "max_nesting_depth": 2,
+    "auto_dissolve_empty_folders": true,
+    "close_button": {
+      "size": 14,
+      "margin_top": 2,
+      "margin_right": 2,
+      "margin_bottom": 2,
+      "margin_left": 2,
+      "border_radius": 3
+    }
+  }
+}
+```
+
+#### tabs.json (Tab Definitions)
+```json
+{
+  "tabs": [
+    {
+      "id": "tab_main",
+      "title_key": "tab.main",
+      "closable": true,
+      "movable": true,
+      "floatable": true
+    }
+  ]
+}
+```
+
+### Testing Strategy
+
+#### Unit Tests
+```
+tests/
+├── test_enhanced_tab_widget.py
+│   ├── test_add_tab_with_metadata
+│   ├── test_remove_tab_cleanup
+│   ├── test_tab_metadata_persistence
+│   └── test_nested_tab_creation
+├── test_drop_zone.py
+│   ├── test_zone_calculation_before
+│   ├── test_zone_calculation_into
+│   ├── test_zone_calculation_after
+│   └── test_zone_edge_cases
+├── test_tab_commands.py
+│   ├── test_move_tab_undo_redo
+│   ├── test_nest_tab_undo_redo
+│   ├── test_unnest_tab_undo_redo
+│   └── test_close_tab_undo_redo
+└── test_memory.py
+    ├── test_no_leaks_on_tab_close
+    ├── test_no_leaks_on_nesting
+    └── test_no_leaks_on_float
+```
+
+#### Integration Tests
+```
+tests/
+├── test_qtads_integration.py
+│   ├── test_tab_to_dock_float
+│   ├── test_dock_to_tab_return
+│   └── test_dock_split_with_tabs
+└── test_dnd_e2e.py
+    ├── test_drag_reorder
+    ├── test_drag_nest
+    ├── test_drag_cross_container
+    └── test_drag_to_float
+```

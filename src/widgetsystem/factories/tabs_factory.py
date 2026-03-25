@@ -2,8 +2,13 @@
 
 from dataclasses import dataclass, field
 import json
+import logging
 from pathlib import Path
 from typing import Any, TypedDict, cast
+
+from widgetsystem.core.config_validator import ConfigValidator, CONFIG_SCHEMAS
+
+logger = logging.getLogger(__name__)
 
 
 class TabDefinition(TypedDict, total=False):
@@ -29,13 +34,36 @@ class TabGroupDefinition(TypedDict, total=False):
 
 @dataclass
 class Tab:
-    """Represents a single tab with optional nested children."""
+    """Represents a single tab with optional nested children.
+
+    Attributes:
+        id: Unique tab identifier
+        title_key: i18n key for tab title
+        component: Component ID for content widget (from ComponentRegistry)
+        closable: Whether tab can be closed
+        movable: Whether tab can be dragged/reordered
+        floatable: Whether tab can be floated to own window
+        active: Whether tab is initially active
+        icon: Optional icon path or icon name
+        tooltip: Optional tooltip text or i18n key
+        badge: Optional badge text (e.g., notification count)
+        disabled: Whether tab is disabled
+        config: Additional configuration passed to component
+        children: Nested child tabs
+    """
 
     id: str
     title_key: str
     component: str = ""
     closable: bool = True
+    movable: bool = True
+    floatable: bool = True
     active: bool = False
+    icon: str = ""
+    tooltip: str = ""
+    badge: str = ""
+    disabled: bool = False
+    config: dict[str, Any] = field(default_factory=dict)
     children: list["Tab"] = field(default_factory=list)
 
 
@@ -70,14 +98,20 @@ class TabsFactory:
         self.config_path = Path(config_path)
         self.tabs_file = self.config_path / "tabs.json"
         self._tab_groups_cache: dict[str, TabGroup] | None = None
+        self._validator = ConfigValidator(self.config_path)
 
     def load_tab_groups(self) -> list[TabGroup]:
-        """Load and parse all tab groups from config."""
+        """Load and parse all tab groups from config with failsafe backup support."""
         if not self.tabs_file.exists():
             raise FileNotFoundError(f"Tabs configuration file not found: {self.tabs_file}")
 
-        with open(self.tabs_file, encoding="utf-8") as f:
-            raw_data_temp: Any = json.load(f)
+        # Use failsafe loading (auto-recovers from backup if main file is corrupted)
+        try:
+            raw_data_temp: Any = self._validator.load_with_failsafe(self.tabs_file)
+        except Exception as e:
+            logger.warning(f"Failsafe load failed, trying direct load: {e}")
+            with open(self.tabs_file, encoding="utf-8") as f:
+                raw_data_temp = json.load(f)
 
         if not isinstance(raw_data_temp, dict):
             raise ValueError("Tabs configuration must be a JSON object")
@@ -117,7 +151,28 @@ class TabsFactory:
             component = ""
 
         closable: Any = tab_dict.get("closable", True)
+        movable: Any = tab_dict.get("movable", True)
+        floatable: Any = tab_dict.get("floatable", True)
         active: Any = tab_dict.get("active", False)
+
+        # Optional properties
+        icon: Any = tab_dict.get("icon", "")
+        if not isinstance(icon, str):
+            icon = ""
+
+        tooltip: Any = tab_dict.get("tooltip", "")
+        if not isinstance(tooltip, str):
+            tooltip = ""
+
+        badge: Any = tab_dict.get("badge", "")
+        if not isinstance(badge, str):
+            badge = str(badge) if badge else ""
+
+        disabled: Any = tab_dict.get("disabled", False)
+
+        config: Any = tab_dict.get("config", {})
+        if not isinstance(config, dict):
+            config = {}
 
         children: list[Tab] = []
         children_list_raw: Any = tab_dict.get("children", [])
@@ -133,7 +188,14 @@ class TabsFactory:
             title_key=title_key,
             component=component,
             closable=bool(closable),
+            movable=bool(movable),
+            floatable=bool(floatable),
             active=bool(active),
+            icon=icon,
+            tooltip=tooltip,
+            badge=badge,
+            disabled=bool(disabled),
+            config=cast("dict[str, Any]", config),
             children=children,
         )
 
@@ -306,8 +368,22 @@ class TabsFactory:
             "title_key": tab.title_key,
             "component": tab.component,
             "closable": tab.closable,
+            "movable": tab.movable,
+            "floatable": tab.floatable,
             "active": tab.active,
         }
+
+        # Only include optional fields if set
+        if tab.icon:
+            result["icon"] = tab.icon
+        if tab.tooltip:
+            result["tooltip"] = tab.tooltip
+        if tab.badge:
+            result["badge"] = tab.badge
+        if tab.disabled:
+            result["disabled"] = tab.disabled
+        if tab.config:
+            result["config"] = tab.config
 
         if tab.children:
             result["children"] = [TabsFactory._tab_to_dict(child) for child in tab.children]
