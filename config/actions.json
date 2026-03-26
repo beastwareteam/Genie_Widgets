@@ -1,0 +1,131 @@
+{
+  "actions": [
+    {
+      "id": "action_save_layout",
+      "label_key": "action.save_layout",
+      "tooltip_key": "tooltip.save_layout",
+      "icon": "save",
+      "shortcut": "Ctrl+S",
+      "action": "save_layout",
+      "category": "file"
+    },
+    {
+      "id": "action_load_layout",
+      "label_key": "action.load_layout",
+      "tooltip_key": "tooltip.load_layout",
+      "icon": "folder-open",
+      "shortcut": "Ctrl+L",
+      "action": "load_layout",
+      "category": "file"
+    },
+    {
+      "id": "action_reset_layout",
+      "label_key": "action.reset_layout",
+      "tooltip_key": "tooltip.reset_layout",
+      "icon": "refresh",
+      "shortcut": "Ctrl+R",
+      "action": "reset_layout",
+      "category": "file"
+    },
+    {
+      "id": "action_new_dock",
+      "label_key": "action.new_dock",
+      "tooltip_key": "toolbar.new_dock",
+      "icon": "plus",
+      "action": "new_dock",
+      "category": "dock"
+    },
+    {
+      "id": "action_float_all",
+      "label_key": "action.float_all",
+      "tooltip_key": "toolbar.float_all",
+      "icon": "window-restore",
+      "action": "float_all",
+      "category": "dock"
+    },
+    {
+      "id": "action_dock_all",
+      "label_key": "action.dock_all",
+      "tooltip_key": "toolbar.dock_all",
+      "icon": "window-maximize",
+      "action": "dock_all",
+      "category": "dock"
+    },
+    {
+      "id": "action_close_all",
+      "label_key": "action.close_all",
+      "tooltip_key": "toolbar.close_all",
+      "icon": "times",
+      "action": "close_all",
+      "category": "dock"
+    },
+    {
+      "id": "action_undo",
+      "label_key": "action.undo",
+      "tooltip_key": "undo_redo.tooltip.undo_short",
+      "icon": "undo",
+      "shortcut": "Ctrl+Z",
+      "action": "undo",
+      "category": "edit"
+    },
+    {
+      "id": "action_redo",
+      "label_key": "action.redo",
+      "tooltip_key": "undo_redo.tooltip.redo_short",
+      "icon": "redo",
+      "shortcut": "Ctrl+Y",
+      "action": "redo",
+      "category": "edit"
+    },
+    {
+      "id": "action_show_theme_editor",
+      "label_key": "visual_app.toolbar.theme_editor",
+      "tooltip_key": "visual_app.toolbar.theme_editor",
+      "icon": "palette",
+      "action": "show_theme_editor",
+      "category": "tools"
+    },
+    {
+      "id": "action_show_color_picker",
+      "label_key": "visual_app.toolbar.color_picker",
+      "tooltip_key": "visual_app.toolbar.color_picker",
+      "icon": "eyedropper",
+      "action": "show_color_picker",
+      "category": "tools"
+    },
+    {
+      "id": "action_show_widget_editor",
+      "label_key": "visual_app.toolbar.widget_editor",
+      "tooltip_key": "visual_app.toolbar.widget_editor",
+      "icon": "wrench",
+      "action": "show_widget_features_editor",
+      "category": "tools"
+    },
+    {
+      "id": "action_show_plugin_manager",
+      "label_key": "plugin_manager.title",
+      "tooltip_key": "plugin_manager.title",
+      "icon": "puzzle-piece",
+      "action": "show_plugin_manager",
+      "category": "tools"
+    },
+    {
+      "id": "action_show_configuration",
+      "label_key": "menu.tools.config",
+      "tooltip_key": "toolbar.config",
+      "icon": "cog",
+      "shortcut": "Ctrl+Shift+C",
+      "action": "show_configuration",
+      "category": "tools"
+    },
+    {
+      "id": "action_refresh",
+      "label_key": "action.refresh",
+      "tooltip_key": "visual_app.toolbar.refresh",
+      "icon": "sync",
+      "shortcut": "F5",
+      "action": "refresh",
+      "category": "view"
+    }
+  ]
+}

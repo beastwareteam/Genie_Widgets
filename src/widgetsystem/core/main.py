@@ -31,6 +31,7 @@ from widgetsystem.controllers import (
     ThemeController,
 )
 from widgetsystem.enums import ActionName, DockArea
+from widgetsystem.factories.action_factory import ActionFactory
 from widgetsystem.factories.dnd_factory import DnDFactory
 from widgetsystem.factories.i18n_factory import I18nFactory
 from widgetsystem.factories.layout_factory import LayoutDefinition, LayoutFactory
@@ -40,7 +41,9 @@ from widgetsystem.factories.panel_factory import PanelConfig, PanelFactory
 from widgetsystem.factories.responsive_factory import ResponsiveFactory
 from widgetsystem.factories.tabs_factory import Tab, TabGroup, TabsFactory
 from widgetsystem.factories.theme_factory import ThemeDefinition, ThemeFactory
+from widgetsystem.factories.toolbar_factory import ToolbarFactory
 from widgetsystem.factories.ui_config_factory import UIConfigFactory
+from widgetsystem.core.action_registry import ActionRegistry
 from widgetsystem.core.plugin_system import PluginManager, PluginRegistry
 from widgetsystem.ui import (
     ConfigurationPanel,
@@ -86,6 +89,16 @@ class MainWindow(QMainWindow):
         self.i18n_factory = I18nFactory(Path("config"), locale="de")
         self.list_factory = ListFactory(Path("config"))
         self.ui_config_factory = UIConfigFactory(Path("config"))
+        self.action_factory = ActionFactory(Path("config"), self.i18n_factory)
+        self.toolbar_factory = ToolbarFactory(Path("config"), self.i18n_factory)
+
+        # Initialize ActionRegistry singleton
+        self.action_registry = ActionRegistry.instance()
+        self.action_registry.initialize(
+            action_factory=self.action_factory,
+            parent=self,
+            handler_map=self._build_action_handlers(),
+        )
 
         # Initialize Plugin System
         self._init_plugin_system()
@@ -824,6 +837,32 @@ class MainWindow(QMainWindow):
         }
         return handlers.get(action_name)
 
+    def _build_action_handlers(self) -> dict[str, Callable[[], None]]:
+        """Build mapping of action names to handler methods for ActionRegistry.
+
+        Returns:
+            Dictionary mapping action names to handler functions
+        """
+        return {
+            ActionName.SAVE_DOCK.value: self._on_save_dock,
+            ActionName.LOAD_DOCK.value: self._on_load_dock,
+            ActionName.SAVE_LAYOUT.value: self._save_layout,
+            ActionName.LOAD_LAYOUT.value: self._load_layout,
+            ActionName.RESET_LAYOUT.value: self._reset_layout,
+            ActionName.NEW_DOCK.value: self._on_new_dock,
+            ActionName.FLOAT_ALL.value: self._on_float_all,
+            ActionName.DOCK_ALL.value: self._on_dock_all,
+            ActionName.CLOSE_ALL.value: self._on_close_all,
+            ActionName.SHOW_THEME_EDITOR.value: self._show_theme_editor,
+            ActionName.SHOW_COLOR_PICKER.value: self._show_color_picker,
+            ActionName.SHOW_WIDGET_FEATURES_EDITOR.value: self._show_widget_features_editor,
+            ActionName.SHOW_PLUGIN_MANAGER.value: self._show_plugin_manager,
+            "show_configuration": self._show_configuration_panel,
+            "undo": self._on_undo,
+            "redo": self._on_redo,
+            "refresh": lambda: print("[REFRESH] Refresh triggered"),
+        }
+
     # ------------------------------------------------------------------
     # Inlay Title Bar (Collapsible 3px->36px)
     # ------------------------------------------------------------------
@@ -942,7 +981,38 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
 
     def _create_toolbar(self) -> None:
-        """Create toolbar with dock management and menu buttons."""
+        """Create toolbar from ToolbarFactory configuration.
+
+        Uses ActionRegistry for actions and ToolbarFactory for layout.
+        Falls back to hardcoded toolbar if config is not available.
+        """
+        # Register menu creators for dynamic menus
+        self.toolbar_factory.register_menu_creator(
+            "layouts_menu", self._create_layouts_menu
+        )
+        self.toolbar_factory.register_menu_creator(
+            "themes_menu", self._create_themes_menu
+        )
+
+        # Try to create toolbar from config
+        try:
+            toolbars = self.toolbar_factory.create_all_toolbars(
+                action_registry=self.action_registry,
+                parent=self,
+            )
+            if toolbars:
+                self._toolbar = toolbars[0]
+                # Setup dynamic menus after toolbar creation
+                self._setup_toolbar_menus()
+                return
+        except Exception as e:
+            print(f"[TOOLBAR] Factory failed, using fallback: {e}")
+
+        # Fallback: Create toolbar manually if factory fails
+        self._create_toolbar_fallback()
+
+    def _create_toolbar_fallback(self) -> None:
+        """Create toolbar with hardcoded buttons (fallback)."""
         toolbar = QToolBar(self.i18n_factory.translate("toolbar.title", default="Dock Tools"))
 
         toolbar.setStyleSheet("""
@@ -953,12 +1023,9 @@ class MainWindow(QMainWindow):
             }
         """)
 
-        # Add toolbar to top area
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, toolbar)
-        # Store reference for positioning
         self._toolbar = toolbar
 
-        # Use fixed toolbar labels here so they are not overridden by i18n entries.
         toolbar.addAction("+").triggered.connect(self._on_new_dock)
         toolbar.addAction("❐").triggered.connect(self._on_float_all)
         toolbar.addAction("▣").triggered.connect(self._on_dock_all)
@@ -966,29 +1033,7 @@ class MainWindow(QMainWindow):
         toolbar.addAction("✕").triggered.connect(self._on_close_all)
         toolbar.addSeparator()
 
-        self.layouts_menu = QMenu(
-            self.i18n_factory.translate("toolbar.layouts", default="Layouts"),
-            self,
-        )
-        self._populate_layouts_menu()
-        layouts_button = QToolButton()
-        layouts_button.setText("▤")
-        layouts_button.setToolTip(self.i18n_factory.translate("toolbar.layouts", default="Layouts"))
-        layouts_button.setMenu(self.layouts_menu)
-        layouts_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        toolbar.addWidget(layouts_button)
-
-        self.themes_menu = QMenu(
-            self.i18n_factory.translate("toolbar.themes", default="Themes"),
-            self,
-        )
-        self._populate_themes_menu()
-        themes_button = QToolButton()
-        themes_button.setText("✦")
-        themes_button.setToolTip(self.i18n_factory.translate("toolbar.themes", default="Themes"))
-        themes_button.setMenu(self.themes_menu)
-        themes_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        toolbar.addWidget(themes_button)
+        self._setup_toolbar_menus()
 
         toolbar.addSeparator()
         config_btn = QToolButton()
@@ -996,6 +1041,54 @@ class MainWindow(QMainWindow):
         config_btn.setToolTip(self.i18n_factory.translate("toolbar.config", default="Config"))
         self._connect_qt_signal(config_btn, "clicked", self._show_configuration_panel)
         toolbar.addWidget(config_btn)
+
+    def _create_layouts_menu(self) -> QMenu:
+        """Create and return layouts dropdown menu."""
+        self.layouts_menu = QMenu(
+            self.i18n_factory.translate("toolbar.layouts", default="Layouts"),
+            self,
+        )
+        self._populate_layouts_menu()
+        return self.layouts_menu
+
+    def _create_themes_menu(self) -> QMenu:
+        """Create and return themes dropdown menu."""
+        self.themes_menu = QMenu(
+            self.i18n_factory.translate("toolbar.themes", default="Themes"),
+            self,
+        )
+        self._populate_themes_menu()
+        return self.themes_menu
+
+    def _setup_toolbar_menus(self) -> None:
+        """Setup dynamic dropdown menus in toolbar."""
+        # Create layouts menu if not exists
+        if not hasattr(self, "layouts_menu"):
+            self.layouts_menu = QMenu(
+                self.i18n_factory.translate("toolbar.layouts", default="Layouts"),
+                self,
+            )
+            self._populate_layouts_menu()
+            layouts_button = QToolButton()
+            layouts_button.setText("▤")
+            layouts_button.setToolTip(self.i18n_factory.translate("toolbar.layouts", default="Layouts"))
+            layouts_button.setMenu(self.layouts_menu)
+            layouts_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+            self._toolbar.addWidget(layouts_button)
+
+        # Create themes menu if not exists
+        if not hasattr(self, "themes_menu"):
+            self.themes_menu = QMenu(
+                self.i18n_factory.translate("toolbar.themes", default="Themes"),
+                self,
+            )
+            self._populate_themes_menu()
+            themes_button = QToolButton()
+            themes_button.setText("✦")
+            themes_button.setToolTip(self.i18n_factory.translate("toolbar.themes", default="Themes"))
+            themes_button.setMenu(self.themes_menu)
+            themes_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+            self._toolbar.addWidget(themes_button)
 
     def _populate_layouts_menu(self) -> None:
         """Populate layouts menu from LayoutFactory."""
