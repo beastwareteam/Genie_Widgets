@@ -3,7 +3,7 @@
 import sys
 from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import PySide6QtAds as QtAds
 from PySide6.QtCore import QSize, Qt, QTimer
@@ -1325,13 +1325,18 @@ class MainWindow(QMainWindow):
         print(f"[!] Plugin error: {error_msg}")
 
     def _register_theme_profiles(self) -> None:
-        """Register all available theme profiles with ThemeManager."""
-        # Register legacy QSS themes (if supported by ThemeFactory implementation)
+        """Registriert alle verfügbaren Theme-Profile beim ThemeManager.
+
+        Lädt sowohl Legacy-QSS-Themes als auch neue Theme-Profile aus der
+        ThemeFactory und registriert sie beim ThemeManager. Verwendet
+        typing.cast, um den Pylint-Fehler E1102 (not-callable) zu vermeiden,
+        der entsteht, wenn eine via getattr() gewonnene Methode aufgerufen wird.
+        """
+        # Legacy-QSS-Themes registrieren (sofern von ThemeFactory unterstützt)
         list_themes = getattr(self.theme_factory, "list_themes", None)
         if callable(list_themes):
-            theme_defs = list_themes()
-            if not isinstance(theme_defs, Iterable):
-                theme_defs = []
+            list_themes_fn = cast(Callable[[], Iterable[Any]], list_themes)
+            theme_defs: Iterable[Any] = list_themes_fn()
 
             for theme_def in theme_defs:
                 theme = Theme(theme_def.theme_id, theme_def.name)
@@ -1341,93 +1346,103 @@ class MainWindow(QMainWindow):
                         theme.set_property("tab_active_color", theme_def.tab_active_color)
                         theme.set_property("tab_inactive_color", theme_def.tab_inactive_color)
                         self.theme_manager.register_theme(theme)
-                        print(f"[+] Registered legacy theme: {theme_def.name}")
+                        print(f"[+] Legacy-Theme registriert: {theme_def.name}")
                 except Exception as e:
-                    print(f"Failed to register legacy theme '{theme_def.name}': {e}")
+                    print(f"Legacy-Theme '{theme_def.name}' konnte nicht registriert werden: {e}")
 
-        # Register new theme profiles (if supported by ThemeFactory implementation)
+        # Neue Theme-Profile registrieren (sofern von ThemeFactory unterstützt)
         list_profiles = getattr(self.theme_factory, "list_profiles", None)
         load_profile = getattr(self.theme_factory, "load_profile", None)
-        if callable(list_profiles) and callable(load_profile):
-            profile_ids = list_profiles()
-            if isinstance(profile_ids, Iterable):
-                for profile_id in profile_ids:
-                    try:
-                        profile = load_profile(profile_id)
-                        if not profile:
-                            continue
-                        profile_name = getattr(profile, "name", None)
-                        if not isinstance(profile_name, str):
-                            continue
-                        generate_qss = getattr(profile, "generate_qss", None)
-                        if generate_qss is None or not callable(generate_qss):
-                            continue
-                        theme = Theme(f"profile_{profile_id}", profile_name)
-                        qss_content = None
-                        try:
-                            result = generate_qss()
-                            qss_content = result if isinstance(result, str) else None
-                        except TypeError:
-                            # generate_qss might not be callable, skip this profile
-                            continue
-                        except Exception as e:
-                            print(f"[!] Failed to generate QSS for profile '{profile_id}': {e}")
-                            qss_content = None
-                        if qss_content:
-                            theme.set_stylesheet(qss_content)
-                            theme.set_property("is_profile", True)
-                            theme.set_property("profile_id", profile_id)
-                            self.theme_manager.register_theme(theme)
-                            print(f"[+] Registered profile theme: {profile_name}")
-                    except Exception as e:
-                        print(f"[!] Failed to register profile theme '{profile_id}': {e}")
 
-        # Set default theme
+        if callable(list_profiles) and callable(load_profile):
+            list_profiles_fn = cast(Callable[[], Iterable[str]], list_profiles)
+            load_profile_fn = cast(Callable[[str], Any], load_profile)
+
+            for profile_id in list_profiles_fn():
+                try:
+                    profile = load_profile_fn(profile_id)
+                    if not profile:
+                        continue
+
+                    profile_name = getattr(profile, "name", None)
+                    if not isinstance(profile_name, str):
+                        continue
+
+                    if not callable(getattr(profile, "generate_qss", None)):
+                        continue
+
+                    # cast teilt Pylint mit, dass generate_qss hier aufrufbar ist
+                    generate_qss_fn = cast(Callable[[], str], profile.generate_qss)
+
+                    theme = Theme(f"profile_{profile_id}", profile_name)
+                    qss_content: str | None = None
+                    try:
+                        qss_content = generate_qss_fn()
+                    except Exception as e:
+                        print(f"[!] QSS-Generierung für Profil '{profile_id}' fehlgeschlagen: {e}")
+                        qss_content = None
+
+                    if isinstance(qss_content, str):
+                        theme.set_stylesheet(qss_content)
+                        theme.set_property("is_profile", True)
+                        theme.set_property("profile_id", profile_id)
+                        self.theme_manager.register_theme(theme)
+                        print(f"[+] Profil-Theme registriert: {profile_name}")
+
+                except Exception as e:
+                    print(f"[!] Profil-Theme '{profile_id}' konnte nicht registriert werden: {e}")
+
+        # Standard-Theme setzen
         default_theme_id = self.theme_factory.get_default_theme_id()
         if default_theme_id:
             self.theme_manager.set_current_theme(default_theme_id)
         elif self.theme_manager.theme_names():
-            # Fallback to first available theme
             self.theme_manager.set_current_theme(self.theme_manager.theme_names()[0])
 
     def _on_theme_changed(self, theme: Theme) -> None:
-        """Handle theme change signal from ThemeManager.
+        """Theme-Wechsel-Signal vom ThemeManager verarbeiten.
+
+        Wendet das neue Theme auf die Anwendung an: Stylesheet, Palette
+        und Tab-Farben werden aktualisiert.
 
         Args:
-            theme: New theme to apply
+            theme: Das neu zu verwendende Theme-Objekt.
         """
         try:
             app = QApplication.instance()
             if isinstance(app, QApplication):
-                # Apply stylesheet to application
+                # Stylesheet auf die gesamte Anwendung anwenden
                 app.setStyleSheet(theme.stylesheet)
 
-                # ALSO apply to DockManager for better transparency support
+                # Auch auf den DockManager anwenden (bessere Transparenz-Unterstützung)
                 if hasattr(self, "dock_manager") and self.dock_manager:
                     self.dock_manager.setStyleSheet(theme.stylesheet)
 
-                # Apply custom palette if available
+                # Benutzerdefinierte Palette anwenden, falls vorhanden
                 if theme.has_custom_palette and theme.palette:
                     app.setPalette(theme.palette)
 
-                # Update tab colors
+                # Tab-Farben aktualisieren
                 tab_active = theme.get_property("tab_active_color", "#E0E0E0")
                 tab_inactive = theme.get_property("tab_inactive_color", "#BDBDBD")
                 self._tab_color_controller.active_color = tab_active
                 self._tab_color_controller.inactive_color = tab_inactive
                 self._tab_color_controller.apply()
 
-                print(f"[+] Theme applied: {theme.name}")
-                print(f"  Stylesheet length: {len(theme.stylesheet)} chars")
-                print(f"  Has rgba colors: {'rgba(' in theme.stylesheet}")
+                print(f"[+] Theme angewendet: {theme.name}")
+                print(f"  Stylesheet-Länge: {len(theme.stylesheet)} Zeichen")
+                print(f"  Enthält rgba-Farben: {'rgba(' in theme.stylesheet}")
         except Exception as e:
-            print(f"[!] Failed to apply theme '{theme.name}': {e}")
+            print(f"[!] Theme '{theme.name}' konnte nicht angewendet werden: {e}")
 
     def _apply_theme_profile(self, profile_id: str) -> None:
-        """Apply a theme profile by ID.
+        """Ein Theme-Profil anhand seiner ID anwenden.
+
+        Sucht das Profil im ThemeManager und wendet es an. Zeigt eine
+        Erfolgs- oder Fehlermeldung als Dialog an.
 
         Args:
-            profile_id: Profile identifier
+            profile_id: Bezeichner des anzuwendenden Profils.
         """
         theme_id = f"profile_{profile_id}"
         if self.theme_manager.set_current_theme(theme_id):

@@ -1,6 +1,9 @@
 """Configuration Panel - Dynamic UI configuration interface for all structural elements."""
 
 from pathlib import Path
+from typing import Any
+from typing import Callable
+from typing import cast
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
@@ -63,6 +66,7 @@ class ConfigurationPanel(QWidget):
         self.list_tree: QTreeWidget | None = None
         self.tabs_tree: QTreeWidget | None = None
         self.panels_list: QListWidget | None = None
+        self.config_tabs: QTabWidget | None = None
 
         # Initialize factories
         self.list_factory = ListFactory(self.config_path)
@@ -83,6 +87,15 @@ class ConfigurationPanel(QWidget):
         self.config_tabs = QTabWidget()
         layout.addWidget(self.config_tabs)
 
+        self._rebuild_tabs()
+
+    def _rebuild_tabs(self) -> None:
+        """Rebuild translated category tabs."""
+        if self.config_tabs is None:
+            return
+
+        self.config_tabs.clear()
+
         # Load all configuration pages
         try:
             categories = self.ui_config_factory.get_all_categories()
@@ -99,8 +112,27 @@ class ConfigurationPanel(QWidget):
                     self.config_tabs.addTab(category_widget, tab_title)
 
         except Exception as e:
-            error_label = QLabel(f"Error loading configuration: {e}")
-            self.config_tabs.addTab(error_label, "Error")
+            error_label = QLabel(
+                self.i18n_factory.translate(
+                    "config.error_loading",
+                    default="Error loading configuration: {error}",
+                    error=str(e),
+                ),
+            )
+            self.config_tabs.addTab(
+                error_label,
+                self.i18n_factory.translate("message.error", default="Error"),
+            )
+
+    def set_i18n_factory(self, i18n_factory: I18nFactory) -> None:
+        """Set or update i18n factory and refresh translated UI texts."""
+        self.i18n_factory = i18n_factory
+        self._rebuild_tabs()
+
+    @staticmethod
+    def _connect_signal(signal: object, callback: Callable[[], None]) -> None:
+        """Connect Qt signal with typed fallback for static analyzers."""
+        cast(Any, signal).connect(callback)  # pyright: ignore[reportAttributeAccessIssue]  # pylint: disable=no-member
 
     def _create_category_widget(self, category: str) -> QWidget:
         """Create a widget for a configuration category."""
@@ -120,7 +152,15 @@ class ConfigurationPanel(QWidget):
         elif category == "advanced":
             self._setup_advanced_settings(layout)
         else:
-            layout.addWidget(QLabel(f"Configuration for {category}"))
+            layout.addWidget(
+                QLabel(
+                    self.i18n_factory.translate(
+                        "config.category.fallback",
+                        default="Configuration for {category}",
+                        category=category,
+                    ),
+                ),
+            )
 
         layout.addStretch()
         return widget
@@ -138,7 +178,9 @@ class ConfigurationPanel(QWidget):
 
         # Menu tree on the left
         self.menu_tree = QTreeWidget()
-        self.menu_tree.setHeaderLabel("Menus")
+        self.menu_tree.setHeaderLabel(
+            self.i18n_factory.translate("config.menus.tree_header", default="Menus"),
+        )
         self.menu_tree.setMinimumWidth(250)
 
         try:
@@ -164,14 +206,16 @@ class ConfigurationPanel(QWidget):
         )
 
         menu_shortcut_input = QLineEdit()
-        menu_shortcut_input.setPlaceholderText("Ctrl+M")
+        menu_shortcut_input.setPlaceholderText(
+            self.i18n_factory.translate("config.menu_shortcut.placeholder", default="Ctrl+M"),
+        )
         props_layout.addRow(
             self.i18n_factory.translate("config.menu_shortcut", default="Shortcut:"),
             menu_shortcut_input,
         )
 
         add_menu_btn = QPushButton(self.i18n_factory.translate("button.add", default="Add Menu"))
-        add_menu_btn.clicked.connect(lambda: self._on_add_menu(menu_name_input.text()))
+        self._connect_signal(add_menu_btn.clicked, lambda: self._on_add_menu(menu_name_input.text()))
         props_layout.addRow(add_menu_btn)
 
         splitter.addWidget(properties_widget)
@@ -208,7 +252,9 @@ class ConfigurationPanel(QWidget):
 
         # List tree on the left
         self.list_tree = QTreeWidget()
-        self.list_tree.setHeaderLabel("Lists")
+        self.list_tree.setHeaderLabel(
+            self.i18n_factory.translate("config.lists.tree_header", default="Lists"),
+        )
         self.list_tree.setMinimumWidth(250)
 
         try:
@@ -234,7 +280,22 @@ class ConfigurationPanel(QWidget):
         )
 
         list_type_combo = QComboBox()
-        list_type_combo.addItems(["vertical", "horizontal", "tree", "table"])
+        list_type_combo.addItem(
+            self.i18n_factory.translate("config.list.type.vertical", default="Vertical"),
+            "vertical",
+        )
+        list_type_combo.addItem(
+            self.i18n_factory.translate("config.list.type.horizontal", default="Horizontal"),
+            "horizontal",
+        )
+        list_type_combo.addItem(
+            self.i18n_factory.translate("config.list.type.tree", default="Tree"),
+            "tree",
+        )
+        list_type_combo.addItem(
+            self.i18n_factory.translate("config.list.type.table", default="Table"),
+            "table",
+        )
         props_layout.addRow(
             self.i18n_factory.translate("config.list_type", default="Type:"),
             list_type_combo,
@@ -253,8 +314,12 @@ class ConfigurationPanel(QWidget):
         )
 
         add_list_btn = QPushButton(self.i18n_factory.translate("button.add", default="Add List"))
-        add_list_btn.clicked.connect(
-            lambda: self._on_add_list(list_name_input.text(), list_type_combo.currentText()),
+        self._connect_signal(
+            add_list_btn.clicked,
+            lambda: self._on_add_list(
+                list_name_input.text(),
+                str(list_type_combo.currentData() or "vertical"),
+            ),
         )
         props_layout.addRow(add_list_btn)
 
@@ -387,7 +452,9 @@ class ConfigurationPanel(QWidget):
 
         # Tab tree on the left
         self.tabs_tree = QTreeWidget()
-        self.tabs_tree.setHeaderLabel("Tab Groups")
+        self.tabs_tree.setHeaderLabel(
+            self.i18n_factory.translate("config.tabs.tree_header", default="Tab Groups"),
+        )
         self.tabs_tree.setMinimumWidth(250)
 
         try:
@@ -426,7 +493,7 @@ class ConfigurationPanel(QWidget):
         )
 
         add_tab_btn = QPushButton(self.i18n_factory.translate("button.add", default="Add Tab"))
-        add_tab_btn.clicked.connect(lambda: self._on_add_tab(tab_name_input.text()))
+        self._connect_signal(add_tab_btn.clicked, lambda: self._on_add_tab(tab_name_input.text()))
         props_layout.addRow(add_tab_btn)
 
         splitter.addWidget(properties_widget)
@@ -490,7 +557,22 @@ class ConfigurationPanel(QWidget):
         )
 
         panel_area_combo = QComboBox()
-        panel_area_combo.addItems(["left", "right", "bottom", "center"])
+        panel_area_combo.addItem(
+            self.i18n_factory.translate("config.panel.area.left", default="Left"),
+            "left",
+        )
+        panel_area_combo.addItem(
+            self.i18n_factory.translate("config.panel.area.right", default="Right"),
+            "right",
+        )
+        panel_area_combo.addItem(
+            self.i18n_factory.translate("config.panel.area.bottom", default="Bottom"),
+            "bottom",
+        )
+        panel_area_combo.addItem(
+            self.i18n_factory.translate("config.panel.area.center", default="Center"),
+            "center",
+        )
         props_layout.addRow(
             self.i18n_factory.translate("config.panel_area", default="Area:"),
             panel_area_combo,
@@ -504,8 +586,12 @@ class ConfigurationPanel(QWidget):
         )
 
         add_panel_btn = QPushButton(self.i18n_factory.translate("button.add", default="Add Panel"))
-        add_panel_btn.clicked.connect(
-            lambda: self._on_add_panel(panel_name_input.text(), panel_area_combo.currentText()),
+        self._connect_signal(
+            add_panel_btn.clicked,
+            lambda: self._on_add_panel(
+                panel_name_input.text(),
+                str(panel_area_combo.currentData() or "left"),
+            ),
         )
         props_layout.addRow(add_panel_btn)
 
@@ -535,7 +621,7 @@ class ConfigurationPanel(QWidget):
         parent_layout.addWidget(theme_combo)
 
         apply_btn = QPushButton(self.i18n_factory.translate("button.apply", default="Apply"))
-        apply_btn.clicked.connect(lambda: self.config_changed.emit("theme"))
+        self._connect_signal(apply_btn.clicked, lambda: self.config_changed.emit("theme"))
         parent_layout.addWidget(apply_btn)
 
     def _setup_advanced_settings(self, parent_layout: QVBoxLayout) -> None:
@@ -586,7 +672,14 @@ class ConfigurationPanel(QWidget):
     def _on_add_menu(self, menu_name: str) -> None:
         """Add a new menu from input."""
         if not menu_name:
-            QMessageBox.warning(self, "Warning", "Please enter a menu name")
+            QMessageBox.warning(
+                self,
+                self.i18n_factory.translate("dialog.warning", default="Warning"),
+                self.i18n_factory.translate(
+                    "config.validation.menu_name_required",
+                    default="Please enter a menu name",
+                ),
+            )
             return
 
         try:
@@ -606,16 +699,46 @@ class ConfigurationPanel(QWidget):
                 # Refresh the UI
                 self._refresh_menus_tree()
                 self.config_changed.emit("menus")
-                QMessageBox.information(self, "Success", f"Menu '{menu_name}' added and saved!")
+                QMessageBox.information(
+                    self,
+                    self.i18n_factory.translate("message.success", default="Success"),
+                    self.i18n_factory.translate(
+                        "config.message.menu_added",
+                        default="Menu '{name}' added and saved!",
+                        name=menu_name,
+                    ),
+                )
             else:
-                QMessageBox.warning(self, "Error", "Failed to save menu to configuration file")
+                QMessageBox.warning(
+                    self,
+                    self.i18n_factory.translate("message.error", default="Error"),
+                    self.i18n_factory.translate(
+                        "config.error.save_menu_failed",
+                        default="Failed to save menu to configuration file",
+                    ),
+                )
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to add menu: {e}")
+            QMessageBox.critical(
+                self,
+                self.i18n_factory.translate("message.error", default="Error"),
+                self.i18n_factory.translate(
+                    "config.error.add_menu_failed",
+                    default="Failed to add menu: {error}",
+                    error=str(e),
+                ),
+            )
 
     def _on_add_list(self, list_name: str, list_type: str) -> None:
         """Add a new list from input."""
         if not list_name:
-            QMessageBox.warning(self, "Warning", "Please enter a list name")
+            QMessageBox.warning(
+                self,
+                self.i18n_factory.translate("dialog.warning", default="Warning"),
+                self.i18n_factory.translate(
+                    "config.validation.list_name_required",
+                    default="Please enter a list name",
+                ),
+            )
             return
 
         try:
@@ -638,18 +761,45 @@ class ConfigurationPanel(QWidget):
                 self.config_changed.emit("lists")
                 QMessageBox.information(
                     self,
-                    "Success",
-                    f"List '{list_name}' ({list_type}) added and saved!",
+                    self.i18n_factory.translate("message.success", default="Success"),
+                    self.i18n_factory.translate(
+                        "config.message.list_added",
+                        default="List '{name}' ({type}) added and saved!",
+                        name=list_name,
+                        type=list_type,
+                    ),
                 )
             else:
-                QMessageBox.warning(self, "Error", "Failed to save list to configuration file")
+                QMessageBox.warning(
+                    self,
+                    self.i18n_factory.translate("message.error", default="Error"),
+                    self.i18n_factory.translate(
+                        "config.error.save_list_failed",
+                        default="Failed to save list to configuration file",
+                    ),
+                )
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to add list: {e}")
+            QMessageBox.critical(
+                self,
+                self.i18n_factory.translate("message.error", default="Error"),
+                self.i18n_factory.translate(
+                    "config.error.add_list_failed",
+                    default="Failed to add list: {error}",
+                    error=str(e),
+                ),
+            )
 
     def _on_add_tab(self, tab_name: str) -> None:
         """Add a new tab from input."""
         if not tab_name:
-            QMessageBox.warning(self, "Warning", "Please enter a tab name")
+            QMessageBox.warning(
+                self,
+                self.i18n_factory.translate("dialog.warning", default="Warning"),
+                self.i18n_factory.translate(
+                    "config.validation.tab_name_required",
+                    default="Please enter a tab name",
+                ),
+            )
             return
 
         try:
@@ -670,16 +820,46 @@ class ConfigurationPanel(QWidget):
                 # Refresh the UI
                 self._refresh_tabs_tree()
                 self.config_changed.emit("tabs")
-                QMessageBox.information(self, "Success", f"Tab '{tab_name}' added and saved!")
+                QMessageBox.information(
+                    self,
+                    self.i18n_factory.translate("message.success", default="Success"),
+                    self.i18n_factory.translate(
+                        "config.message.tab_added",
+                        default="Tab '{name}' added and saved!",
+                        name=tab_name,
+                    ),
+                )
             else:
-                QMessageBox.warning(self, "Error", "Failed to save tab to configuration file")
+                QMessageBox.warning(
+                    self,
+                    self.i18n_factory.translate("message.error", default="Error"),
+                    self.i18n_factory.translate(
+                        "config.error.save_tab_failed",
+                        default="Failed to save tab to configuration file",
+                    ),
+                )
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to add tab: {e}")
+            QMessageBox.critical(
+                self,
+                self.i18n_factory.translate("message.error", default="Error"),
+                self.i18n_factory.translate(
+                    "config.error.add_tab_failed",
+                    default="Failed to add tab: {error}",
+                    error=str(e),
+                ),
+            )
 
     def _on_add_panel(self, panel_name: str, panel_area: str) -> None:
         """Add a new panel from input."""
         if not panel_name:
-            QMessageBox.warning(self, "Warning", "Please enter a panel name")
+            QMessageBox.warning(
+                self,
+                self.i18n_factory.translate("dialog.warning", default="Warning"),
+                self.i18n_factory.translate(
+                    "config.validation.panel_name_required",
+                    default="Please enter a panel name",
+                ),
+            )
             return
 
         try:
@@ -703,10 +883,30 @@ class ConfigurationPanel(QWidget):
                 self.config_changed.emit("panels")
                 QMessageBox.information(
                     self,
-                    "Success",
-                    f"Panel '{panel_name}' ({panel_area}) added and saved!",
+                    self.i18n_factory.translate("message.success", default="Success"),
+                    self.i18n_factory.translate(
+                        "config.message.panel_added",
+                        default="Panel '{name}' ({area}) added and saved!",
+                        name=panel_name,
+                        area=panel_area,
+                    ),
                 )
             else:
-                QMessageBox.warning(self, "Error", "Failed to save panel to configuration file")
+                QMessageBox.warning(
+                    self,
+                    self.i18n_factory.translate("message.error", default="Error"),
+                    self.i18n_factory.translate(
+                        "config.error.save_panel_failed",
+                        default="Failed to save panel to configuration file",
+                    ),
+                )
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to add panel: {e}")
+            QMessageBox.critical(
+                self,
+                self.i18n_factory.translate("message.error", default="Error"),
+                self.i18n_factory.translate(
+                    "config.error.add_panel_failed",
+                    default="Failed to add panel: {error}",
+                    error=str(e),
+                ),
+            )

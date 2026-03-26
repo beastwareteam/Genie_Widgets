@@ -8,11 +8,15 @@ Every tab (dock tab, sub-tab, nested tab) gets the same functionality:
 - Configuration persistence
 """
 
-from typing import Any
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, cast
 
 from PySide6.QtCore import QObject, QPoint, Signal
 from PySide6.QtGui import QAction, QIcon
 from PySide6.QtWidgets import QMenu, QTabBar, QTabWidget, QWidget
+
+if TYPE_CHECKING:
+    from widgetsystem.factories.i18n_factory import I18nFactory
 
 
 class UnifiedTabItem(QObject):
@@ -44,6 +48,7 @@ class UnifiedTabItem(QObject):
         parent_tab_widget: QTabWidget,
         tab_index: int,
         config: dict[str, Any] | None = None,
+        i18n_factory: "I18nFactory | None" = None,
         parent: QObject | None = None,
     ) -> None:
         """Initialize UnifiedTabItem.
@@ -65,6 +70,8 @@ class UnifiedTabItem(QObject):
         self.parent_tab_widget = parent_tab_widget
         self._tab_index = tab_index
         self._config = config or {}
+        self._i18n_factory = i18n_factory
+        self._translation_cache: dict[str, str] = {}
 
         # Extract config values
         self._closable = self._config.get("closable", True)
@@ -79,6 +86,27 @@ class UnifiedTabItem(QObject):
 
         # Setup context menu on tab bar
         self._setup_context_menu()
+
+    def _translate(self, key: str, default: str) -> str:
+        """Translate key using i18n factory with fallback and cache."""
+        if not key:
+            return default
+
+        if key in self._translation_cache:
+            return self._translation_cache[key]
+
+        if self._i18n_factory is None:
+            self._translation_cache[key] = default
+            return default
+
+        translated = self._i18n_factory.translate(key, default=default)
+        self._translation_cache[key] = translated
+        return translated
+
+    def set_i18n_factory(self, i18n_factory: "I18nFactory | None") -> None:
+        """Set or update i18n factory for runtime locale switching."""
+        self._i18n_factory = i18n_factory
+        self._translation_cache.clear()
 
     @property
     def tab_index(self) -> int:
@@ -114,21 +142,15 @@ class UnifiedTabItem(QObject):
         """Setup context menu for this tab."""
         tab_bar = self.parent_tab_widget.tabBar()
         if tab_bar:
-            # Enable context menu on tab bar
-            tab_bar.setContextMenuPolicy(
-                tab_bar.contextMenuPolicy()
-                if hasattr(tab_bar, "_context_menu_installed")
-                else self._install_context_menu(tab_bar)
-            )
+            if not bool(tab_bar.property("_context_menu_installed")):
+                self._install_context_menu(tab_bar)
 
-    def _install_context_menu(self, tab_bar: QTabBar) -> int:
+    def _install_context_menu(self, tab_bar: QTabBar) -> None:
         """Install context menu handler on tab bar.
 
         Args:
             tab_bar: The tab bar widget
 
-        Returns:
-            Context menu policy
         """
         from PySide6.QtCore import Qt
 
@@ -136,8 +158,7 @@ class UnifiedTabItem(QObject):
         tab_bar.customContextMenuRequested.connect(
             lambda pos: self._show_context_menu(tab_bar, pos)
         )
-        tab_bar._context_menu_installed = True  # type: ignore[attr-defined]
-        return Qt.ContextMenuPolicy.CustomContextMenu
+        tab_bar.setProperty("_context_menu_installed", True)
 
     def _show_context_menu(self, tab_bar: QTabBar, pos: QPoint) -> None:
         """Show context menu for tab at position.
@@ -158,10 +179,18 @@ class UnifiedTabItem(QObject):
             if widget:
                 item = widget.property("unified_tab_item")
                 if item and isinstance(item, UnifiedTabItem):
-                    item._show_own_context_menu(tab_bar.mapToGlobal(pos))
+                    item.show_context_menu(tab_bar.mapToGlobal(pos))
             return
 
-        self._show_own_context_menu(tab_bar.mapToGlobal(pos))
+        self.show_context_menu(tab_bar.mapToGlobal(pos))
+
+    def show_context_menu(self, global_pos: QPoint) -> None:
+        """Public wrapper to show this tab item's own context menu."""
+        self._show_own_context_menu(global_pos)
+
+    def _connect_action(self, action: QAction, callback: Callable[..., object]) -> None:
+        """Connect QAction signal with type-safe fallback."""
+        cast(Any, action.triggered).connect(callback)
 
     def _show_own_context_menu(self, global_pos: QPoint) -> None:
         """Show context menu for this specific tab.
@@ -173,30 +202,39 @@ class UnifiedTabItem(QObject):
 
         # Close action
         if self._closable:
-            close_action = QAction("Close", menu)
-            close_action.triggered.connect(self.close)
+            close_action = QAction(self._translate("unified_tab.action.close", "Close"), menu)
+            self._connect_action(close_action, self.close)
             menu.addAction(close_action)
 
-            close_others = QAction("Close Others", menu)
-            close_others.triggered.connect(self._close_other_tabs)
+            close_others = QAction(
+                self._translate("unified_tab.action.close_others", "Close Others"),
+                menu,
+            )
+            self._connect_action(close_others, self._close_other_tabs)
             menu.addAction(close_others)
 
-            close_right = QAction("Close Tabs to Right", menu)
-            close_right.triggered.connect(self._close_tabs_to_right)
+            close_right = QAction(
+                self._translate("unified_tab.action.close_right", "Close Tabs to Right"),
+                menu,
+            )
+            self._connect_action(close_right, self._close_tabs_to_right)
             menu.addAction(close_right)
 
             menu.addSeparator()
 
         # Float action
         if self._floatable:
-            float_action = QAction("Float", menu)
-            float_action.triggered.connect(self._request_float)
+            float_action = QAction(self._translate("unified_tab.action.float", "Float"), menu)
+            self._connect_action(float_action, self._request_float)
             menu.addAction(float_action)
             menu.addSeparator()
 
         # Settings
-        settings_action = QAction("Tab Settings...", menu)
-        settings_action.triggered.connect(self._show_settings)
+        settings_action = QAction(
+            self._translate("unified_tab.action.settings", "Tab Settings..."),
+            menu,
+        )
+        self._connect_action(settings_action, self._show_settings)
         menu.addAction(settings_action)
 
         menu.exec(global_pos)
@@ -251,11 +289,15 @@ class UnifiedTabItem(QObject):
 
     def _show_settings(self) -> None:
         """Show settings dialog for this tab."""
-        from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QDialogButtonBox
+        from PySide6.QtWidgets import QDialog, QDialogButtonBox, QVBoxLayout
         from PySide6.QtWidgets import QCheckBox, QLineEdit, QFormLayout
 
         dialog = QDialog(self.parent_tab_widget)
-        dialog.setWindowTitle(f"Tab Settings - {self.title}")
+        dialog_title = self._translate(
+            "unified_tab.settings.window_title",
+            "Tab Settings - {title}",
+        ).format(title=self.title)
+        dialog.setWindowTitle(dialog_title)
         dialog.setMinimumWidth(300)
 
         layout = QVBoxLayout(dialog)
@@ -263,22 +305,34 @@ class UnifiedTabItem(QObject):
 
         # Title edit
         title_edit = QLineEdit(self.title)
-        form.addRow("Title:", title_edit)
+        form.addRow(
+            self._translate("unified_tab.settings.field.title", "Title") + ":",
+            title_edit,
+        )
 
         # Closable
         closable_cb = QCheckBox()
         closable_cb.setChecked(self._closable)
-        form.addRow("Closable:", closable_cb)
+        form.addRow(
+            self._translate("unified_tab.settings.field.closable", "Closable") + ":",
+            closable_cb,
+        )
 
         # Movable
         movable_cb = QCheckBox()
         movable_cb.setChecked(self._movable)
-        form.addRow("Movable:", movable_cb)
+        form.addRow(
+            self._translate("unified_tab.settings.field.movable", "Movable") + ":",
+            movable_cb,
+        )
 
         # Floatable
         floatable_cb = QCheckBox()
         floatable_cb.setChecked(self._floatable)
-        form.addRow("Floatable:", floatable_cb)
+        form.addRow(
+            self._translate("unified_tab.settings.field.floatable", "Floatable") + ":",
+            floatable_cb,
+        )
 
         layout.addLayout(form)
 
@@ -286,8 +340,12 @@ class UnifiedTabItem(QObject):
         buttons = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
         )
-        buttons.accepted.connect(dialog.accept)
-        buttons.rejected.connect(dialog.reject)
+        cast(Any, buttons.accepted).connect(  # pyright: ignore[reportAttributeAccessIssue]  # pylint: disable=no-member
+            dialog.accept,
+        )
+        cast(Any, buttons.rejected).connect(  # pyright: ignore[reportAttributeAccessIssue]  # pylint: disable=no-member
+            dialog.reject,
+        )
         layout.addWidget(buttons)
 
         if dialog.exec() == QDialog.DialogCode.Accepted:

@@ -1,7 +1,7 @@
 """Tab Color Controller for managing tab bar text colors in ADS docking system."""
 
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from PySide6.QtCore import QEvent, QObject
 from PySide6.QtWidgets import QApplication, QWidget
@@ -68,7 +68,7 @@ class TabColorController(QObject):
                     if label.objectName() == "dockWidgetTabLabel":
                         label.setStyleSheet(f"color: {color};")
 
-    def eventFilter(self, watched: QObject | None, event: QEvent | None) -> bool:
+    def eventFilter(self, watched: Optional[QObject], event: Optional[QEvent]) -> bool:
         """Event filter to monitor dock area and tab changes.
 
         Args:

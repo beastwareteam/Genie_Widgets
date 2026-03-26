@@ -4,7 +4,10 @@ from dataclasses import dataclass
 from enum import Enum
 import json
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import TYPE_CHECKING, Any, TypedDict, cast
+
+if TYPE_CHECKING:
+    from widgetsystem.factories.i18n_factory import I18nFactory
 
 
 class BreakpointType(str, Enum):
@@ -22,6 +25,7 @@ class BreakpointDefinition(TypedDict, total=False):
     min_width: int
     max_width: int
     name: str
+    name_key: str
 
 
 class ResponsiveRuleDefinition(TypedDict, total=False):
@@ -41,6 +45,7 @@ class Breakpoint:
     min_width: int = 0
     max_width: int = 99999
     name: str = ""
+    name_key: str = ""
 
     def __post_init__(self) -> None:
         """Validate breakpoint configuration."""
@@ -75,13 +80,62 @@ class ResponsiveRule:
 class ResponsiveFactory:
     """Factory for loading and managing responsive design configurations."""
 
-    def __init__(self, config_path: str | Path = "config") -> None:
-        """Initialize ResponsiveFactory."""
+    def __init__(self, config_path: str | Path = "config", i18n_factory: "I18nFactory | None" = None) -> None:
+        """Initialize ResponsiveFactory.
+
+        Args:
+            config_path: Path to configuration directory
+            i18n_factory: Optional I18nFactory instance for translations
+        """
         self.config_path = Path(config_path)
         self.responsive_file = self.config_path / "responsive.json"
         self._breakpoints_cache: dict[str, Breakpoint] | None = None
         self._rules_cache: dict[str, ResponsiveRule] | None = None
         self._current_breakpoint: Breakpoint | None = None
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
+
+    def set_i18n_factory(self, i18n_factory: "I18nFactory") -> None:
+        """Set internationalization factory and clear cache.
+
+        Args:
+            i18n_factory: I18nFactory instance for translations
+        """
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate a key using i18n factory.
+
+        Args:
+            key: Translation key
+            default: Default value if translation not found
+
+        Returns:
+            Translated string or default/key
+        """
+        if not self._i18n_factory or not key:
+            return default or key
+
+        if key in self._translated_cache:
+            return self._translated_cache[key]
+
+        translated = self._i18n_factory.translate(key, default=key)
+        self._translated_cache[key] = translated
+        return translated
+
+    def get_breakpoint_name(self, breakpoint: Breakpoint) -> str:
+        """Get translated name for a breakpoint.
+
+        Args:
+            breakpoint: Breakpoint instance
+
+        Returns:
+            Translated breakpoint name
+        """
+        if breakpoint.name_key:
+            return self._translate(breakpoint.name_key, breakpoint.name)
+        return breakpoint.name
 
     def load_breakpoints(self) -> list[Breakpoint]:
         """Load and parse all breakpoints from config."""
@@ -157,12 +211,14 @@ class ResponsiveFactory:
         min_width: Any = bp_dict.get("min_width", 0)
         max_width: Any = bp_dict.get("max_width", 99999)
         name: Any = bp_dict.get("name", "")
+        name_key: Any = bp_dict.get("name_key", "")
 
         return Breakpoint(
             id=bp_id,
             min_width=int(min_width) if isinstance(min_width, (int, float)) else 0,
             max_width=int(max_width) if isinstance(max_width, (int, float)) else 99999,
             name=str(name) if isinstance(name, str) else "",
+            name_key=str(name_key) if isinstance(name_key, str) else "",
         )
 
     @staticmethod

@@ -372,7 +372,7 @@ ads--CTitleBarButton:pressed {{
     border-radius: 2px;
 }}
 
-#dockAreaCloseButton:hover, #detachGroupButton:hover, 
+#dockAreaCloseButton:hover, #detachGroupButton:hover,
 #tabCloseButton:hover, #dockAreaAutoHideButton:hover {{
     background: {qss_color("titlebar_btn_hover")};
 }}

@@ -44,12 +44,14 @@ class VisualMainWindow(QMainWindow):
     def __init__(self) -> None:
         """Initialize visual main window."""
         super().__init__()
-        self.setWindowTitle("WidgetSystem - Visuelle Ebene")
+        config_path = Path("config")
+        self.i18n_factory = I18nFactory(config_path, locale="de")
+        self.setWindowTitle(
+            self._translate("visual_app.window_title", "WidgetSystem - Visuelle Ebene"),
+        )
         self.setMinimumSize(1600, 1000)
 
         # Initialize factories
-        config_path = Path("config")
-        self.i18n_factory = I18nFactory(config_path, locale="de")
         self.theme_factory = ThemeFactory(config_path)
         self.menu_factory = MenuFactory(config_path)
         self.list_factory = ListFactory(config_path)
@@ -67,6 +69,83 @@ class VisualMainWindow(QMainWindow):
 
         # Show welcome message
         QTimer.singleShot(500, self._show_welcome)
+
+    def _translate(self, key: str, default: str) -> str:
+        """Translate helper with fallback."""
+        return self.i18n_factory.translate(key, default=default)
+
+    def set_i18n_factory(self, i18n_factory: I18nFactory) -> None:
+        """Set i18n factory and update UI texts."""
+        self.i18n_factory = i18n_factory
+        self.setWindowTitle(self._translate("visual_app.window_title", "WidgetSystem - Visuelle Ebene"))
+
+        self._refresh_translated_texts()
+
+        self.lists_viewer.set_i18n_factory(i18n_factory)
+        self.menus_viewer.set_i18n_factory(i18n_factory)
+        self.tabs_viewer.set_i18n_factory(i18n_factory)
+        self.panels_viewer.set_i18n_factory(i18n_factory)
+
+    def _refresh_translated_texts(self) -> None:
+        """Refresh translated UI texts after locale changes."""
+        if hasattr(self, "toolbar"):
+            self.toolbar.setWindowTitle(self._translate("toolbar.main", "Hauptwerkzeugleiste"))
+        if hasattr(self, "dashboard_btn"):
+            self.dashboard_btn.setText(self._translate("visual_app.toolbar.dashboard", "📊 Dashboard"))
+        if hasattr(self, "config_btn"):
+            self.config_btn.setText(
+                self._translate("visual_app.toolbar.configuration", "⚙️ Konfiguration"),
+            )
+        if hasattr(self, "refresh_btn"):
+            self.refresh_btn.setText(self._translate("visual_app.toolbar.refresh", "🔄 Aktualisieren"))
+        if hasattr(self, "theme_button"):
+            self.theme_button.setText(self._translate("visual_app.toolbar.themes", "🎨 Themes"))
+        if hasattr(self, "theme_editor_btn"):
+            self.theme_editor_btn.setText(
+                self._translate("visual_app.toolbar.theme_editor", "🎨 Theme Editor"),
+            )
+        if hasattr(self, "color_picker_btn"):
+            self.color_picker_btn.setText(
+                self._translate("visual_app.toolbar.color_picker", "🌈 Farbauswahl"),
+            )
+        if hasattr(self, "widget_editor_btn"):
+            self.widget_editor_btn.setText(
+                self._translate("visual_app.toolbar.widget_editor", "🔧 Widget Editor"),
+            )
+
+        if hasattr(self, "file_menu"):
+            self.file_menu.setTitle(self._translate("menu.file", "Datei"))
+        if hasattr(self, "exit_action"):
+            self.exit_action.setText(self._translate("menu.exit", "Beenden"))
+        if hasattr(self, "view_menu"):
+            self.view_menu.setTitle(self._translate("menu.view", "Ansicht"))
+        if hasattr(self, "show_lists_action"):
+            self.show_lists_action.setText(
+                self._translate("visual_app.menu.show_lists", "Listen anzeigen"),
+            )
+        if hasattr(self, "show_menus_action"):
+            self.show_menus_action.setText(
+                self._translate("visual_app.menu.show_menus", "Menüs anzeigen"),
+            )
+        if hasattr(self, "show_tabs_action"):
+            self.show_tabs_action.setText(self._translate("visual_app.menu.show_tabs", "Tabs anzeigen"))
+        if hasattr(self, "show_panels_action"):
+            self.show_panels_action.setText(
+                self._translate("visual_app.menu.show_panels", "Panels anzeigen"),
+            )
+        if hasattr(self, "help_menu"):
+            self.help_menu.setTitle(self._translate("menu.help", "Hilfe"))
+        if hasattr(self, "about_action"):
+            self.about_action.setText(self._translate("visual_app.menu.about", "Über..."))
+
+        if hasattr(self, "lists_dock"):
+            self.lists_dock.setWindowTitle(self._translate("visual.tab.lists", "Listen"))
+        if hasattr(self, "menus_dock"):
+            self.menus_dock.setWindowTitle(self._translate("visual.tab.menus", "Menüs"))
+        if hasattr(self, "tabs_dock"):
+            self.tabs_dock.setWindowTitle(self._translate("visual.tab.tabs", "Tabs"))
+        if hasattr(self, "panels_dock"):
+            self.panels_dock.setWindowTitle(self._translate("visual.tab.panels", "Panels"))
 
     def _setup_docking(self) -> None:
         """Setup QtAds docking system."""
@@ -133,29 +212,29 @@ class VisualMainWindow(QMainWindow):
 
     def _create_toolbar(self) -> None:
         """Create toolbar with action buttons."""
-        toolbar = QToolBar(
-            self.i18n_factory.translate("toolbar.main", default="Hauptwerkzeugleiste"),
-        )
-        self.addToolBar(toolbar)
+        self.toolbar = QToolBar(self._translate("toolbar.main", "Hauptwerkzeugleiste"))
+        self.addToolBar(self.toolbar)
 
         # Dashboard button
-        dashboard_btn = QPushButton("📊 Dashboard")
-        dashboard_btn.clicked.connect(self._show_dashboard)
-        toolbar.addWidget(dashboard_btn)
+        self.dashboard_btn = QPushButton(self._translate("visual_app.toolbar.dashboard", "📊 Dashboard"))
+        self.dashboard_btn.clicked.connect(self._show_dashboard)
+        self.toolbar.addWidget(self.dashboard_btn)
 
-        toolbar.addSeparator()
+        self.toolbar.addSeparator()
 
         # Config button
-        config_btn = QPushButton("⚙️ Konfiguration")
-        config_btn.clicked.connect(self._show_configuration)
-        toolbar.addWidget(config_btn)
+        self.config_btn = QPushButton(
+            self._translate("visual_app.toolbar.configuration", "⚙️ Konfiguration"),
+        )
+        self.config_btn.clicked.connect(self._show_configuration)
+        self.toolbar.addWidget(self.config_btn)
 
-        toolbar.addSeparator()
+        self.toolbar.addSeparator()
 
         # Refresh button
-        refresh_btn = QPushButton("🔄 Aktualisieren")
-        refresh_btn.clicked.connect(self._refresh_viewers)
-        toolbar.addWidget(refresh_btn)
+        self.refresh_btn = QPushButton(self._translate("visual_app.toolbar.refresh", "🔄 Aktualisieren"))
+        self.refresh_btn.clicked.connect(self._refresh_viewers)
+        self.toolbar.addWidget(self.refresh_btn)
 
         # Theme menu
         theme_menu = QMenu(self)
@@ -173,55 +252,69 @@ class VisualMainWindow(QMainWindow):
         except Exception:
             pass
 
-        theme_button = QToolButton()
-        theme_button.setText("🎨 Themes")
-        theme_button.setMenu(theme_menu)
-        theme_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        toolbar.addWidget(theme_button)
+        self.theme_button = QToolButton()
+        self.theme_button.setText(self._translate("visual_app.toolbar.themes", "🎨 Themes"))
+        self.theme_button.setMenu(theme_menu)
+        self.theme_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.toolbar.addWidget(self.theme_button)
 
-        toolbar.addSeparator()
+        self.toolbar.addSeparator()
 
         # Theme Editor button
-        theme_editor_btn = QPushButton("🎨 Theme Editor")
-        theme_editor_btn.clicked.connect(self._show_theme_editor)
-        toolbar.addWidget(theme_editor_btn)
+        self.theme_editor_btn = QPushButton(
+            self._translate("visual_app.toolbar.theme_editor", "🎨 Theme Editor"),
+        )
+        self.theme_editor_btn.clicked.connect(self._show_theme_editor)
+        self.toolbar.addWidget(self.theme_editor_btn)
 
         # Color Picker button
-        color_picker_btn = QPushButton("🌈 Farbauswahl")
-        color_picker_btn.clicked.connect(self._show_color_picker)
-        toolbar.addWidget(color_picker_btn)
+        self.color_picker_btn = QPushButton(
+            self._translate("visual_app.toolbar.color_picker", "🌈 Farbauswahl"),
+        )
+        self.color_picker_btn.clicked.connect(self._show_color_picker)
+        self.toolbar.addWidget(self.color_picker_btn)
 
         # Widget Features Editor button
-        widget_editor_btn = QPushButton("🔧 Widget Editor")
-        widget_editor_btn.clicked.connect(self._show_widget_editor)
-        toolbar.addWidget(widget_editor_btn)
+        self.widget_editor_btn = QPushButton(
+            self._translate("visual_app.toolbar.widget_editor", "🔧 Widget Editor"),
+        )
+        self.widget_editor_btn.clicked.connect(self._show_widget_editor)
+        self.toolbar.addWidget(self.widget_editor_btn)
 
     def _create_menu(self) -> None:
         """Create application menu."""
         menu_bar = self.menuBar()
 
         # File menu
-        file_menu = menu_bar.addMenu(self.i18n_factory.translate("menu.file", default="Datei"))
-        exit_action = file_menu.addAction(
-            self.i18n_factory.translate("menu.exit", default="Beenden"),
-        )
-        exit_action.triggered.connect(self.close)
+        self.file_menu = menu_bar.addMenu(self._translate("menu.file", "Datei"))
+        self.exit_action = self.file_menu.addAction(self._translate("menu.exit", "Beenden"))
+        self.exit_action.triggered.connect(self.close)
 
         # View menu
-        view_menu = menu_bar.addMenu(self.i18n_factory.translate("menu.view", default="Ansicht"))
-        show_lists_action = view_menu.addAction("Listen anzeigen")
-        show_lists_action.triggered.connect(self._show_lists_viewer)
-        show_menus_action = view_menu.addAction("Menüs anzeigen")
-        show_menus_action.triggered.connect(self._show_menus_viewer)
-        show_tabs_action = view_menu.addAction("Tabs anzeigen")
-        show_tabs_action.triggered.connect(self._show_tabs_viewer)
-        show_panels_action = view_menu.addAction("Panels anzeigen")
-        show_panels_action.triggered.connect(self._show_panels_viewer)
+        self.view_menu = menu_bar.addMenu(self._translate("menu.view", "Ansicht"))
+        self.show_lists_action = self.view_menu.addAction(
+            self._translate("visual_app.menu.show_lists", "Listen anzeigen"),
+        )
+        self.show_lists_action.triggered.connect(self._show_lists_viewer)
+        self.show_menus_action = self.view_menu.addAction(
+            self._translate("visual_app.menu.show_menus", "Menüs anzeigen"),
+        )
+        self.show_menus_action.triggered.connect(self._show_menus_viewer)
+        self.show_tabs_action = self.view_menu.addAction(
+            self._translate("visual_app.menu.show_tabs", "Tabs anzeigen"),
+        )
+        self.show_tabs_action.triggered.connect(self._show_tabs_viewer)
+        self.show_panels_action = self.view_menu.addAction(
+            self._translate("visual_app.menu.show_panels", "Panels anzeigen"),
+        )
+        self.show_panels_action.triggered.connect(self._show_panels_viewer)
 
         # Help menu
-        help_menu = menu_bar.addMenu(self.i18n_factory.translate("menu.help", default="Hilfe"))
-        about_action = help_menu.addAction("Über...")
-        about_action.triggered.connect(self._show_about)
+        self.help_menu = menu_bar.addMenu(self._translate("menu.help", "Hilfe"))
+        self.about_action = self.help_menu.addAction(
+            self._translate("visual_app.menu.about", "Über..."),
+        )
+        self.about_action.triggered.connect(self._show_about)
 
     def _create_viewers(self) -> None:
         """Create and add viewer docks."""
@@ -229,38 +322,59 @@ class VisualMainWindow(QMainWindow):
 
         # Lists viewer
         self.lists_viewer = ListsViewer(Path("config"), self.i18n_factory, config=viewer_config)
-        lists_dock = QtAds.CDockWidget(self.dock_manager, "Listen", self)
-        lists_dock.setWidget(self.lists_viewer)
-        self.dock_manager.addDockWidget(QtAds.LeftDockWidgetArea, lists_dock)
-        self.docks.append(lists_dock)
+        self.lists_dock = QtAds.CDockWidget(
+            self.dock_manager,
+            self._translate("visual.tab.lists", "Listen"),
+            self,
+        )
+        self.lists_dock.setWidget(self.lists_viewer)
+        self.dock_manager.addDockWidget(QtAds.LeftDockWidgetArea, self.lists_dock)
+        self.docks.append(self.lists_dock)
 
         # Menus viewer
         self.menus_viewer = MenusViewer(Path("config"), self.i18n_factory, config=viewer_config)
-        menus_dock = QtAds.CDockWidget(self.dock_manager, "Menüs", self)
-        menus_dock.setWidget(self.menus_viewer)
-        self.dock_manager.addDockWidget(QtAds.LeftDockWidgetArea, menus_dock)
-        self.docks.append(menus_dock)
+        self.menus_dock = QtAds.CDockWidget(
+            self.dock_manager,
+            self._translate("visual.tab.menus", "Menüs"),
+            self,
+        )
+        self.menus_dock.setWidget(self.menus_viewer)
+        self.dock_manager.addDockWidget(QtAds.LeftDockWidgetArea, self.menus_dock)
+        self.docks.append(self.menus_dock)
 
         # Tabs viewer
         self.tabs_viewer = TabsViewer(Path("config"), self.i18n_factory, config=viewer_config)
-        tabs_dock = QtAds.CDockWidget(self.dock_manager, "Tabs", self)
-        tabs_dock.setWidget(self.tabs_viewer)
-        self.dock_manager.addDockWidget(QtAds.RightDockWidgetArea, tabs_dock)
-        self.docks.append(tabs_dock)
+        self.tabs_dock = QtAds.CDockWidget(
+            self.dock_manager,
+            self._translate("visual.tab.tabs", "Tabs"),
+            self,
+        )
+        self.tabs_dock.setWidget(self.tabs_viewer)
+        self.dock_manager.addDockWidget(QtAds.RightDockWidgetArea, self.tabs_dock)
+        self.docks.append(self.tabs_dock)
 
         # Panels viewer
         self.panels_viewer = PanelsViewer(Path("config"), self.i18n_factory, config=viewer_config)
-        panels_dock = QtAds.CDockWidget(self.dock_manager, "Panels", self)
-        panels_dock.setWidget(self.panels_viewer)
-        self.dock_manager.addDockWidget(QtAds.RightDockWidgetArea, panels_dock)
-        self.docks.append(panels_dock)
+        self.panels_dock = QtAds.CDockWidget(
+            self.dock_manager,
+            self._translate("visual.tab.panels", "Panels"),
+            self,
+        )
+        self.panels_dock.setWidget(self.panels_viewer)
+        self.dock_manager.addDockWidget(QtAds.RightDockWidgetArea, self.panels_dock)
+        self.docks.append(self.panels_dock)
 
     def _create_central_widget(self) -> None:
         """Create central widget with status info."""
         central = QWidget()
         layout = QVBoxLayout(central)
 
-        title = QLabel("✨ WidgetSystem - Visuelle Strukturebene")
+        title = QLabel(
+            self._translate(
+                "visual_app.central.title",
+                "✨ WidgetSystem - Visuelle Strukturebene",
+            ),
+        )
         title_font = QFont()
         title_font.setBold(True)
         title_font.setPointSize(16)
@@ -268,11 +382,14 @@ class VisualMainWindow(QMainWindow):
         layout.addWidget(title)
 
         info = QLabel(
-            "Alle strukturellen Komponenten des Systems sind hier sichtbar:\n"
-            "• Listen mit Hierarchien (Links)\n"
-            "• Menü-Strukturen (Links unten)\n"
-            "• Tab-Gruppen (Rechts)\n"
-            "• Panel-Konfigurationen (Rechts unten)",
+            self._translate(
+                "visual_app.central.info",
+                "Alle strukturellen Komponenten des Systems sind hier sichtbar:\n"
+                "• Listen mit Hierarchien (Links)\n"
+                "• Menü-Strukturen (Links unten)\n"
+                "• Tab-Gruppen (Rechts)\n"
+                "• Panel-Konfigurationen (Rechts unten)",
+            ),
         )
         layout.addWidget(info)
         layout.addStretch()
@@ -299,14 +416,19 @@ class VisualMainWindow(QMainWindow):
         """Show configuration panel."""
         try:
             config_panel = ConfigurationPanel(Path("config"), self.i18n_factory)
-            config_panel.setWindowTitle("Konfigurationspanel")
+            config_panel.setWindowTitle(
+                self._translate("visual_app.dialog.configuration.title", "Konfigurationspanel"),
+            )
             config_panel.resize(1200, 700)
             config_panel.show()
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "Fehler",
-                f"Konfigurationspanel konnte nicht geöffnet werden:\n{e}",
+                self._translate("dialog.error", "Fehler"),
+                self._translate(
+                    "visual_app.error.configuration_open_failed",
+                    "Konfigurationspanel konnte nicht geöffnet werden:\n{error}",
+                ).format(error=e),
             )
 
     def _show_dashboard(self) -> None:
@@ -315,7 +437,14 @@ class VisualMainWindow(QMainWindow):
             dashboard = VisualDashboard(Path("config"), self.i18n_factory)
             dashboard.show()
         except Exception as e:
-            QMessageBox.critical(self, "Fehler", f"Dashboard konnte nicht geöffnet werden:\n{e}")
+            QMessageBox.critical(
+                self,
+                self._translate("dialog.error", "Fehler"),
+                self._translate(
+                    "visual_app.error.dashboard_open_failed",
+                    "Dashboard konnte nicht geöffnet werden:\n{error}",
+                ).format(error=e),
+            )
 
     def _refresh_viewers(self) -> None:
         """Refresh all viewers."""
@@ -323,7 +452,11 @@ class VisualMainWindow(QMainWindow):
         self.menus_viewer.refresh()
         self.tabs_viewer.refresh()
         self.panels_viewer.refresh()
-        QMessageBox.information(self, "Erfolg", "✅ Alle Viewer aktualisiert")
+        QMessageBox.information(
+            self,
+            self._translate("message.success", "Erfolg"),
+            self._translate("visual_app.message.viewers_refreshed", "✅ Alle Viewer aktualisiert"),
+        )
 
     def _apply_theme(self) -> None:
         """Apply default theme."""
@@ -354,8 +487,9 @@ class VisualMainWindow(QMainWindow):
 
     def _show_welcome(self) -> None:
         """Show welcome message."""
-        title = "🎉 Willkommen zur visuellen Ebene!"
-        message = (
+        title = self._translate("visual_app.welcome.title", "🎉 Willkommen zur visuellen Ebene!")
+        message = self._translate(
+            "visual_app.welcome.message",
             "Dieses Fenster zeigt die vollständige visuelle Struktur des Systems:\n\n"
             "📋 LINKS:\n"
             "  • Listen-Viewer: Alle konfigurierten Listen mit Hierarchien\n"
@@ -366,7 +500,7 @@ class VisualMainWindow(QMainWindow):
             "🛠️ TOOLBAR:\n"
             "  • Dashboard: Umfassende Übersicht aller Komponenten\n"
             "  • Konfiguration: Bearbeitung aller Strukturelemente\n"
-            "  • Themes: Design-Auswahl\n"
+            "  • Themes: Design-Auswahl\n",
         )
         QMessageBox.information(self, title, message)
 
@@ -381,13 +515,21 @@ class VisualMainWindow(QMainWindow):
                     self.setStyleSheet(theme_data["stylesheet"])
                     print("✅ Theme aus Editor angewendet")
 
-            dialog = ThemeEditorDialog(Path("config"), apply_theme, self)
+            dialog = ThemeEditorDialog(
+                Path("config"),
+                apply_theme,
+                self,
+                i18n_factory=self.i18n_factory,
+            )
             dialog.exec()
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "Fehler",
-                f"Theme Editor konnte nicht geöffnet werden:\n{e}",
+                self._translate("dialog.error", "Fehler"),
+                self._translate(
+                    "visual_app.error.theme_editor_open_failed",
+                    "Theme Editor konnte nicht geöffnet werden:\n{error}",
+                ).format(error=e),
             )
 
     def _show_color_picker(self) -> None:
@@ -395,19 +537,30 @@ class VisualMainWindow(QMainWindow):
         try:
             from widgetsystem.ui import ARGBColorPickerDialog
 
-            dialog = ARGBColorPickerDialog("#FFFFFFFF", None, self)
+            dialog = ARGBColorPickerDialog(
+                "#FFFFFFFF",
+                None,
+                self,
+                i18n_factory=self.i18n_factory,
+            )
             if dialog.exec():
                 color = dialog.color_picker.get_color()
                 QMessageBox.information(
                     self,
-                    "Farbe ausgewählt",
-                    f"Ausgewählte Farbe: {color}",
+                    self._translate("visual_app.message.color_selected_title", "Farbe ausgewählt"),
+                    self._translate(
+                        "visual_app.message.color_selected",
+                        "Ausgewählte Farbe: {color}",
+                    ).format(color=color),
                 )
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "Fehler",
-                f"Farbauswahl konnte nicht geöffnet werden:\n{e}",
+                self._translate("dialog.error", "Fehler"),
+                self._translate(
+                    "visual_app.error.color_picker_open_failed",
+                    "Farbauswahl konnte nicht geöffnet werden:\n{error}",
+                ).format(error=e),
             )
 
     def _show_widget_editor(self) -> None:
@@ -415,30 +568,40 @@ class VisualMainWindow(QMainWindow):
         try:
             from widgetsystem.ui import WidgetFeaturesEditorDialog
 
-            dialog = WidgetFeaturesEditorDialog(Path("config"), self)
+            dialog = WidgetFeaturesEditorDialog(
+                Path("config"),
+                self,
+                i18n_factory=self.i18n_factory,
+            )
             dialog.exec()
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "Fehler",
-                f"Widget Editor konnte nicht geöffnet werden:\n{e}",
+                self._translate("dialog.error", "Fehler"),
+                self._translate(
+                    "visual_app.error.widget_editor_open_failed",
+                    "Widget Editor konnte nicht geöffnet werden:\n{error}",
+                ).format(error=e),
             )
 
     def _show_about(self) -> None:
         """Show about dialog."""
         QMessageBox.about(
             self,
-            "Über WidgetSystem",
-            "WidgetSystem v1.0\n\n"
-            "Eine vollständig konfigurierbare Anwendungsarchitektur mit:\n"
-            "✅ 10 Factories für alle Strukturelemente\n"
-            "✅ Vollständige Typsicherheit (100% type hints)\n"
-            "✅ Persistente Konfiguration (JSON)\n"
-            "✅ QtAds Docking System\n"
-            "✅ Visuelle Konfigurationsebene\n"
-            "✅ Responsive Design\n"
-            "✅ Mehrsprachigkeit (DE/EN)\n\n"
-            "© 2026 Maximale Funktionalität",
+            self._translate("visual_app.about.title", "Über WidgetSystem"),
+            self._translate(
+                "visual_app.about.message",
+                "WidgetSystem v1.0\n\n"
+                "Eine vollständig konfigurierbare Anwendungsarchitektur mit:\n"
+                "✅ 10 Factories für alle Strukturelemente\n"
+                "✅ Vollständige Typsicherheit (100% type hints)\n"
+                "✅ Persistente Konfiguration (JSON)\n"
+                "✅ QtAds Docking System\n"
+                "✅ Visuelle Konfigurationsebene\n"
+                "✅ Responsive Design\n"
+                "✅ Mehrsprachigkeit (DE/EN)\n\n"
+                "© 2026 Maximale Funktionalität",
+            ),
         )
 
 

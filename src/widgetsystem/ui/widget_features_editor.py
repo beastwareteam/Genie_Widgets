@@ -10,22 +10,18 @@ Provides UI for editing widget-specific features like:
 import json
 import logging
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
-    QComboBox,
     QDialog,
     QDialogButtonBox,
-    QDoubleSpinBox,
     QGroupBox,
     QHBoxLayout,
     QLabel,
-    QLineEdit,
     QMessageBox,
     QPushButton,
-    QSpinBox,
     QSplitter,
     QTabWidget,
     QTableWidget,
@@ -37,6 +33,9 @@ from PySide6.QtWidgets import (
 )
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from widgetsystem.factories.i18n_factory import I18nFactory
 
 
 class WidgetPropertyEditor(QWidget):
@@ -50,20 +49,48 @@ class WidgetPropertyEditor(QWidget):
     propertyChanged = Signal(str, str, str)
     saved = Signal(str)
 
-    def __init__(self, config_path: Path, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        config_path: Path,
+        parent: QWidget | None = None,
+        i18n_factory: "I18nFactory | None" = None,
+    ) -> None:
         """Initialize Widget Property Editor.
 
         Args:
             config_path: Path to configuration directory
             parent: Parent widget
+            i18n_factory: Optional i18n factory for UI text translation
         """
         super().__init__(parent)
         self.config_path = config_path
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
         self.current_widget: dict[str, Any] | None = None
         self.widget_configs: dict[str, dict[str, Any]] = {}
         self._load_configs()
         self._setup_ui()
         logger.debug(f"WidgetPropertyEditor initialized with config path: {config_path}")
+
+    def set_i18n_factory(self, i18n_factory: "I18nFactory | None") -> None:
+        """Set or update i18n factory and refresh visible texts."""
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+        self._apply_translated_texts()
+
+    def _translate(self, key: str, default: str | None = None, **kwargs: object) -> str:
+        """Translate key with fallback and interpolation."""
+        if not self._i18n_factory or not key:
+            text = default or key
+            return text.format(**kwargs) if kwargs else text
+
+        cache_key = f"{key}|{sorted(kwargs.items())}" if kwargs else key
+        if cache_key in self._translated_cache:
+            return self._translated_cache[cache_key]
+
+        translated = self._i18n_factory.translate(key, default=default or key, **kwargs)
+        self._translated_cache[cache_key] = translated
+        return translated
 
     def _setup_ui(self) -> None:
         """Set up user interface."""
@@ -86,14 +113,18 @@ class WidgetPropertyEditor(QWidget):
 
         # Bottom: Action buttons
         button_layout = QHBoxLayout()
-        
-        save_btn = QPushButton("Save Changes")
-        save_btn.clicked.connect(self._save_changes)
-        button_layout.addWidget(save_btn)
 
-        reset_btn = QPushButton("Reload Config")
-        reset_btn.clicked.connect(self._reload_config)
-        button_layout.addWidget(reset_btn)
+        self._save_btn = QPushButton(
+            self._translate("widget_features.button.save", "Save Changes"),
+        )
+        self._save_btn.clicked.connect(self._save_changes)
+        button_layout.addWidget(self._save_btn)
+
+        self._reset_btn = QPushButton(
+            self._translate("widget_features.button.reload", "Reload Config"),
+        )
+        self._reset_btn.clicked.connect(self._reload_config)
+        button_layout.addWidget(self._reset_btn)
 
         button_layout.addStretch()
         layout.addLayout(button_layout)
@@ -104,15 +135,18 @@ class WidgetPropertyEditor(QWidget):
         Returns:
             Configured QGroupBox with tree widget
         """
-        group = QGroupBox("Widgets")
+        group = QGroupBox(self._translate("widget_features.group.widgets", "Widgets"))
         layout = QVBoxLayout()
 
         self.tree = QTreeWidget()
-        self.tree.setHeaderLabel("Widget Hierarchy")
+        self.tree.setHeaderLabel(
+            self._translate("widget_features.tree.header", "Widget Hierarchy"),
+        )
         self.tree.itemSelectionChanged.connect(self._on_tree_selection_changed)
         layout.addWidget(self.tree)
 
         group.setLayout(layout)
+        self._tree_group = group
         return group
 
     def _create_property_editor_group(self) -> QGroupBox:
@@ -121,18 +155,40 @@ class WidgetPropertyEditor(QWidget):
         Returns:
             Configured QGroupBox with property table
         """
-        group = QGroupBox("Properties")
+        group = QGroupBox(self._translate("widget_features.group.properties", "Properties"))
         layout = QVBoxLayout()
 
         self.property_table = QTableWidget()
         self.property_table.setColumnCount(2)
-        self.property_table.setHorizontalHeaderLabels(["Property", "Value"])
+        self.property_table.setHorizontalHeaderLabels(
+            [
+                self._translate("widget_features.table.property", "Property"),
+                self._translate("widget_features.table.value", "Value"),
+            ],
+        )
         self.property_table.setColumnWidth(0, 150)
         self.property_table.setColumnWidth(1, 250)
         layout.addWidget(self.property_table)
 
         group.setLayout(layout)
+        self._properties_group = group
         return group
+
+    def _apply_translated_texts(self) -> None:
+        """Refresh translated static texts."""
+        self._save_btn.setText(self._translate("widget_features.button.save", "Save Changes"))
+        self._reset_btn.setText(self._translate("widget_features.button.reload", "Reload Config"))
+        self._tree_group.setTitle(self._translate("widget_features.group.widgets", "Widgets"))
+        self.tree.setHeaderLabel(self._translate("widget_features.tree.header", "Widget Hierarchy"))
+        self._properties_group.setTitle(
+            self._translate("widget_features.group.properties", "Properties"),
+        )
+        self.property_table.setHorizontalHeaderLabels(
+            [
+                self._translate("widget_features.table.property", "Property"),
+                self._translate("widget_features.table.value", "Value"),
+            ],
+        )
 
     def _load_configs(self) -> None:
         """Load all widget configurations from JSON files."""
@@ -228,10 +284,25 @@ class WidgetPropertyEditor(QWidget):
                     logger.info(f"Saved config: {config_file}")
 
             self.saved.emit(str(self.config_path))
-            QMessageBox.information(self, "Success", "Configuration saved successfully!")
+            QMessageBox.information(
+                self,
+                self._translate("message.success", "Success"),
+                self._translate(
+                    "widget_features.message.saved",
+                    "Configuration saved successfully!",
+                ),
+            )
         except Exception as exc:
             logger.exception(f"Error saving configuration: {exc}")
-            QMessageBox.critical(self, "Error", f"Failed to save: {exc}")
+            QMessageBox.critical(
+                self,
+                self._translate("message.error", "Error"),
+                self._translate(
+                    "widget_features.error.save_failed",
+                    "Failed to save: {error}",
+                    error=str(exc),
+                ),
+            )
 
     def _reload_config(self) -> None:
         """Reload configuration from files."""
@@ -257,39 +328,102 @@ class WidgetFeaturesEditorDialog(QDialog):
         self,
         config_path: Path,
         parent: QWidget | None = None,
+        i18n_factory: "I18nFactory | None" = None,
     ) -> None:
         """Initialize Widget Features Editor Dialog.
 
         Args:
             config_path: Path to configuration directory
             parent: Parent widget
+            i18n_factory: Optional i18n factory for dialog text translation
         """
         super().__init__(parent)
-        self.setWindowTitle("Widget Features Editor")
+        self._config_path = config_path
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
+        self.setWindowTitle(
+            self._translate("widget_features.dialog.title", "Widget Features Editor"),
+        )
         self.setGeometry(100, 100, 900, 600)
 
         layout = QVBoxLayout(self)
 
         # Tab widget for different editor views
-        tabs = QTabWidget()
+        self.tabs = QTabWidget()
 
         # Property editor tab
-        property_editor = WidgetPropertyEditor(config_path, self)
-        property_editor.load_widgets()
-        tabs.addTab(property_editor, "Properties")
+        self.property_editor = WidgetPropertyEditor(config_path, self, i18n_factory=i18n_factory)
+        self.property_editor.load_widgets()
+        self.tabs.addTab(
+            self.property_editor,
+            self._translate("widget_features.tab.properties", "Properties"),
+        )
 
         # Statistics tab
-        stats_tab = self._create_statistics_tab(config_path)
-        tabs.addTab(stats_tab, "Statistics")
+        self.stats_tab = self._create_statistics_tab(config_path)
+        self.tabs.addTab(
+            self.stats_tab,
+            self._translate("widget_features.tab.statistics", "Statistics"),
+        )
 
-        layout.addWidget(tabs)
+        layout.addWidget(self.tabs)
 
         # Dialog buttons
-        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
-        button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
+        self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
+        self.button_box.rejected.connect(self.reject)
+        close_button = self.button_box.button(QDialogButtonBox.StandardButton.Close)
+        if close_button is not None:
+            close_button.setText(self._translate("dialog.close", "Close"))
+        layout.addWidget(self.button_box)
 
         logger.debug(f"WidgetFeaturesEditorDialog created")
+
+    def set_i18n_factory(self, i18n_factory: "I18nFactory | None") -> None:
+        """Set or update i18n factory and refresh visible texts."""
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+
+        self.setWindowTitle(
+            self._translate("widget_features.dialog.title", "Widget Features Editor"),
+        )
+
+        self.property_editor.set_i18n_factory(i18n_factory)
+
+        self.tabs.setTabText(
+            0,
+            self._translate("widget_features.tab.properties", "Properties"),
+        )
+        self.tabs.setTabText(
+            1,
+            self._translate("widget_features.tab.statistics", "Statistics"),
+        )
+
+        close_button = self.button_box.button(QDialogButtonBox.StandardButton.Close)
+        if close_button is not None:
+            close_button.setText(self._translate("dialog.close", "Close"))
+
+        refreshed_stats_tab = self._create_statistics_tab(self._config_path)
+        self.tabs.removeTab(1)
+        self.tabs.insertTab(
+            1,
+            refreshed_stats_tab,
+            self._translate("widget_features.tab.statistics", "Statistics"),
+        )
+        self.stats_tab = refreshed_stats_tab
+
+    def _translate(self, key: str, default: str | None = None, **kwargs: object) -> str:
+        """Translate key with fallback and interpolation."""
+        if not self._i18n_factory or not key:
+            text = default or key
+            return text.format(**kwargs) if kwargs else text
+
+        cache_key = f"{key}|{sorted(kwargs.items())}" if kwargs else key
+        if cache_key in self._translated_cache:
+            return self._translated_cache[cache_key]
+
+        translated = self._i18n_factory.translate(key, default=default or key, **kwargs)
+        self._translated_cache[cache_key] = translated
+        return translated
 
     def _create_statistics_tab(self, config_path: Path) -> QWidget:
         """Create statistics tab.
@@ -303,7 +437,9 @@ class WidgetFeaturesEditorDialog(QDialog):
         widget = QWidget()
         layout = QVBoxLayout(widget)
 
-        stats_group = QGroupBox("Configuration Statistics")
+        stats_group = QGroupBox(
+            self._translate("widget_features.stats.group", "Configuration Statistics"),
+        )
         stats_layout = QVBoxLayout()
 
         try:
@@ -317,7 +453,10 @@ class WidgetFeaturesEditorDialog(QDialog):
             ]
 
             total_items = 0
-            stats_text = "<b>Configuration Summary:</b><br>"
+            stats_text = self._translate(
+                "widget_features.stats.summary_html",
+                "<b>Configuration Summary:</b><br>",
+            )
 
             for config_file in config_files:
                 config_path_file = config_path / config_file
@@ -327,9 +466,18 @@ class WidgetFeaturesEditorDialog(QDialog):
                         if isinstance(data, dict) and "items" in data:
                             count = len(data.get("items", []))
                             total_items += count
-                            stats_text += f"<br>{config_file}: {count} items"
+                            stats_text += self._translate(
+                                "widget_features.stats.file_line_html",
+                                "<br>{file}: {count} items",
+                                file=config_file,
+                                count=count,
+                            )
 
-            stats_text += f"<br><br><b>Total: {total_items} items</b>"
+            stats_text += self._translate(
+                "widget_features.stats.total_html",
+                "<br><br><b>Total: {count} items</b>",
+                count=total_items,
+            )
 
             label = QLabel(stats_text)
             label.setWordWrap(True)
@@ -337,7 +485,9 @@ class WidgetFeaturesEditorDialog(QDialog):
 
         except Exception as exc:
             logger.exception(f"Error generating statistics: {exc}")
-            label = QLabel(f"Error: {exc}")
+            label = QLabel(
+                self._translate("widget_features.error.label", "Error: {error}", error=str(exc)),
+            )
             stats_layout.addWidget(label)
 
         stats_layout.addStretch()
@@ -360,34 +510,55 @@ class WidgetFeaturesEditor(QWidget):
         self,
         config_path: Path,
         parent: QWidget | None = None,
+        i18n_factory: "I18nFactory | None" = None,
     ) -> None:
         """Initialize Widget Features Editor.
 
         Args:
             config_path: Path to configuration directory
             parent: Parent widget
+            i18n_factory: Optional i18n factory for UI text translation
         """
         super().__init__(parent)
         self.config_path = config_path
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
         self._setup_ui()
         logger.debug(f"WidgetFeaturesEditor initialized with config path: {config_path}")
+
+    def set_i18n_factory(self, i18n_factory: "I18nFactory | None") -> None:
+        """Set or update i18n factory and refresh visible texts."""
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+        self._header.setText(self._translate("widget_features.header", "Widget Features Editor"))
+        self.editor.set_i18n_factory(i18n_factory)
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate key with fallback."""
+        if not self._i18n_factory or not key:
+            return default or key
+        if key in self._translated_cache:
+            return self._translated_cache[key]
+        translated = self._i18n_factory.translate(key, default=default or key)
+        self._translated_cache[key] = translated
+        return translated
 
     def _setup_ui(self) -> None:
         """Set up user interface."""
         layout = QVBoxLayout(self)
 
         # Header
-        header = QLabel("Widget Features Editor")
+        self._header = QLabel(self._translate("widget_features.header", "Widget Features Editor"))
         header_font = QFont()
         header_font.setPointSize(12)
         header_font.setBold(True)
-        header.setFont(header_font)
-        layout.addWidget(header)
+        self._header.setFont(header_font)
+        layout.addWidget(self._header)
 
         # Property editor
-        self.editor = WidgetPropertyEditor(self.config_path, self)
+        self.editor = WidgetPropertyEditor(self.config_path, self, i18n_factory=self._i18n_factory)
         self.editor.load_widgets()
-        self.editor.saved.connect(self.updated.emit)
+        self.editor.saved.connect(lambda _config_name: self.updated.emit())
         layout.addWidget(self.editor)
 
     def refresh(self) -> None:

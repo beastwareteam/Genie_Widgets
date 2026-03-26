@@ -8,8 +8,10 @@ Provides a comprehensive color selection interface with:
 - Quick color buttons
 """
 
+from __future__ import annotations
+
 import logging
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QColor, QFont
@@ -29,6 +31,9 @@ from PySide6.QtWidgets import (
 )
 
 logger = logging.getLogger(__name__)
+
+if TYPE_CHECKING:
+    from widgetsystem.factories.i18n_factory import I18nFactory
 
 # Predefined color palettes
 QUICK_COLORS = [
@@ -63,6 +68,7 @@ class ARGBColorPicker(QWidget):
         initial_color: str = "#FFFFFFFF",
         apply_callback: Callable[[str], None] | None = None,
         parent: QWidget | None = None,
+        i18n_factory: I18nFactory | None = None,
     ) -> None:
         """Initialize ARGB Color Picker.
 
@@ -70,6 +76,7 @@ class ARGBColorPicker(QWidget):
             initial_color: Initial color in #AARRGGBB format
             apply_callback: Optional callback for live preview
             parent: Parent widget
+            i18n_factory: Optional i18n factory for UI text translation
 
         Raises:
             ValueError: If initial_color is not in valid hex format
@@ -77,9 +84,32 @@ class ARGBColorPicker(QWidget):
         super().__init__(parent)
         self.current_color = initial_color
         self.apply_callback = apply_callback
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
         self._setup_ui()
         self._set_color(initial_color)
         logger.debug(f"ARGBColorPicker initialized with color: {initial_color}")
+
+    def set_i18n_factory(self, i18n_factory: I18nFactory | None) -> None:
+        """Set or update i18n factory and refresh visible texts."""
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+        self._apply_translated_texts()
+        self._set_color_internal(self.current_color)
+
+    def _translate(self, key: str, default: str | None = None, **kwargs: object) -> str:
+        """Translate a key using i18n factory with cache and fallback."""
+        if not self._i18n_factory or not key:
+            text = default or key
+            return text.format(**kwargs) if kwargs else text
+
+        cache_key = f"{key}|{sorted(kwargs.items())}" if kwargs else key
+        if cache_key in self._translated_cache:
+            return self._translated_cache[cache_key]
+
+        translated = self._i18n_factory.translate(key, default=default or key, **kwargs)
+        self._translated_cache[cache_key] = translated
+        return translated
 
     def _setup_ui(self) -> None:
         """Set up user interface."""
@@ -105,7 +135,7 @@ class ARGBColorPicker(QWidget):
 
     def _create_preview_group(self) -> QGroupBox:
         """Create color preview group."""
-        group = QGroupBox("Color Preview")
+        group = QGroupBox(self._translate("argb.preview_group", "Color Preview"))
         layout = QVBoxLayout()
 
         # Current color preview
@@ -122,32 +152,38 @@ class ARGBColorPicker(QWidget):
         layout.addWidget(self.info_label)
 
         group.setLayout(layout)
+        self.preview_group = group
         return group
 
     def _create_input_group(self) -> QGroupBox:
         """Create hex input group."""
-        group = QGroupBox("Hex Color Input")
+        group = QGroupBox(self._translate("argb.hex_input_group", "Hex Color Input"))
         layout = QHBoxLayout()
 
-        layout.addWidget(QLabel("Hex #AARRGGBB:"))
+        self.hex_label = QLabel(self._translate("argb.hex_label", "Hex #AARRGGBB:"))
+        layout.addWidget(self.hex_label)
 
         self.hex_input = QLineEdit()
         self.hex_input.setMaxLength(9)
-        self.hex_input.setPlaceholderText("FFFFFFFF")
+        self.hex_input.setPlaceholderText(
+            self._translate("argb.hex_placeholder", "FFFFFFFF"),
+        )
         self.hex_input.textChanged.connect(self._on_hex_changed)
         layout.addWidget(self.hex_input)
 
         layout.addStretch()
         group.setLayout(layout)
+        self.input_group = group
         return group
 
     def _create_sliders_group(self) -> QGroupBox:
         """Create RGB/Alpha sliders group."""
-        group = QGroupBox("Color Components")
+        group = QGroupBox(self._translate("argb.components_group", "Color Components"))
         layout = QGridLayout()
 
         # Alpha slider
-        layout.addWidget(QLabel("Alpha (A):"), 0, 0)
+        self.alpha_label = QLabel(self._translate("argb.label.alpha", "Alpha (A):"))
+        layout.addWidget(self.alpha_label, 0, 0)
         self.alpha_slider = self._create_slider(0, 255)
         self.alpha_slider.valueChanged.connect(self._on_slider_changed)
         layout.addWidget(self.alpha_slider, 0, 1)
@@ -157,7 +193,8 @@ class ARGBColorPicker(QWidget):
         layout.addWidget(self.alpha_spin, 0, 2)
 
         # Red slider
-        layout.addWidget(QLabel("Red (R):"), 1, 0)
+        self.red_label = QLabel(self._translate("argb.label.red", "Red (R):"))
+        layout.addWidget(self.red_label, 1, 0)
         self.red_slider = self._create_slider(0, 255)
         self.red_slider.valueChanged.connect(self._on_slider_changed)
         layout.addWidget(self.red_slider, 1, 1)
@@ -167,7 +204,8 @@ class ARGBColorPicker(QWidget):
         layout.addWidget(self.red_spin, 1, 2)
 
         # Green slider
-        layout.addWidget(QLabel("Green (G):"), 2, 0)
+        self.green_label = QLabel(self._translate("argb.label.green", "Green (G):"))
+        layout.addWidget(self.green_label, 2, 0)
         self.green_slider = self._create_slider(0, 255)
         self.green_slider.valueChanged.connect(self._on_slider_changed)
         layout.addWidget(self.green_slider, 2, 1)
@@ -177,7 +215,8 @@ class ARGBColorPicker(QWidget):
         layout.addWidget(self.green_spin, 2, 2)
 
         # Blue slider
-        layout.addWidget(QLabel("Blue (B):"), 3, 0)
+        self.blue_label = QLabel(self._translate("argb.label.blue", "Blue (B):"))
+        layout.addWidget(self.blue_label, 3, 0)
         self.blue_slider = self._create_slider(0, 255)
         self.blue_slider.valueChanged.connect(self._on_slider_changed)
         layout.addWidget(self.blue_slider, 3, 1)
@@ -187,11 +226,12 @@ class ARGBColorPicker(QWidget):
         layout.addWidget(self.blue_spin, 3, 2)
 
         group.setLayout(layout)
+        self.sliders_group = group
         return group
 
     def _create_quick_colors_group(self) -> QGroupBox:
         """Create quick colors buttons group."""
-        group = QGroupBox("Quick Colors")
+        group = QGroupBox(self._translate("argb.quick_colors_group", "Quick Colors"))
         layout = QGridLayout()
 
         for i, color in enumerate(QUICK_COLORS):
@@ -202,7 +242,21 @@ class ARGBColorPicker(QWidget):
             layout.addWidget(btn, i // 4, i % 4)
 
         group.setLayout(layout)
+        self.quick_group = group
         return group
+
+    def _apply_translated_texts(self) -> None:
+        """Refresh translated static texts in the picker."""
+        self.preview_group.setTitle(self._translate("argb.preview_group", "Color Preview"))
+        self.input_group.setTitle(self._translate("argb.hex_input_group", "Hex Color Input"))
+        self.hex_label.setText(self._translate("argb.hex_label", "Hex #AARRGGBB:"))
+        self.hex_input.setPlaceholderText(self._translate("argb.hex_placeholder", "FFFFFFFF"))
+        self.sliders_group.setTitle(self._translate("argb.components_group", "Color Components"))
+        self.alpha_label.setText(self._translate("argb.label.alpha", "Alpha (A):"))
+        self.red_label.setText(self._translate("argb.label.red", "Red (R):"))
+        self.green_label.setText(self._translate("argb.label.green", "Green (G):"))
+        self.blue_label.setText(self._translate("argb.label.blue", "Blue (B):"))
+        self.quick_group.setTitle(self._translate("argb.quick_colors_group", "Quick Colors"))
 
     @staticmethod
     def _create_slider(minimum: int, maximum: int) -> QSlider:
@@ -370,7 +424,15 @@ class ARGBColorPicker(QWidget):
             f"background-color: rgba({red}, {green}, {blue}, {alpha}); border: 1px solid #ccc;"
         )
         self.info_label.setText(
-            f"Color: {color} | RGB: ({red}, {green}, {blue}) | Alpha: {alpha_percent}%"
+            self._translate(
+                "argb.info_line",
+                "Color: {color} | RGB: ({red}, {green}, {blue}) | Alpha: {alpha_percent}%",
+                color=color,
+                red=red,
+                green=green,
+                blue=blue,
+                alpha_percent=alpha_percent,
+            ),
         )
 
         # Emit signals
@@ -417,6 +479,7 @@ class ARGBColorPickerDialog(QDialog):
         initial_color: str = "#FFFFFFFF",
         apply_callback: Callable[[str], None] | None = None,
         parent: QWidget | None = None,
+        i18n_factory: I18nFactory | None = None,
     ) -> None:
         """Initialize color picker dialog.
 
@@ -424,26 +487,55 @@ class ARGBColorPickerDialog(QDialog):
             initial_color: Initial color in #AARRGGBB format
             apply_callback: Optional callback for live preview
             parent: Parent widget
+            i18n_factory: Optional i18n factory for dialog text translation
         """
         super().__init__(parent)
-        self.setWindowTitle("ARGB Color Picker")
+        self._i18n_factory = i18n_factory
+        self.setWindowTitle(self._translate("argb.dialog_title", "ARGB Color Picker"))
         self.setGeometry(100, 100, 500, 600)
 
         layout = QVBoxLayout(self)
 
-        self.color_picker = ARGBColorPicker(initial_color, apply_callback, self)
+        self.color_picker = ARGBColorPicker(
+            initial_color,
+            apply_callback,
+            self,
+            i18n_factory=i18n_factory,
+        )
         layout.addWidget(self.color_picker)
 
         # Dialog buttons
-        button_box = QDialogButtonBox(
+        self.button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Ok
             | QDialogButtonBox.StandardButton.Cancel
         )
-        button_box.accepted.connect(self.accept)
-        button_box.rejected.connect(self.reject)
-        layout.addWidget(button_box)
+        self.button_box.accepted.connect(self.accept)
+        self.button_box.rejected.connect(self.reject)
+        self.ok_button = self.button_box.button(QDialogButtonBox.StandardButton.Ok)
+        self.cancel_button = self.button_box.button(QDialogButtonBox.StandardButton.Cancel)
+        if self.ok_button is not None:
+            self.ok_button.setText(self._translate("dialog.ok", "OK"))
+        if self.cancel_button is not None:
+            self.cancel_button.setText(self._translate("dialog.cancel", "Cancel"))
+        layout.addWidget(self.button_box)
 
         logger.debug(f"ARGBColorPickerDialog created with color: {initial_color}")
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate dialog text using i18n factory if available."""
+        if not self._i18n_factory or not key:
+            return default or key
+        return self._i18n_factory.translate(key, default=default or key)
+
+    def set_i18n_factory(self, i18n_factory: I18nFactory | None) -> None:
+        """Set or update i18n factory and refresh visible texts."""
+        self._i18n_factory = i18n_factory
+        self.setWindowTitle(self._translate("argb.dialog_title", "ARGB Color Picker"))
+        if self.ok_button is not None:
+            self.ok_button.setText(self._translate("dialog.ok", "OK"))
+        if self.cancel_button is not None:
+            self.cancel_button.setText(self._translate("dialog.cancel", "Cancel"))
+        self.color_picker.set_i18n_factory(i18n_factory)
 
     def get_color(self) -> str:
         """Get selected color.

@@ -1,5 +1,6 @@
 """Custom floating title bar for CDockWidgets - Qt-native inline title bar for floating state."""
 
+from typing import TYPE_CHECKING
 from typing import Any
 
 from PySide6.QtCore import QEvent, QObject, Qt, Signal
@@ -11,6 +12,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 import PySide6QtAds as QtAds
+
+if TYPE_CHECKING:
+    from widgetsystem.factories.i18n_factory import I18nFactory
 
 
 class FloatingWindowPatcher(QObject):
@@ -126,11 +130,11 @@ class WindowMoveHandle(QWidget):
         self._drag_pos = None
         event.accept()
 
-    def resizeEvent(self, event: Any) -> None:
+    def resizeEvent(self, _event: Any) -> None:
         """Adjust handle geometry when parent window resizes.
 
         Args:
-            event: Resize event
+            _event: Resize event
         """
         # Span full width, fixed height at top
         self.setGeometry(0, 0, self._parent_window.width(), 30)
@@ -153,6 +157,7 @@ class CustomFloatingTitleBar(QWidget):
         self,
         title: str,
         parent: QWidget | None = None,
+        i18n_factory: "I18nFactory | None" = None,
     ) -> None:
         """Initialize custom floating title bar.
 
@@ -164,9 +169,42 @@ class CustomFloatingTitleBar(QWidget):
 
         self.title_text = title
         self._drag_start_pos = None
+        self._i18n_factory = i18n_factory
+        self._translation_cache: dict[str, str] = {}
 
         self._setup_ui()
         self._setup_style()
+
+    def _translate(self, key: str, default: str) -> str:
+        """Translate a key with fallback and cache."""
+        if not key:
+            return default
+
+        if key in self._translation_cache:
+            return self._translation_cache[key]
+
+        if self._i18n_factory is None:
+            self._translation_cache[key] = default
+            return default
+
+        translated = self._i18n_factory.translate(key, default=default)
+        self._translation_cache[key] = translated
+        return translated
+
+    def set_i18n_factory(self, i18n_factory: "I18nFactory | None") -> None:
+        """Set or update i18n factory and refresh translated texts."""
+        self._i18n_factory = i18n_factory
+        self._translation_cache.clear()
+        self._refresh_translated_texts()
+
+    def _refresh_translated_texts(self) -> None:
+        """Refresh translated visible texts."""
+        self.dock_button.setToolTip(
+            self._translate("floating_titlebar.tooltip.dock", "Zurück ins Dock"),
+        )
+        self.close_button.setToolTip(
+            self._translate("floating_titlebar.tooltip.close", "Schließen"),
+        )
 
     def _setup_ui(self) -> None:
         """Setup UI layout and widgets."""
@@ -188,7 +226,9 @@ class CustomFloatingTitleBar(QWidget):
         self.dock_button = QPushButton("📌")
         self.dock_button.setMaximumWidth(32)
         self.dock_button.setMaximumHeight(26)
-        self.dock_button.setToolTip("Zurück ins Dock")
+        self.dock_button.setToolTip(
+            self._translate("floating_titlebar.tooltip.dock", "Zurück ins Dock"),
+        )
         self.dock_button.clicked.connect(self.dock_requested.emit)
         layout.addWidget(self.dock_button)
 
@@ -196,7 +236,9 @@ class CustomFloatingTitleBar(QWidget):
         self.close_button = QPushButton("✕")
         self.close_button.setMaximumWidth(32)
         self.close_button.setMaximumHeight(26)
-        self.close_button.setToolTip("Schließen")
+        self.close_button.setToolTip(
+            self._translate("floating_titlebar.tooltip.close", "Schließen"),
+        )
         self.close_button.clicked.connect(self.close_requested.emit)
         layout.addWidget(self.close_button)
 

@@ -7,7 +7,7 @@ including color selection, ARGB support, and live preview capabilities.
 import json
 import logging
 from pathlib import Path
-from typing import Any, Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QColor
@@ -27,6 +27,13 @@ from PySide6.QtWidgets import (
 
 from widgetsystem.factories.theme_factory import ThemeFactory
 
+if TYPE_CHECKING:
+    from widgetsystem.factories.i18n_factory import I18nFactory
+
+    I18nFactoryType = I18nFactory
+else:
+    I18nFactoryType = Any
+
 logger = logging.getLogger(__name__)
 
 
@@ -35,17 +42,45 @@ class ARGBColorButton(QPushButton):
 
     colorChanged = Signal(str)  # Emits hex color string #AARRGGBB
 
-    def __init__(self, initial_color: str = "#FFFFFFFF", parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        initial_color: str = "#FFFFFFFF",
+        parent: QWidget | None = None,
+        i18n_factory: I18nFactoryType | None = None,
+    ) -> None:
         """Initialize ARGB color button.
 
         Args:
             initial_color: Initial color in #AARRGGBB format
             parent: Parent widget
+            i18n_factory: Optional i18n factory for label translation
         """
         super().__init__(parent)
         self.current_color = initial_color
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
         self._update_display()
         self.clicked.connect(self._on_color_clicked)
+
+    def set_i18n_factory(self, i18n_factory: I18nFactoryType | None) -> None:
+        """Set or update the i18n factory.
+
+        Args:
+            i18n_factory: Optional i18n factory instance
+        """
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+        self._update_display()
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate a key using i18n factory if available."""
+        if not self._i18n_factory or not key:
+            return default or key
+        if key in self._translated_cache:
+            return self._translated_cache[key]
+        result = self._i18n_factory.translate(key, default=default or key)
+        self._translated_cache[key] = result
+        return result
 
     def _update_display(self) -> None:
         """Update button display based on current color."""
@@ -83,10 +118,11 @@ class ARGBColorButton(QPushButton):
             """)
 
             # Display text
-            self.setText(f"{self.current_color}\n({alpha_percent:.0f}% opacity)")
+            opacity_text = self._translate("theme_editor.opacity", "opacity")
+            self.setText(f"{self.current_color}\n({alpha_percent:.0f}% {opacity_text})")
         except Exception as e:
             logger.exception(f"Error updating color button: {e}")
-            self.setText("Select Color")
+            self.setText(self._translate("theme_editor.select_color", "Select Color"))
 
     def _on_color_clicked(self) -> None:
         """Handle color button click - show color dialog."""
@@ -137,6 +173,7 @@ class ThemePropertyEditor(QWidget):
         property_name: str,
         property_value: Any,
         parent: QWidget | None = None,
+        i18n_factory: I18nFactoryType | None = None,
     ) -> None:
         """Initialize theme property editor.
 
@@ -144,36 +181,49 @@ class ThemePropertyEditor(QWidget):
             property_name: Name of the property
             property_value: Current value
             parent: Parent widget
+            i18n_factory: Optional i18n factory for label translation
         """
         super().__init__(parent)
         self.property_name = property_name
         self.property_value = property_value
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
 
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
         # Label
-        label = QLabel(f"{property_name}:")
+        property_label = self._translate(f"property.{property_name}", property_name)
+        label = QLabel(f"{property_label}:")
         label.setMinimumWidth(120)
         layout.addWidget(label)
 
         # Value editor based on type
         if isinstance(property_value, str) and (property_value.startswith("#")):
             # Color property
-            self.editor = ARGBColorButton(str(property_value), self)
+            self.editor = ARGBColorButton(
+                str(property_value),
+                self,
+                i18n_factory=self._i18n_factory,
+            )
             self.editor.colorChanged.connect(self._on_value_changed)
+        elif isinstance(property_value, bool):
+            # Boolean property
+            self.editor = QComboBox(self)
+            self.editor.addItems([
+                self._translate("boolean.false", "False"),
+                self._translate("boolean.true", "True"),
+            ])
+            true_text = self._translate("boolean.true", "True")
+            false_text = self._translate("boolean.false", "False")
+            self.editor.setCurrentText(true_text if property_value else false_text)
+            self.editor.currentTextChanged.connect(self._on_value_changed)
         elif isinstance(property_value, (int, float)):
             # Numeric property
             self.editor = QSpinBox(self)
             self.editor.setRange(-999, 9999)
             self.editor.setValue(int(property_value))
             self.editor.valueChanged.connect(self._on_value_changed)
-        elif isinstance(property_value, bool):
-            # Boolean property
-            self.editor = QComboBox(self)
-            self.editor.addItems(["False", "True"])
-            self.editor.setCurrentText(str(property_value))
-            self.editor.currentTextChanged.connect(self._on_value_changed)
         else:
             # String property
             from PySide6.QtWidgets import QLineEdit
@@ -183,6 +233,16 @@ class ThemePropertyEditor(QWidget):
             self.editor.textChanged.connect(self._on_value_changed)
 
         layout.addWidget(self.editor)
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate a key using i18n factory if available."""
+        if not self._i18n_factory or not key:
+            return default or key
+        if key in self._translated_cache:
+            return self._translated_cache[key]
+        result = self._i18n_factory.translate(key, default=default or key)
+        self._translated_cache[key] = result
+        return result
 
     def _on_value_changed(self) -> None:
         """Handle value change."""
@@ -204,7 +264,7 @@ class ThemePropertyEditor(QWidget):
         elif isinstance(self.editor, QSpinBox):
             return self.editor.value()
         elif isinstance(self.editor, QComboBox):
-            return self.editor.currentText() == "True"
+            return self.editor.currentText() == self._translate("boolean.true", "True")
         else:
             return self.editor.text()
 
@@ -219,6 +279,7 @@ class LiveThemeEditor(QWidget):
         config_path: Path,
         apply_theme_callback: Callable[[dict[str, Any]], None] | None = None,
         parent: QWidget | None = None,
+        i18n_factory: I18nFactoryType | None = None,
     ) -> None:
         """Initialize theme editor.
 
@@ -226,16 +287,36 @@ class LiveThemeEditor(QWidget):
             config_path: Path to config directory
             apply_theme_callback: Callback to apply theme (receives theme dict)
             parent: Parent widget
+            i18n_factory: Optional i18n factory for UI text translation
         """
         super().__init__(parent)
         self.config_path = config_path
         self.apply_theme_callback = apply_theme_callback
         self.theme_factory = ThemeFactory(config_path)
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
         self.current_theme: dict[str, Any] = {}
         self.property_editors: dict[str, ThemePropertyEditor] = {}
 
         self._setup_ui()
         self._load_themes()
+
+    def set_i18n_factory(self, i18n_factory: I18nFactoryType | None) -> None:
+        """Set or update i18n factory and refresh visible texts."""
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+        self._setup_translated_texts()
+        self._load_themes()
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate a key using i18n factory if available."""
+        if not self._i18n_factory or not key:
+            return default or key
+        if key in self._translated_cache:
+            return self._translated_cache[key]
+        result = self._i18n_factory.translate(key, default=default or key)
+        self._translated_cache[key] = result
+        return result
 
     def _setup_ui(self) -> None:
         """Setup the UI."""
@@ -243,7 +324,8 @@ class LiveThemeEditor(QWidget):
 
         # Theme selection
         selection_layout = QHBoxLayout()
-        selection_layout.addWidget(QLabel("Select Theme:"))
+        self.select_theme_label = QLabel(self._translate("theme_editor.select_theme", "Select Theme:"))
+        selection_layout.addWidget(self.select_theme_label)
 
         self.theme_combo = QComboBox(self)
         self.theme_combo.currentTextChanged.connect(self._on_theme_selected)
@@ -253,7 +335,10 @@ class LiveThemeEditor(QWidget):
         layout.addLayout(selection_layout)
 
         # Property editor area
-        self.editor_group = QGroupBox("Theme Properties", self)
+        self.editor_group = QGroupBox(
+            self._translate("theme_editor.properties", "Theme Properties"),
+            self,
+        )
         editor_layout = QVBoxLayout(self.editor_group)
         self.editor_layout = editor_layout
         layout.addWidget(self.editor_group)
@@ -261,28 +346,44 @@ class LiveThemeEditor(QWidget):
         # Buttons
         button_layout = QHBoxLayout()
 
-        self.reset_btn = QPushButton("Reset", self)
+        self.reset_btn = QPushButton(self._translate("button.reset", "Reset"), self)
         self.reset_btn.clicked.connect(self._on_reset)
         button_layout.addWidget(self.reset_btn)
 
-        self.save_btn = QPushButton("Save Theme", self)
+        self.save_btn = QPushButton(self._translate("theme_editor.save_theme", "Save Theme"), self)
         self.save_btn.clicked.connect(self._on_save)
         button_layout.addWidget(self.save_btn)
 
-        self.export_btn = QPushButton("Export", self)
+        self.export_btn = QPushButton(self._translate("action.export", "Export"), self)
         self.export_btn.clicked.connect(self._on_export)
         button_layout.addWidget(self.export_btn)
 
         button_layout.addStretch()
         layout.addLayout(button_layout)
 
+    def _setup_translated_texts(self) -> None:
+        """Refresh translated static UI texts."""
+        self.select_theme_label.setText(self._translate("theme_editor.select_theme", "Select Theme:"))
+        self.editor_group.setTitle(self._translate("theme_editor.properties", "Theme Properties"))
+        self.reset_btn.setText(self._translate("button.reset", "Reset"))
+        self.save_btn.setText(self._translate("theme_editor.save_theme", "Save Theme"))
+        self.export_btn.setText(self._translate("action.export", "Export"))
+
     def _load_themes(self) -> None:
         """Load available themes."""
         try:
             themes = self.theme_factory.load_themes()
+            if not themes:
+                # Backward-compatible fallback for plain list format in themes.json
+                themes_file = self.config_path / "themes.json"
+                if themes_file.exists():
+                    raw_data = json.loads(themes_file.read_text(encoding="utf-8"))
+                    if isinstance(raw_data, list):
+                        themes = raw_data
             self.theme_combo.clear()
             for theme in themes:
-                theme_name = theme.get("name", theme.get("id", "Unknown"))
+                fallback_unknown = self._translate("theme_editor.unknown", "Unknown")
+                theme_name = theme.get("name", theme.get("id", fallback_unknown))
                 self.theme_combo.addItem(theme_name, theme)
         except Exception as e:
             logger.exception(f"Error loading themes: {e}")
@@ -306,7 +407,10 @@ class LiveThemeEditor(QWidget):
         """
         # Clear existing editors
         while self.editor_layout.count() > 0:
-            widget = self.editor_layout.takeAt(0).widget()
+            item = self.editor_layout.takeAt(0)
+            if item is None:
+                continue
+            widget = item.widget()
             if widget:
                 widget.deleteLater()
 
@@ -320,13 +424,23 @@ class LiveThemeEditor(QWidget):
                 # Nested color object
                 for sub_name, sub_value in color_value.items():
                     prop_name = f"{color_name}.{sub_name}"
-                    editor = ThemePropertyEditor(prop_name, sub_value, self)
+                    editor = ThemePropertyEditor(
+                        prop_name,
+                        sub_value,
+                        self,
+                        i18n_factory=self._i18n_factory,
+                    )
                     editor.propertyChanged.connect(self._on_property_changed)
                     self.editor_layout.addWidget(editor)
                     self.property_editors[prop_name] = editor
             else:
                 # Simple color value
-                editor = ThemePropertyEditor(color_name, color_value, self)
+                editor = ThemePropertyEditor(
+                    color_name,
+                    color_value,
+                    self,
+                    i18n_factory=self._i18n_factory,
+                )
                 editor.propertyChanged.connect(self._on_property_changed)
                 self.editor_layout.addWidget(editor)
                 self.property_editors[color_name] = editor
@@ -334,7 +448,12 @@ class LiveThemeEditor(QWidget):
         # Add other properties
         for prop_name, prop_value in theme.items():
             if prop_name not in ("id", "name", "colors", "description"):
-                editor = ThemePropertyEditor(prop_name, prop_value, self)
+                editor = ThemePropertyEditor(
+                    prop_name,
+                    prop_value,
+                    self,
+                    i18n_factory=self._i18n_factory,
+                )
                 editor.propertyChanged.connect(self._on_property_changed)
                 self.editor_layout.addWidget(editor)
                 self.property_editors[prop_name] = editor
@@ -357,6 +476,9 @@ class LiveThemeEditor(QWidget):
                     self.current_theme["colors"] = {}
                 if parts[0] not in self.current_theme["colors"]:
                     self.current_theme["colors"][parts[0]] = {}
+                elif not isinstance(self.current_theme["colors"][parts[0]], dict):
+                    existing_value = self.current_theme["colors"][parts[0]]
+                    self.current_theme["colors"][parts[0]] = {"value": existing_value}
                 self.current_theme["colors"][parts[0]][parts[1]] = property_value
             else:
                 # Top-level property
@@ -405,9 +527,9 @@ class LiveThemeEditor(QWidget):
 
             file_path, _ = QFileDialog.getSaveFileName(
                 self,
-                "Export Theme",
+                self._translate("theme_editor.export_theme", "Export Theme"),
                 str(self.config_path),
-                "JSON Files (*.json)",
+                self._translate("theme_editor.json_files", "JSON Files (*.json)"),
             )
 
             if file_path:
@@ -428,6 +550,7 @@ class ThemeEditorDialog(QDialog):
         config_path: Path,
         apply_theme_callback: Callable[[dict[str, Any]], None] | None = None,
         parent: QWidget | None = None,
+        i18n_factory: I18nFactoryType | None = None,
     ) -> None:
         """Initialize theme editor dialog.
 
@@ -435,20 +558,46 @@ class ThemeEditorDialog(QDialog):
             config_path: Path to config directory
             apply_theme_callback: Callback to apply theme
             parent: Parent widget
+            i18n_factory: Optional i18n factory for dialog text translation
         """
         super().__init__(parent)
-        self.setWindowTitle("Live Theme Editor")
+        self._i18n_factory = i18n_factory
+        self.setWindowTitle(self._translate("theme_editor.dialog_title", "Live Theme Editor"))
         self.setMinimumSize(600, 500)
 
         layout = QVBoxLayout(self)
 
-        self.editor = LiveThemeEditor(config_path, apply_theme_callback, self)
+        self.editor = LiveThemeEditor(
+            config_path,
+            apply_theme_callback,
+            self,
+            i18n_factory=i18n_factory,
+        )
         layout.addWidget(self.editor)
 
         # Buttons
-        button_box = QDialogButtonBox(
+        self.button_box = QDialogButtonBox(
             QDialogButtonBox.StandardButton.Close,
             self,
         )
-        button_box.rejected.connect(self.close)
-        layout.addWidget(button_box)
+        self.button_box.rejected.connect(  # pyright: ignore[reportAttributeAccessIssue]  # pylint: disable=no-member
+            self.close,
+        )
+        self.close_button = self.button_box.button(QDialogButtonBox.StandardButton.Close)
+        if self.close_button is not None:
+            self.close_button.setText(self._translate("dialog.close", "Close"))
+        layout.addWidget(self.button_box)
+
+    def set_i18n_factory(self, i18n_factory: I18nFactoryType | None) -> None:
+        """Set or update i18n factory and refresh visible texts."""
+        self._i18n_factory = i18n_factory
+        self.setWindowTitle(self._translate("theme_editor.dialog_title", "Live Theme Editor"))
+        if self.close_button is not None:
+            self.close_button.setText(self._translate("dialog.close", "Close"))
+        self.editor.set_i18n_factory(i18n_factory)
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate a key using i18n factory if available."""
+        if not self._i18n_factory or not key:
+            return default or key
+        return self._i18n_factory.translate(key, default=default or key)

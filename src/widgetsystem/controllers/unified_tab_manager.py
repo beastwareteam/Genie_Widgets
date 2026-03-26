@@ -4,12 +4,15 @@ Ensures every tab (dock, sub, nested) has the same features and
 syncs configuration changes to persistence layer.
 """
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtWidgets import QTabWidget, QWidget
 
 from widgetsystem.ui.unified_tab_item import UnifiedTabItem
+
+if TYPE_CHECKING:
+    from widgetsystem.factories.i18n_factory import I18nFactory
 
 
 class UnifiedTabManager(QObject):
@@ -54,6 +57,9 @@ class UnifiedTabManager(QObject):
         # Reference to tabs factory for persistence
         self._tabs_factory: Any = None
 
+        # Optional i18n factory for tab UI strings
+        self._i18n_factory: I18nFactory | None = None
+
     @classmethod
     def instance(cls) -> "UnifiedTabManager":
         """Get singleton instance."""
@@ -76,6 +82,12 @@ class UnifiedTabManager(QObject):
             tabs_factory: TabsFactory instance
         """
         self._tabs_factory = tabs_factory
+
+    def set_i18n_factory(self, i18n_factory: "I18nFactory | None") -> None:
+        """Set i18n factory and propagate to managed tab items."""
+        self._i18n_factory = i18n_factory
+        for item in self._tabs.values():
+            item.set_i18n_factory(i18n_factory)
 
     def create_tab(
         self,
@@ -111,6 +123,7 @@ class UnifiedTabManager(QObject):
             parent_tab_widget=parent_tab_widget,
             tab_index=tab_index,
             config=config,
+            i18n_factory=self._i18n_factory,
             parent=self,
         )
 
@@ -141,13 +154,13 @@ class UnifiedTabManager(QObject):
             tab_widget: The tab widget
         """
         # Only connect once
-        if hasattr(tab_widget, "_unified_signals_connected"):
+        if bool(tab_widget.property("_unified_signals_connected")):
             return
 
         tab_widget.tabCloseRequested.connect(
             lambda idx, tw=tab_widget: self._on_tab_close_requested(tw, idx)
         )
-        tab_widget._unified_signals_connected = True  # type: ignore[attr-defined]
+        tab_widget.setProperty("_unified_signals_connected", True)
 
     def _on_tab_close_requested(self, tab_widget: QTabWidget, index: int) -> None:
         """Handle tab close request from QTabWidget.

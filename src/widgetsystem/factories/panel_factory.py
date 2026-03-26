@@ -4,9 +4,12 @@ from dataclasses import dataclass
 import json
 import logging
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 
 from widgetsystem.core.config_validator import ConfigValidator
+
+if TYPE_CHECKING:
+    from widgetsystem.factories.i18n_factory import I18nFactory
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +19,7 @@ class PanelDefinition(TypedDict, total=False):
 
     id: str
     name_key: str
+    tooltip_key: str
     area: str
     closable: bool
     movable: bool
@@ -37,6 +41,7 @@ class PanelConfig:
     floatable: bool = False
     delete_on_close: bool = False
     dnd_enabled: bool = True
+    tooltip_key: str = ""
     responsive_hidden_at: list[str] | None = None
 
     def __post_init__(self) -> None:
@@ -52,12 +57,76 @@ class PanelConfig:
 class PanelFactory:
     """Factory for loading and managing panel configurations."""
 
-    def __init__(self, config_path: str | Path = "config") -> None:
-        """Initialize PanelFactory."""
+    def __init__(
+        self,
+        config_path: str | Path = "config",
+        i18n_factory: "I18nFactory | None" = None,
+    ) -> None:
+        """Initialize PanelFactory.
+
+        Args:
+            config_path: Path to configuration directory
+            i18n_factory: Optional I18nFactory for translating panel names/tooltips
+        """
         self.config_path = Path(config_path)
         self.panels_file = self.config_path / "panels.json"
         self._panels_cache: dict[str, PanelConfig] | None = None
         self._validator = ConfigValidator(self.config_path)
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
+
+    def set_i18n_factory(self, i18n_factory: "I18nFactory") -> None:
+        """Set or update the I18nFactory instance.
+
+        Args:
+            i18n_factory: I18nFactory instance for translating strings
+        """
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate a key using i18n_factory if available.
+
+        Args:
+            key: Translation key
+            default: Default value if key not found or no i18n_factory
+
+        Returns:
+            Translated string or default/key name
+        """
+        if not self._i18n_factory or not key:
+            return default or key
+
+        # Check cache first
+        if key in self._translated_cache:
+            return self._translated_cache[key]
+
+        # Translate using factory
+        translated = self._i18n_factory.translate(key, default=key)
+        self._translated_cache[key] = translated
+        return translated
+
+    def get_panel_name(self, panel: PanelConfig) -> str:
+        """Get translated name for a panel.
+
+        Args:
+            panel: PanelConfig instance
+
+        Returns:
+            Translated panel name or fallback to name_key
+        """
+        return self._translate(panel.name_key, panel.name_key)
+
+    def get_panel_tooltip(self, panel: PanelConfig) -> str:
+        """Get translated tooltip for a panel.
+
+        Args:
+            panel: PanelConfig instance
+
+        Returns:
+            Translated panel tooltip or empty string
+        """
+        return self._translate(panel.tooltip_key, "") if panel.tooltip_key else ""
 
     def load_panels(self) -> list[PanelConfig]:
         """Load and parse all panels from config with failsafe backup support."""
@@ -109,6 +178,10 @@ class PanelFactory:
         if not isinstance(name_key, str):
             name_key = ""
 
+        tooltip_key: Any = panel_dict.get("tooltip_key", "")
+        if not isinstance(tooltip_key, str):
+            tooltip_key = ""
+
         closable: Any = panel_dict.get("closable", True)
         movable: Any = panel_dict.get("movable", True)
         floatable: Any = panel_dict.get("floatable", False)
@@ -133,6 +206,7 @@ class PanelFactory:
             floatable=bool(floatable),
             delete_on_close=bool(delete_on_close),
             dnd_enabled=bool(dnd_enabled),
+            tooltip_key=tooltip_key,
             responsive_hidden_at=responsive_hidden_at,
         )
 
@@ -231,7 +305,7 @@ class PanelFactory:
     @staticmethod
     def _panel_to_dict(panel: PanelConfig) -> dict[str, Any]:
         """Convert PanelConfig to dictionary."""
-        return {
+        result: dict[str, Any] = {
             "id": panel.id,
             "name_key": panel.name_key,
             "area": panel.area,
@@ -242,3 +316,9 @@ class PanelFactory:
             "dnd_enabled": panel.dnd_enabled,
             "responsive_hidden_at": panel.responsive_hidden_at or [],
         }
+
+        # Only include optional fields if set
+        if panel.tooltip_key:
+            result["tooltip_key"] = panel.tooltip_key
+
+        return result

@@ -34,6 +34,7 @@ from PySide6.QtWidgets import (
 
 if TYPE_CHECKING:
     from PySide6.QtWidgets import QMainWindow
+    from widgetsystem.factories.i18n_factory import I18nFactory
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +70,16 @@ class InlayTitleBar(QWidget):
     #: The integer payload is the new height in pixels.
     contentOffsetChanged = Signal(int)
 
-    def __init__(self, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+        i18n_factory: I18nFactory | None = None,
+    ) -> None:
         super().__init__(parent)
         self.setObjectName("InlayTitleBar")
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
+        self._uses_default_title = True
 
         # Always on top inside the parent, no native frame
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -107,6 +115,24 @@ class InlayTitleBar(QWidget):
 
         self._apply_style()
 
+    def set_i18n_factory(self, i18n_factory: I18nFactory | None) -> None:
+        """Set or update i18n factory and refresh translated texts."""
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+        self._apply_translated_texts()
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate key using i18n factory with fallback and cache."""
+        if not self._i18n_factory or not key:
+            return default or key
+
+        if key in self._translated_cache:
+            return self._translated_cache[key]
+
+        translated = self._i18n_factory.translate(key, default=default or key)
+        self._translated_cache[key] = translated
+        return translated
+
     # ── UI construction ───────────────────────────────────────────────────────
 
     def _build_ui(self) -> None:
@@ -115,7 +141,7 @@ class InlayTitleBar(QWidget):
         layout.setSpacing(2)
 
         # Window title
-        self._title_label = QLabel("WidgetSystem")
+        self._title_label = QLabel(self._translate("window.title", "WidgetSystem"))
         self._title_label.setObjectName("TitleLabel")
         self._title_label.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
@@ -138,6 +164,19 @@ class InlayTitleBar(QWidget):
         self._btn_min.clicked.connect(self._on_minimize)
         self._btn_max.clicked.connect(self._on_toggle_max)
         self._btn_close.clicked.connect(self._on_close)
+
+    def _apply_translated_texts(self) -> None:
+        """Refresh translated visible texts."""
+        if self._uses_default_title:
+            self._title_label.setText(self._translate("window.title", "WidgetSystem"))
+        self._btn_min.setToolTip(self._translate("titlebar.tooltip.minimize", "Minimize"))
+
+        if self._main_window() and self._main_window().isMaximized():
+            self._btn_max.setToolTip(self._translate("titlebar.tooltip.restore", "Restore"))
+        else:
+            self._btn_max.setToolTip(self._translate("titlebar.tooltip.maximize", "Maximize"))
+
+        self._btn_close.setToolTip(self._translate("titlebar.tooltip.close", "Close"))
 
     def _make_button(self, symbol: str, role: str) -> QPushButton:
         btn = QPushButton(symbol)
@@ -168,7 +207,14 @@ class InlayTitleBar(QWidget):
                 color: #DDDDDD;
             }}
         """)
-        
+
+        if role == "minimize":
+            btn.setToolTip(self._translate("titlebar.tooltip.minimize", "Minimize"))
+        elif role == "maximize":
+            btn.setToolTip(self._translate("titlebar.tooltip.maximize", "Maximize"))
+        elif role == "close":
+            btn.setToolTip(self._translate("titlebar.tooltip.close", "Close"))
+
         return btn
 
     def _apply_style(self) -> None:
@@ -194,6 +240,7 @@ class InlayTitleBar(QWidget):
     # ── Title text ────────────────────────────────────────────────────────────
 
     def set_title(self, title: str) -> None:
+        self._uses_default_title = False
         self._title_label.setText(title)
 
     # ── Expand / Collapse ─────────────────────────────────────────────────────
@@ -214,7 +261,7 @@ class InlayTitleBar(QWidget):
         self.setMinimumHeight(0)
         self._anim.start()
         self.contentOffsetChanged.emit(EXPANDED_HEIGHT)
-        
+
         # Start collapse timer to watch for exit
         self._collapse_timer.start()
 
@@ -348,9 +395,11 @@ class InlayTitleBar(QWidget):
             if win.isMaximized():
                 win.showNormal()
                 self._btn_max.setText("□")
+                self._btn_max.setToolTip(self._translate("titlebar.tooltip.maximize", "Maximize"))
             else:
                 win.showMaximized()
                 self._btn_max.setText("❐")
+                self._btn_max.setToolTip(self._translate("titlebar.tooltip.restore", "Restore"))
 
     def _on_close(self) -> None:
         win = self._main_window()
@@ -391,15 +440,22 @@ class InlayTitleBar(QWidget):
 class InlayTitleBarController:
     """Installs and manages the InlayTitleBar for a QMainWindow."""
 
-    def __init__(self, main_window: Any) -> None:
+    def __init__(self, main_window: Any, i18n_factory: I18nFactory | None = None) -> None:
         self._win = main_window
+        self._i18n_factory = i18n_factory
         self.titlebar: InlayTitleBar | None = None
 
     def install(self) -> None:
         """Create the titlebar widget, parent it to the main window, and position it."""
-        self.titlebar = InlayTitleBar(self._win)
+        self.titlebar = InlayTitleBar(self._win, i18n_factory=self._i18n_factory)
         self.titlebar.raise_()
         self._position()
+
+    def set_i18n_factory(self, i18n_factory: I18nFactory | None) -> None:
+        """Set or update i18n factory for managed titlebar."""
+        self._i18n_factory = i18n_factory
+        if self.titlebar:
+            self.titlebar.set_i18n_factory(i18n_factory)
 
     def set_title(self, title: str) -> None:
         if self.titlebar:

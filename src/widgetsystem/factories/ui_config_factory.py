@@ -3,7 +3,10 @@
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import TYPE_CHECKING, Any, TypedDict, cast
+
+if TYPE_CHECKING:
+    from widgetsystem.factories.i18n_factory import I18nFactory
 
 
 class WidgetPropertyDefinition(TypedDict, total=False):
@@ -98,12 +101,92 @@ class UIConfigPage:
 class UIConfigFactory:
     """Factory for loading and managing UI configuration definitions."""
 
-    def __init__(self, config_path: str | Path = "config") -> None:
-        """Initialize UIConfigFactory."""
+    def __init__(self, config_path: str | Path = "config", i18n_factory: "I18nFactory | None" = None) -> None:
+        """Initialize UIConfigFactory.
+
+        Args:
+            config_path: Path to configuration directory
+            i18n_factory: Optional I18nFactory instance for translations
+        """
         self.config_path = Path(config_path)
         self.config_file = self.config_path / "ui_config.json"
         self._pages_cache: dict[str, UIConfigPage] | None = None
         self._widgets_cache: dict[str, Widget] | None = None
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
+
+    def set_i18n_factory(self, i18n_factory: "I18nFactory") -> None:
+        """Set internationalization factory and clear cache.
+
+        Args:
+            i18n_factory: I18nFactory instance for translations
+        """
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate a key using i18n factory.
+
+        Args:
+            key: Translation key
+            default: Default value if translation not found
+
+        Returns:
+            Translated string or default/key
+        """
+        if not self._i18n_factory or not key:
+            return default or key
+
+        if key in self._translated_cache:
+            return self._translated_cache[key]
+
+        translated = self._i18n_factory.translate(key, default=key)
+        self._translated_cache[key] = translated
+        return translated
+
+    def get_page_title(self, page: UIConfigPage) -> str:
+        """Get translated title for a configuration page.
+
+        Args:
+            page: UIConfigPage instance
+
+        Returns:
+            Translated page title
+        """
+        return self._translate(page.title_key, page.title_key)
+
+    def get_page_description(self, page: UIConfigPage) -> str:
+        """Get translated description for a configuration page.
+
+        Args:
+            page: UIConfigPage instance
+
+        Returns:
+            Translated page description
+        """
+        return self._translate(page.description_key, "") if page.description_key else ""
+
+    def get_widget_label(self, widget: Widget) -> str:
+        """Get translated label for a widget.
+
+        Args:
+            widget: Widget instance
+
+        Returns:
+            Translated widget label
+        """
+        return self._translate(widget.label_key, widget.label_key) if widget.label_key else ""
+
+    def get_property_label(self, prop: WidgetProperty) -> str:
+        """Get translated label for a widget property.
+
+        Args:
+            prop: WidgetProperty instance
+
+        Returns:
+            Translated property label
+        """
+        return self._translate(prop.label_key, prop.label_key) if prop.label_key else ""
 
     def load_ui_config_pages(self) -> list[UIConfigPage]:
         """Load and parse all UI configuration pages from config."""

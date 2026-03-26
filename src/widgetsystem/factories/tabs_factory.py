@@ -4,9 +4,12 @@ from dataclasses import dataclass, field
 import json
 import logging
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import TYPE_CHECKING, Any, TypedDict, cast
 
-from widgetsystem.core.config_validator import ConfigValidator, CONFIG_SCHEMAS
+from widgetsystem.core.config_validator import ConfigValidator
+
+if TYPE_CHECKING:
+    from widgetsystem.factories.i18n_factory import I18nFactory
 
 logger = logging.getLogger(__name__)
 
@@ -93,12 +96,76 @@ class TabGroup:
 class TabsFactory:
     """Factory for loading and managing tab configurations with nesting support."""
 
-    def __init__(self, config_path: str | Path = "config") -> None:
-        """Initialize TabsFactory."""
+    def __init__(
+        self,
+        config_path: str | Path = "config",
+        i18n_factory: "I18nFactory | None" = None,
+    ) -> None:
+        """Initialize TabsFactory.
+
+        Args:
+            config_path: Path to configuration directory
+            i18n_factory: Optional I18nFactory for translating tab titles/tooltips
+        """
         self.config_path = Path(config_path)
         self.tabs_file = self.config_path / "tabs.json"
         self._tab_groups_cache: dict[str, TabGroup] | None = None
         self._validator = ConfigValidator(self.config_path)
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
+
+    def set_i18n_factory(self, i18n_factory: "I18nFactory") -> None:
+        """Set or update the I18nFactory instance.
+
+        Args:
+            i18n_factory: I18nFactory instance for translating strings
+        """
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate a key using i18n_factory if available.
+
+        Args:
+            key: Translation key
+            default: Default value if key not found or no i18n_factory
+
+        Returns:
+            Translated string or default/key name
+        """
+        if not self._i18n_factory or not key:
+            return default or key
+
+        # Check cache first
+        if key in self._translated_cache:
+            return self._translated_cache[key]
+
+        # Translate using factory
+        translated = self._i18n_factory.translate(key, default=key)
+        self._translated_cache[key] = translated
+        return translated
+
+    def get_tab_title(self, tab: Tab) -> str:
+        """Get translated title for a tab.
+
+        Args:
+            tab: Tab instance
+
+        Returns:
+            Translated tab title or fallback to title_key
+        """
+        return self._translate(tab.title_key, tab.title_key)
+
+    def get_tab_tooltip(self, tab: Tab) -> str:
+        """Get translated tooltip for a tab.
+
+        Args:
+            tab: Tab instance
+
+        Returns:
+            Translated tab tooltip or empty string
+        """
+        return self._translate(tab.tooltip, "") if tab.tooltip else ""
 
     def load_tab_groups(self) -> list[TabGroup]:
         """Load and parse all tab groups from config with failsafe backup support."""

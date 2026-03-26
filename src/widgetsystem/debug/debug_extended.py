@@ -14,10 +14,10 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, Q
 def find_all_buttons(widget, indent=0) -> None:
     """Rekursiv alle Buttons finden."""
     prefix = "  " * indent
-    
+
     widget_type = type(widget).__name__
     object_name = widget.objectName() if hasattr(widget, 'objectName') else ''
-    
+
     # Interessante Widget-Typen
     if any(x in widget_type for x in ['Button', 'Combo', 'Menu', 'Tool']):
         print(f"{prefix}🔘 {widget_type}")
@@ -25,7 +25,7 @@ def find_all_buttons(widget, indent=0) -> None:
         print(f"{prefix}   Visible: {widget.isVisible()}")
         print(f"{prefix}   Size: {widget.width()}x{widget.height()}")
         print(f"{prefix}   Pos: ({widget.x()}, {widget.y()})")
-        
+
         # Text oder Icon
         if hasattr(widget, 'text'):
             try:
@@ -34,7 +34,7 @@ def find_all_buttons(widget, indent=0) -> None:
                     print(f"{prefix}   Text: '{text}'")
             except:
                 pass
-        
+
         if hasattr(widget, 'toolTip'):
             try:
                 tooltip = widget.toolTip()
@@ -42,7 +42,7 @@ def find_all_buttons(widget, indent=0) -> None:
                     print(f"{prefix}   ToolTip: '{tooltip}'")
             except:
                 pass
-        
+
         if hasattr(widget, 'icon'):
             try:
                 icon = widget.icon()
@@ -50,9 +50,9 @@ def find_all_buttons(widget, indent=0) -> None:
                     print(f"{prefix}   Has Icon: Yes")
             except:
                 pass
-        
+
         print()
-    
+
     # Rekursiv durch Kinder
     if hasattr(widget, 'children'):
         for child in widget.children():
@@ -65,36 +65,36 @@ def search_for_dropdown_arrow(dock_manager) -> None:
     print(f"\n{'='*80}")
     print(f"🔎 SEARCHING FOR DROPDOWN ARROW BUTTON")
     print(f"{'='*80}\n")
-    
+
     # Alle dock areas durchsuchen
     if hasattr(dock_manager, 'openedDockAreas'):
         areas = dock_manager.openedDockAreas()
         print(f"✅ Searching through {len(areas)} dock areas...\n")
-        
+
         for i, area in enumerate(areas):
             area_name = f"Area_{i}"
             if hasattr(area, 'objectName') and area.objectName():
                 area_name = area.objectName()
-            
+
             print(f"\n{'─'*60}")
             print(f"📍 {area_name}")
             print(f"{'─'*60}")
-            
+
             # Durchsuche Area
             find_all_buttons(area, indent=1)
-            
+
             # Durchsuche Title Bar
             if hasattr(area, 'titleBar'):
                 title_bar = area.titleBar()
                 if title_bar:
                     print(f"\n  📋 Title Bar Buttons:")
                     find_all_buttons(title_bar, indent=2)
-    
+
     # Durchsuche auch floating containers
     print(f"\n{'='*80}")
     print(f"🎈 FLOATING CONTAINERS")
     print(f"{'='*80}\n")
-    
+
     if hasattr(dock_manager, 'floatingWidgets'):
         try:
             floating = dock_manager.floatingWidgets()
@@ -108,12 +108,12 @@ def search_for_dropdown_arrow(dock_manager) -> None:
 
 class ExtendedDebugWindow(QMainWindow):
     """Extended Debug Window."""
-    
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Extended Debug - Find Tab Selector")
         self.setMinimumSize(1000, 600)
-        
+
         # QtAds Setup - ALLE möglichen Flags
         QtAds.CDockManager.setConfigFlag(
             QtAds.CDockManager.eConfigFlag.OpaqueSplitterResize, True
@@ -127,14 +127,14 @@ class ExtendedDebugWindow(QMainWindow):
         QtAds.CDockManager.setConfigFlag(
             QtAds.CDockManager.eConfigFlag.DockAreaHideDisabledButtons, False
         )
-        
+
         self.dock_manager = QtAds.CDockManager(self)
-        
+
         # Erstelle 2 Panels im SELBEN Bereich (für Tabs)
         dock1 = QtAds.CDockWidget(self.dock_manager, "Panel 1", self)
         dock1.setWidget(QWidget())
         self.dock_manager.addDockWidget(QtAds.LeftDockWidgetArea, dock1)
-        
+
         dock2 = QtAds.CDockWidget(self.dock_manager, "Panel 2", self)
         dock2.setWidget(QWidget())
         # Füge als TAB hinzu, nicht als Split
@@ -143,30 +143,30 @@ class ExtendedDebugWindow(QMainWindow):
             self.dock_manager.addDockWidgetTab(QtAds.CenterDockWidgetArea, dock2)
         else:
             self.dock_manager.addDockWidget(QtAds.LeftDockWidgetArea, dock2)
-        
+
         # Debug nach Verzögerung
         QTimer.singleShot(1000, self.run_debug)
-    
+
     def run_debug(self):
         """Führt erweiterte Debug-Analyse aus."""
         search_for_dropdown_arrow(self.dock_manager)
-        
+
         print(f"\n\n{'='*80}")
         print(f"✅ EXTENDED DEBUG COMPLETE")
         print(f"{'='*80}\n")
-        
+
         # Zeige noch QtAds Flags
         print(f"\n{'='*80}")
         print(f"⚙️  QTADS CONFIG FLAGS")
         print(f"{'='*80}\n")
-        
+
         flags = [
             'DockAreaHasTabsMenuButton',
             'DockAreaHideDisabledButtons',
             'AllTabsHaveCloseButton',
             'DockAreaCloseButtonClosesTab',
         ]
-        
+
         for flag_name in flags:
             if hasattr(QtAds.CDockManager.eConfigFlag, flag_name):
                 flag = getattr(QtAds.CDockManager.eConfigFlag, flag_name)
@@ -178,8 +178,8 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = ExtendedDebugWindow()
     window.show()
-    
+
     # Länger offen lassen für manuelle Inspektion
     QTimer.singleShot(10000, app.quit)
-    
+
     sys.exit(app.exec())

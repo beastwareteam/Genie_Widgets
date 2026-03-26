@@ -2,8 +2,11 @@
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 import json
+
+if TYPE_CHECKING:
+    from widgetsystem.factories.i18n_factory import I18nFactory
 
 
 @dataclass
@@ -76,6 +79,7 @@ class ThemeDefinition:
     Attributes:
         theme_id: Unique identifier for the theme
         name: Display name for the theme
+        name_key: i18n key for the theme name (optional)
         file_path: Path to the theme stylesheet file
         tab_colors: Complete tab color configuration
         tab_active_color: Legacy - color for active tabs (hex format)
@@ -85,6 +89,7 @@ class ThemeDefinition:
     theme_id: str
     name: str
     file_path: Path
+    name_key: str = ""
     tab_colors: TabColors = field(default_factory=TabColors)
     # Legacy fields for backwards compatibility
     tab_active_color: str = "#E0E0E0"
@@ -150,20 +155,65 @@ ThemeProfile = SimpleThemeProfile
 
 class ThemeFactory:
     """Factory for creating theme-related instances from JSON configuration.
-    
+
     Loads theme definitions from themes.json and provides methods
     to retrieve specific themes, stylesheets, and color configurations.
     """
 
-    def __init__(self, config_path: Path | str) -> None:
+    def __init__(self, config_path: Path | str, i18n_factory: "I18nFactory | None" = None) -> None:
         """Initialize factory with configuration directory.
 
         Args:
             config_path: Path to the config directory containing themes.json
+            i18n_factory: Optional I18nFactory instance for translations
         """
         self.config_path = Path(config_path)
         self.themes_file = self.config_path / "themes.json"
         self._cache: dict[str, Any] = {}
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
+
+    def set_i18n_factory(self, i18n_factory: "I18nFactory") -> None:
+        """Set internationalization factory and clear cache.
+
+        Args:
+            i18n_factory: I18nFactory instance for translations
+        """
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate a key using i18n factory.
+
+        Args:
+            key: Translation key
+            default: Default value if translation not found
+
+        Returns:
+            Translated string or default/key
+        """
+        if not self._i18n_factory or not key:
+            return default or key
+
+        if key in self._translated_cache:
+            return self._translated_cache[key]
+
+        translated = self._i18n_factory.translate(key, default=key)
+        self._translated_cache[key] = translated
+        return translated
+
+    def get_theme_name(self, theme: ThemeDefinition) -> str:
+        """Get translated name for a theme.
+
+        Args:
+            theme: ThemeDefinition instance
+
+        Returns:
+            Translated theme name
+        """
+        if theme.name_key:
+            return self._translate(theme.name_key, theme.name)
+        return theme.name
 
     def load_themes(self) -> list[dict[str, Any]]:
         """Load all themes from configuration file.
@@ -205,7 +255,8 @@ class ThemeFactory:
             # Check for required fields
             theme_id = theme.get("id")
             name = theme.get("name")
-            
+            name_key = theme.get("name_key", "")
+
             # Support both "file" and "stylesheet" keys
             file_path = theme.get("file") or theme.get("stylesheet")
 
@@ -231,6 +282,7 @@ class ThemeFactory:
                 ThemeDefinition(
                     theme_id=theme_id,
                     name=name,
+                    name_key=str(name_key),
                     file_path=resolved_path,
                     tab_colors=tab_colors,
                     tab_active_color=tab_active,
@@ -430,7 +482,7 @@ class ThemeFactory:
 
     def create_default_profiles(self) -> None:
         """Create default theme profiles if they do not exist.
-        
+
         Ensures the profiles directory exists and is ready
         for storing theme profile configurations.
         """

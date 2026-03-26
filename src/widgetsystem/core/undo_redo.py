@@ -8,14 +8,13 @@ Provides a command-based undo/redo implementation with:
 """
 
 import copy
-import json
 import logging
 from abc import ABC, abstractmethod
 from collections import deque
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Generic, TypeVar
+from typing import Any, Callable, TypeVar
 
 from PySide6.QtCore import QObject, Signal
 

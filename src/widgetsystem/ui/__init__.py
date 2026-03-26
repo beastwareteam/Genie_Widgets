@@ -5,6 +5,7 @@ from widgetsystem.ui.argb_color_picker import (
     ARGBColorPicker,
     ARGBColorPickerDialog,
 )
+from widgetsystem.ui.chevron_menu import ChevronMenu, ChevronMenuBar
 from widgetsystem.ui.config_panel import ConfigurationPanel
 from widgetsystem.ui.floating_state_tracker import FloatingStateTracker
 from widgetsystem.ui.floating_titlebar import (
@@ -48,6 +49,8 @@ __all__ = [
     "ARGBColorButton",
     "ARGBColorPicker",
     "ARGBColorPickerDialog",
+    "ChevronMenu",
+    "ChevronMenuBar",
     "ConfigurationPanel",
     "CustomFloatingTitleBar",
     "EnhancedTabBar",

@@ -9,7 +9,6 @@ Provides Command pattern implementations for all tab operations:
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from widgetsystem.core.undo_redo import Command

@@ -3,7 +3,10 @@
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import TYPE_CHECKING, Any, TypedDict, cast
+
+if TYPE_CHECKING:
+    from widgetsystem.factories.i18n_factory import I18nFactory
 
 
 class ListItemDefinition(TypedDict, total=False):
@@ -81,11 +84,69 @@ class ListGroup:
 class ListFactory:
     """Factory for loading and managing list configurations with nesting support."""
 
-    def __init__(self, config_path: str | Path = "config") -> None:
-        """Initialize ListFactory."""
+    def __init__(self, config_path: str | Path = "config", i18n_factory: "I18nFactory | None" = None) -> None:
+        """Initialize ListFactory.
+
+        Args:
+            config_path: Path to configuration directory
+            i18n_factory: Optional I18nFactory instance for translations
+        """
         self.config_path = Path(config_path)
         self.lists_file = self.config_path / "lists.json"
         self._list_groups_cache: dict[str, ListGroup] | None = None
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
+
+    def set_i18n_factory(self, i18n_factory: "I18nFactory") -> None:
+        """Set internationalization factory and clear cache.
+
+        Args:
+            i18n_factory: I18nFactory instance for translations
+        """
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate a key using i18n factory.
+
+        Args:
+            key: Translation key
+            default: Default value if translation not found
+
+        Returns:
+            Translated string or default/key
+        """
+        if not self._i18n_factory or not key:
+            return default or key
+
+        if key in self._translated_cache:
+            return self._translated_cache[key]
+
+        translated = self._i18n_factory.translate(key, default=key)
+        self._translated_cache[key] = translated
+        return translated
+
+    def get_list_group_title(self, group: ListGroup) -> str:
+        """Get translated title for a list group.
+
+        Args:
+            group: ListGroup instance
+
+        Returns:
+            Translated group title
+        """
+        return self._translate(group.title_key, group.title_key)
+
+    def get_list_item_label(self, item: ListItem) -> str:
+        """Get translated label for a list item.
+
+        Args:
+            item: ListItem instance
+
+        Returns:
+            Translated item label
+        """
+        return self._translate(item.label_key, item.label_key)
 
     def load_list_groups(self) -> list[ListGroup]:
         """Load and parse all list groups from config."""

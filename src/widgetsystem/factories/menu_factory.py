@@ -3,7 +3,10 @@
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import TYPE_CHECKING, Any, TypedDict, cast
+
+if TYPE_CHECKING:
+    from widgetsystem.factories.i18n_factory import I18nFactory
 
 
 class MenuItemDefinition(TypedDict, total=False):
@@ -28,6 +31,7 @@ class MenuItem:
     action: str = ""
     shortcut: str = ""
     visible: bool = True
+    tooltip_key: str = ""
     children: list["MenuItem"] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -40,11 +44,75 @@ class MenuItem:
 class MenuFactory:
     """Factory for loading and managing menu configurations with nesting support."""
 
-    def __init__(self, config_path: str | Path = "config") -> None:
-        """Initialize MenuFactory."""
+    def __init__(
+        self,
+        config_path: str | Path = "config",
+        i18n_factory: "I18nFactory | None" = None,
+    ) -> None:
+        """Initialize MenuFactory.
+
+        Args:
+            config_path: Path to configuration directory
+            i18n_factory: Optional I18nFactory for translating menu labels/tooltips
+        """
         self.config_path = Path(config_path)
         self.menus_file = self.config_path / "menus.json"
         self._menus_cache: dict[str, MenuItem] | None = None
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
+
+    def set_i18n_factory(self, i18n_factory: "I18nFactory") -> None:
+        """Set or update the I18nFactory instance.
+
+        Args:
+            i18n_factory: I18nFactory instance for translating strings
+        """
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate a key using i18n_factory if available.
+
+        Args:
+            key: Translation key
+            default: Default value if key not found or no i18n_factory
+
+        Returns:
+            Translated string or default/key name
+        """
+        if not self._i18n_factory or not key:
+            return default or key
+
+        # Check cache first
+        if key in self._translated_cache:
+            return self._translated_cache[key]
+
+        # Translate using factory
+        translated = self._i18n_factory.translate(key, default=key)
+        self._translated_cache[key] = translated
+        return translated
+
+    def get_menu_label(self, menu: MenuItem) -> str:
+        """Get translated label for a menu item.
+
+        Args:
+            menu: MenuItem instance
+
+        Returns:
+            Translated menu label or fallback to label_key
+        """
+        return self._translate(menu.label_key, menu.label_key)
+
+    def get_menu_tooltip(self, menu: MenuItem) -> str:
+        """Get translated tooltip for a menu item.
+
+        Args:
+            menu: MenuItem instance
+
+        Returns:
+            Translated menu tooltip or empty string
+        """
+        return self._translate(menu.tooltip_key, "") if menu.tooltip_key else ""
 
     def load_menus(self) -> list[MenuItem]:
         """Load and parse all menus from config."""
@@ -87,6 +155,10 @@ class MenuFactory:
         if not isinstance(label_key, str):
             label_key = ""
 
+        tooltip_key: Any = item_dict.get("tooltip_key", "")
+        if not isinstance(tooltip_key, str):
+            tooltip_key = ""
+
         item_type: Any = item_dict.get("type", "action")
         if not isinstance(item_type, str):
             item_type = "action"
@@ -116,6 +188,7 @@ class MenuFactory:
             action=action,
             shortcut=shortcut,
             visible=bool(visible),
+            tooltip_key=tooltip_key,
             children=children,
         )
 
@@ -193,6 +266,7 @@ class MenuFactory:
         return self._menu_to_dict(menu_item)
 
     @staticmethod
+    @staticmethod
     def _menu_to_dict(menu: MenuItem) -> dict[str, Any]:
         """Convert a MenuItem to a dictionary representation."""
         result: dict[str, Any] = {
@@ -203,6 +277,10 @@ class MenuFactory:
             "shortcut": menu.shortcut,
             "visible": menu.visible,
         }
+
+        # Only include optional fields if set
+        if menu.tooltip_key:
+            result["tooltip_key"] = menu.tooltip_key
 
         if menu.children:
             result["children"] = [MenuFactory._menu_to_dict(child) for child in menu.children]

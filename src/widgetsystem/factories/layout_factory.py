@@ -3,7 +3,10 @@
 from dataclasses import dataclass
 import json
 from pathlib import Path
-from typing import Any, TypedDict, cast
+from typing import TYPE_CHECKING, Any, TypedDict, cast
+
+if TYPE_CHECKING:
+    from widgetsystem.factories.i18n_factory import I18nFactory
 
 
 class LayoutEntry(TypedDict, total=False):
@@ -11,6 +14,7 @@ class LayoutEntry(TypedDict, total=False):
 
     id: str
     name: str
+    name_key: str
     file: str
 
 
@@ -27,16 +31,66 @@ class LayoutDefinition:
 
     layout_id: str
     name: str
-    file_path: Path
+    name_key: str = ""
+    file_path: Path = Path("layout.xml")
 
 
 class LayoutFactory:
     """Factory for loading and managing layout configurations."""
 
-    def __init__(self, config_path: str | Path = "config") -> None:
-        """Initialize LayoutFactory."""
+    def __init__(self, config_path: str | Path = "config", i18n_factory: "I18nFactory | None" = None) -> None:
+        """Initialize LayoutFactory.
+
+        Args:
+            config_path: Path to configuration directory
+            i18n_factory: Optional I18nFactory instance for translations
+        """
         self.config_path = Path(config_path)
         self.layouts_file = self.config_path / "layouts.json"
+        self._i18n_factory = i18n_factory
+        self._translated_cache: dict[str, str] = {}
+
+    def set_i18n_factory(self, i18n_factory: "I18nFactory") -> None:
+        """Set internationalization factory and clear cache.
+
+        Args:
+            i18n_factory: I18nFactory instance for translations
+        """
+        self._i18n_factory = i18n_factory
+        self._translated_cache.clear()
+
+    def _translate(self, key: str, default: str | None = None) -> str:
+        """Translate a key using i18n factory.
+
+        Args:
+            key: Translation key
+            default: Default value if translation not found
+
+        Returns:
+            Translated string or default/key
+        """
+        if not self._i18n_factory or not key:
+            return default or key
+
+        if key in self._translated_cache:
+            return self._translated_cache[key]
+
+        translated = self._i18n_factory.translate(key, default=key)
+        self._translated_cache[key] = translated
+        return translated
+
+    def get_layout_name(self, layout: LayoutDefinition) -> str:
+        """Get translated name for a layout.
+
+        Args:
+            layout: LayoutDefinition instance
+
+        Returns:
+            Translated layout name
+        """
+        if layout.name_key:
+            return self._translate(layout.name_key, layout.name)
+        return layout.name
 
     def list_layouts(self) -> list[LayoutDefinition]:
         """Load and parse all layouts from config."""
@@ -64,6 +118,7 @@ class LayoutFactory:
                 entry_dict = cast("dict[str, Any]", entry)
                 layout_id: Any = entry_dict.get("id")
                 name: Any = entry_dict.get("name")
+                name_key: Any = entry_dict.get("name_key", "")
                 file_value: Any = entry_dict.get("file")
 
                 if (
@@ -79,7 +134,12 @@ class LayoutFactory:
                     file_path = (Path.cwd() / file_path).resolve()
 
                 layouts.append(
-                    LayoutDefinition(layout_id=layout_id, name=name, file_path=file_path),
+                    LayoutDefinition(
+                        layout_id=layout_id,
+                        name=name,
+                        name_key=str(name_key),
+                        file_path=file_path,
+                    ),
                 )
 
             return layouts
