@@ -155,9 +155,9 @@ class ChevronMenuDemo(QMainWindow):
                     child, callback=self._on_menu_action_triggered
                 )
 
-            # Connect button to show menu
+            # Connect button to show menu (ignore checked parameter)
             btn.clicked.connect(
-                lambda m=chevron_menu: self._show_menu(m)
+                lambda checked=False, m=chevron_menu: self._show_menu(m)
             )
             layout.addWidget(btn)
 
