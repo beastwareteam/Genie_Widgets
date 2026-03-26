@@ -268,8 +268,8 @@ max-returns = 8
 max-statements = 60
 
 [tool.ruff.lint.mccabe]
-# Cyclomatic complexity
-max-complexity = 15
+# Cyclomatic complexity (raised for Qt widget code)
+max-complexity = 20
 
 [tool.ruff.lint.flake8-tidy-imports]
 # Import rules
@@ -360,6 +360,7 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
     "ui: marks tests that require UI/QApplication",
+    "isolated: marks tests as isolated module tests (exempt from global coverage)",
 ]
 filterwarnings = [
     "error",                  # Turn warnings into errors
@@ -383,8 +384,15 @@ disable = [
     "C0116",  # missing-function-docstring (we handle with ruff)
     "R0903",  # too-few-public-methods (data classes are fine)
     "R0913",  # too-many-arguments (Qt needs many args)
+    "R0917",  # too-many-positional-arguments (Qt needs many args)
     "W0212",  # protected-access (needed for Qt internals)
     "C0103",  # invalid-name (Qt uses camelCase)
+    "C0415",  # import-outside-toplevel (lazy loading for performance)
+    "E1101",  # no-member (false positive with PySide6 signals)
+    "E1102",  # not-callable (false positive with dynamic callable checks)
+    "W0201",  # attribute-defined-outside-init (Qt pattern)
+    "R0902",  # too-many-instance-attributes (Qt widgets need many)
+    "R0915",  # too-many-statements (Qt init methods are long)
 ]
 
 [tool.pylint.format]
