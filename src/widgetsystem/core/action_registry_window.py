@@ -340,6 +340,7 @@ class ActionRegistryDemo(QMainWindow):
 
         self.dock_manager = QtAds.CDockManager(self)
         self.dock_manager.installEventFilter(self)
+        self.setCentralWidget(self.dock_manager)
 
         actions_dock = self._create_actions_dock()
         self.dock_manager.addDockWidget(QtAds.CenterDockWidgetArea, actions_dock)
