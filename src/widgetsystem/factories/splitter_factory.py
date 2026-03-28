@@ -674,6 +674,8 @@ class SplitterFactory:
         self.style = style or SplitterStyle()
         self._handler: SplitterEventHandler | None = None
         self._corner_handles: list[CornerSplitterHandle] = []
+        # Maps splitter id → sizes snapshot taken just before a curtain snap.
+        self._curtain_snapshots: dict[int, list[int]] = {}
 
     def get_collapse_snap_distance(self, splitter: QSplitter) -> int:
         """Return snap distance in pixels before a handle is considered collapse-near."""
@@ -1449,6 +1451,53 @@ QSplitter::handle:hover {{
         sizes = [remainder] * count
         sizes[-1] = main_size
         return sizes
+
+    # ------------------------------------------------------------------
+    # Curtain-snap snapshot / restore
+    # ------------------------------------------------------------------
+
+    def save_curtain_snapshot(self, splitters: list[QSplitter]) -> None:
+        """Persist current sizes of all given splitters as a pre-snap baseline.
+
+        Called once just before a curtain snap so that ``restore_curtain_snapshot``
+        can animate everything back to exactly this state.
+
+        Args:
+            splitters: All splitters whose sizes should be saved.
+        """
+        for splitter in splitters:
+            self._curtain_snapshots[id(splitter)] = list(splitter.sizes())
+
+    def restore_curtain_snapshot(
+        self,
+        splitters: list[QSplitter],
+        animate_callback: Any,
+    ) -> bool:
+        """Animate splitters back to the sizes saved by ``save_curtain_snapshot``.
+
+        Args:
+            splitters: Splitters to restore (same list passed to save).
+            animate_callback: Callable(splitter, target_sizes) that runs the
+                              animation (e.g. ``_animate_splitter_sizes``).
+
+        Returns:
+            True if at least one splitter had a saved snapshot.
+        """
+        restored = False
+        for splitter in splitters:
+            snapshot = self._curtain_snapshots.get(id(splitter))
+            if snapshot and len(snapshot) == splitter.count():
+                animate_callback(splitter, snapshot)
+                restored = True
+        return restored
+
+    def has_curtain_snapshot(self, splitters: list[QSplitter]) -> bool:
+        """Return True if every splitter in the list has a saved snapshot."""
+        return all(id(s) in self._curtain_snapshots for s in splitters)
+
+    def clear_curtain_snapshots(self) -> None:
+        """Discard all saved snapshots (e.g. after a full layout reset)."""
+        self._curtain_snapshots.clear()
 
     # ------------------------------------------------------------------
     # Dock-area title-bar collapse synchronisation

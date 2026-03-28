@@ -24,8 +24,8 @@ import sys
 from typing import Any, cast
 
 import PySide6QtAds as QtAds
-from PySide6.QtCore import QEasingCurve, QEvent, QMimeData, QPropertyAnimation, QSize, Qt, QTimer
-from PySide6.QtGui import QAction, QDrag, QIcon, QKeySequence
+from PySide6.QtCore import QEasingCurve, QEvent, QMimeData, QPoint, QPropertyAnimation, QSize, Qt, QTimer
+from PySide6.QtGui import QAction, QColor, QDrag, QIcon, QKeySequence, QPainter
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -207,6 +207,165 @@ class CustomActionDefinition:
     enabled: bool = True
 
 
+class _CurtainSnapWidget(QWidget):
+    """Gesture-driven curtain-snap control.
+
+    A single square widget the user interacts with in two ways:
+
+    **Drag gesture** (mouse press + move ≥ threshold):
+      The drag direction determines which curtain snap fires:
+      - Drag left  → snap "right"  (right pane expands, left collapses)
+      - Drag right → snap "left"   (left pane expands, right collapses)
+      - Drag up    → snap "bottom" (bottom pane expands, top collapses)
+      - Drag down  → snap "top"    (top pane expands, bottom collapses)
+      Dragging back in the opposite direction while still held restores.
+
+    **Double-click**: restores the last active snap (any direction).
+
+    **Visual**: a compass-rose with arrows; the active direction is
+    highlighted in accent blue.  A small "↩" indicator appears when
+    a restore is available.
+    """
+
+    _GESTURE_THRESHOLD: int = 12   # px before a drag is committed
+    _WIDGET_SIZE: int = 80
+    _ARROW_SIDES: tuple[str, ...] = ("left", "right", "top", "bottom")
+
+    def __init__(self, snap_callback: Any, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self._snap = snap_callback
+        self._drag_start: QPoint | None = None
+        self._committed_side: str | None = None
+        self._active_sides: set[str] = set()   # sides currently snapped
+        self.setFixedSize(self._WIDGET_SIZE, self._WIDGET_SIZE)
+        self.setToolTip(
+            "Ziehen: Vorhang-Richtung wählen\n"
+            "Doppelklick: letzten Snap rückgängig\n"
+            "Gleiche Richtung nochmal: Restore"
+        )
+        self.setCursor(Qt.CursorShape.OpenHandCursor)
+
+    # ------------------------------------------------------------------
+    # Qt events
+    # ------------------------------------------------------------------
+
+    def mousePressEvent(self, event: Any) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._drag_start = event.pos()
+            self._committed_side = None
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+
+    def mouseMoveEvent(self, event: Any) -> None:
+        if self._drag_start is None:
+            return
+        delta = event.pos() - self._drag_start
+        dx, dy = delta.x(), delta.y()
+        if abs(dx) < self._GESTURE_THRESHOLD and abs(dy) < self._GESTURE_THRESHOLD:
+            return
+        # Dominant axis determines side.
+        if abs(dx) >= abs(dy):
+            side = "right" if dx < 0 else "left"
+        else:
+            side = "bottom" if dy < 0 else "top"
+        if side != self._committed_side:
+            self._committed_side = side
+            self.update()
+
+    def mouseReleaseEvent(self, event: Any) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.setCursor(Qt.CursorShape.OpenHandCursor)
+            if self._committed_side:
+                self._fire(self._committed_side)
+            self._drag_start = None
+            self._committed_side = None
+
+    def mouseDoubleClickEvent(self, event: Any) -> None:
+        if event.button() == Qt.MouseButton.LeftButton and self._active_sides:
+            # Restore the most recently snapped side.
+            side = next(iter(reversed(list(self._active_sides))))
+            self._fire(side)
+
+    def paintEvent(self, _event: Any) -> None:  # noqa: ARG002
+        from PySide6.QtGui import QPainterPath  # noqa: PLC0415  (avoids circular at module level)
+        p = QPainter(self)
+        p.setRenderHint(QPainter.RenderHint.Antialiasing)
+        w, h = self.width(), self.height()
+        cx, cy = w // 2, h // 2
+        r = min(w, h) // 2 - 4
+
+        # Background circle
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QColor("#3c3c3c"))
+        p.drawEllipse(cx - r, cy - r, r * 2, r * 2)
+
+        # Centre dot
+        p.setBrush(QColor("#888888"))
+        p.drawEllipse(cx - 3, cy - 3, 6, 6)
+
+        # Arrow definitions: (tip_x, tip_y, tail_dx, tail_dy, side)
+        arrow_size = r - 6
+        arrows = [
+            (cx,          cy - arrow_size, 0,  1,  "top"),
+            (cx,          cy + arrow_size, 0, -1,  "bottom"),
+            (cx - arrow_size, cy,          1,  0,  "left"),
+            (cx + arrow_size, cy,         -1,  0,  "right"),
+        ]
+        for tip_x, tip_y, tdx, tdy, side in arrows:
+            snapped = side in self._active_sides
+            hovered = side == self._committed_side
+            color = QColor("#0078d4") if snapped else (QColor("#60aaff") if hovered else QColor("#909090"))
+
+            # Draw arrow head
+            path = QPainterPath()
+            head = 7
+            perp_x, perp_y = -tdy, tdx   # perpendicular
+            path.moveTo(tip_x, tip_y)
+            path.lineTo(tip_x + tdx * head + perp_x * (head // 2),
+                        tip_y + tdy * head + perp_y * (head // 2))
+            path.lineTo(tip_x + tdx * head - perp_x * (head // 2),
+                        tip_y + tdy * head - perp_y * (head // 2))
+            path.closeSubpath()
+            p.setBrush(color)
+            p.setPen(Qt.PenStyle.NoPen)
+            p.drawPath(path)
+
+            # Draw arrow shaft
+            shaft_len = arrow_size - head - 4
+            p.setPen(color)
+            pen = p.pen()
+            pen.setWidth(2)
+            p.setPen(pen)
+            p.drawLine(
+                tip_x + tdx * (head + 1), tip_y + tdy * (head + 1),
+                tip_x + tdx * (head + shaft_len), tip_y + tdy * (head + shaft_len),
+            )
+
+        # Restore indicator
+        if self._active_sides:
+            p.setPen(QColor("#0078d4"))
+            p.setFont(p.font())
+            p.drawText(cx - 6, cy + 5, "↩")
+
+    # ------------------------------------------------------------------
+    # Internal
+    # ------------------------------------------------------------------
+
+    def _fire(self, side: str) -> None:
+        """Call the snap callback and track active state for visual feedback."""
+        opposite = {"left": "right", "right": "left", "top": "bottom", "bottom": "top"}
+        was_active = side in self._active_sides
+        self._snap(side)
+        if was_active:
+            self._active_sides.discard(side)
+            # Also discard opposite in case it was set.
+            self._active_sides.discard(opposite.get(side, ""))
+        else:
+            self._active_sides.add(side)
+            # Remove opposite – you can't be snapped left AND right.
+            self._active_sides.discard(opposite.get(side, ""))
+        self.update()
+
+
 class ActionRegistryDemo(QMainWindow):
     """Demo window showing all ActionRegistry capabilities."""
 
@@ -243,6 +402,9 @@ class ActionRegistryDemo(QMainWindow):
         self._splitter_known_ids: set[int] = set()
         self._splitter_last_positions: dict[tuple[int, int], int] = {}
         self._corner_settle_count: int = 0
+        # Tracks whether a curtain snap is currently active per side so the
+        # same gesture/button toggles between snap and restore.
+        self._curtain_snap_active: dict[str, bool] = {}
         self._toolbar_slide_animations: list[QPropertyAnimation] = []
         self._panel_toolbar_scroll_areas: dict[int, QScrollArea] = {}
         self._panel_toolbar_slide_buttons: dict[int, tuple[QToolButton, QToolButton]] = {}
@@ -533,39 +695,80 @@ class ActionRegistryDemo(QMainWindow):
         self._schedule_splitter_refresh()
 
     def _curtain_snap(self, side: str) -> None:
-        """Animate splitters like curtains with smooth resistance near the end.
+        """Animate splitters like curtains – toggles between snapped and restored.
 
-        ``side`` controls which panes collapse and which expands:
+        First call with a given ``side``:
+          - Saves the current splitter sizes as a restore snapshot
+          - Animates to the collapsed curtain target
+          - Marks ``side`` as active
 
-        * ``"left"``  / ``"right"``          – horizontal splitters only
-        * ``"top"``   / ``"bottom"``          – vertical splitters only
-        * ``"expand_center"``                 – all splitters, centre pane expands
-        * ``"collapse_center"``               – all splitters, outer panes expand
+        Second call with the same ``side`` (or the opposite direction):
+          - Animates back to the saved snapshot
+          - Clears the active state
+
+        ``side`` values:
+        * ``"left"``  / ``"right"``   – horizontal splitters only
+        * ``"top"``   / ``"bottom"``  – vertical splitters only
+        * ``"expand_center"``         – all splitters, centre expands
+        * ``"collapse_center"``       – all splitters, outer panes expand
         """
         if self.dock_manager is None:
             return
 
-        # Determine which splitter orientations the side applies to.
         h_sides = {"left", "right", "expand_center", "collapse_center"}
         v_sides = {"top", "bottom", "expand_center", "collapse_center"}
 
-        self._stop_splitter_animations()
-        splitters = self.dock_manager.findChildren(QSplitter)
-        for splitter in splitters:
+        all_splitters = self.dock_manager.findChildren(QSplitter)
+        relevant: list[QSplitter] = []
+        for splitter in all_splitters:
             is_h = splitter.orientation() == Qt.Orientation.Horizontal
             is_v = splitter.orientation() == Qt.Orientation.Vertical
             if is_h and side not in h_sides:
                 continue
             if is_v and side not in v_sides:
                 continue
-            target_sizes = self._build_curtain_target_sizes(splitter, side)
-            if target_sizes is None:
-                continue
-            self._animate_splitter_sizes(splitter, target_sizes)
+            relevant.append(splitter)
 
-        self._log(f"Curtain snap: {side}")
-        # Title-bar collapse state is updated frame-by-frame in _animate_splitter_sizes.
-        # Call once more here as a safety net for edge cases where no animation ran.
+        if not relevant:
+            return
+
+        self._stop_splitter_animations()
+
+        already_snapped = self._curtain_snap_active.get(side, False)
+
+        if already_snapped:
+            # --- RESTORE path -------------------------------------------
+            restored = self.splitter_factory.restore_curtain_snapshot(
+                relevant, self._animate_splitter_sizes
+            )
+            if restored:
+                self._curtain_snap_active[side] = False
+                self._log(f"Curtain restore: {side}")
+            # Also clear any paired/opposite side state so it doesn't
+            # conflict with a fresh snap later.
+            opposite = {"left": "right", "right": "left", "top": "bottom", "bottom": "top"}
+            paired = opposite.get(side)
+            if paired:
+                self._curtain_snap_active.pop(paired, None)
+        else:
+            # --- SNAP path ----------------------------------------------
+            # Save snapshot before anything moves.
+            self.splitter_factory.save_curtain_snapshot(relevant)
+            self._curtain_snap_active[side] = True
+            # Clear the opposite direction – user can only be in one state.
+            opposite = {"left": "right", "right": "left", "top": "bottom", "bottom": "top"}
+            paired = opposite.get(side)
+            if paired:
+                self._curtain_snap_active.pop(paired, None)
+
+            for splitter in relevant:
+                target_sizes = self._build_curtain_target_sizes(splitter, side)
+                if target_sizes is None:
+                    continue
+                self._animate_splitter_sizes(splitter, target_sizes)
+
+            self._log(f"Curtain snap: {side}")
+
         self.splitter_factory.sync_all_dock_area_collapse(self.dock_manager)
 
     def _build_curtain_target_sizes(self, splitter: Any, side: str) -> list[int] | None:
@@ -843,29 +1046,8 @@ class ActionRegistryDemo(QMainWindow):
         )
         layout.addWidget(add_button)
 
-        curtain_left_button = QPushButton("◀ Vorhang links (H)")
-        self._connect_signal(curtain_left_button.clicked, lambda checked=False: self._curtain_snap("left"))
-        layout.addWidget(curtain_left_button)
-
-        curtain_right_button = QPushButton("▶ Vorhang rechts (H)")
-        self._connect_signal(curtain_right_button.clicked, lambda checked=False: self._curtain_snap("right"))
-        layout.addWidget(curtain_right_button)
-
-        curtain_top_button = QPushButton("▲ Vorhang oben (V)")
-        self._connect_signal(curtain_top_button.clicked, lambda checked=False: self._curtain_snap("top"))
-        layout.addWidget(curtain_top_button)
-
-        curtain_bottom_button = QPushButton("▼ Vorhang unten (V)")
-        self._connect_signal(curtain_bottom_button.clicked, lambda checked=False: self._curtain_snap("bottom"))
-        layout.addWidget(curtain_bottom_button)
-
-        curtain_expand_center_button = QPushButton("⬡ Mitte expandieren")
-        self._connect_signal(curtain_expand_center_button.clicked, lambda checked=False: self._curtain_snap("expand_center"))
-        layout.addWidget(curtain_expand_center_button)
-
-        curtain_collapse_center_button = QPushButton("⬢ Mitte einklappen")
-        self._connect_signal(curtain_collapse_center_button.clicked, lambda checked=False: self._curtain_snap("collapse_center"))
-        layout.addWidget(curtain_collapse_center_button)
+        curtain_widget = _CurtainSnapWidget(self._curtain_snap)
+        layout.addWidget(curtain_widget)
 
         dock.setWidget(container)
         dock.setFeature(QtAds.CDockWidget.DockWidgetFeature.DockWidgetClosable, True)
