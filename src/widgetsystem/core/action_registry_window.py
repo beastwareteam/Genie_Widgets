@@ -578,14 +578,25 @@ class ActionRegistryDemo(QMainWindow):
         )
 
     def _animate_splitter_sizes(self, splitter: Any, target_sizes: list[int]) -> None:
-        """Animate splitter sizes in steps with ease-out resistance."""
+        """Animate splitter sizes in steps with ease-out resistance.
+
+        Dock-area title-bar collapse sync is called only when a pane crosses
+        the threshold boundary, not on every frame.  This avoids 14× per-frame
+        widget-tree traversals that caused jitter in the previous version.
+        """
         start_sizes = splitter.sizes()
         if len(start_sizes) != len(target_sizes):
             return
 
+        threshold = self.splitter_factory._TITLE_BAR_THRESHOLD
         timer = QTimer(self)
         self._splitter_animation_timers.append(timer)
-        state = {"step": 0}
+        state: dict[str, Any] = {
+            "step": 0,
+            # Track which panes were already below threshold at start so we
+            # only sync on the actual crossing, not redundantly every frame.
+            "was_collapsed": [s < threshold for s in start_sizes],
+        }
 
         def animate_step() -> None:
             state["step"] += 1
@@ -611,10 +622,19 @@ class ActionRegistryDemo(QMainWindow):
             )
 
             splitter.setSizes(interpolated_sizes)
-            self.splitter_factory.sync_dock_area_collapse(splitter)
+
+            # Sync only when a pane crosses the threshold – avoids per-frame cost.
+            needs_sync = any(
+                (sz < threshold) != was
+                for sz, was in zip(interpolated_sizes, state["was_collapsed"], strict=False)
+            )
+            if needs_sync:
+                self.splitter_factory.sync_dock_area_collapse(splitter)
+                state["was_collapsed"] = [sz < threshold for sz in interpolated_sizes]
 
             if state["step"] >= self._splitter_animation_steps:
                 splitter.setSizes(target_sizes)
+                # Always sync once at the end to guarantee final state is correct.
                 self.splitter_factory.sync_dock_area_collapse(splitter)
                 timer.stop()
                 if timer in self._splitter_animation_timers:
