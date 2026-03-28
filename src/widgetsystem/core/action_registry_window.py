@@ -564,6 +564,9 @@ class ActionRegistryDemo(QMainWindow):
             self._animate_splitter_sizes(splitter, target_sizes)
 
         self._log(f"Curtain snap: {side}")
+        # Title-bar collapse state is updated frame-by-frame in _animate_splitter_sizes.
+        # Call once more here as a safety net for edge cases where no animation ran.
+        self.splitter_factory.sync_all_dock_area_collapse(self.dock_manager)
 
     def _build_curtain_target_sizes(self, splitter: Any, side: str) -> list[int] | None:
         """Build target sizes with a small remainder so collapsed panes stay usable (delegated to factory)."""
@@ -608,9 +611,11 @@ class ActionRegistryDemo(QMainWindow):
             )
 
             splitter.setSizes(interpolated_sizes)
+            self.splitter_factory.sync_dock_area_collapse(splitter)
 
             if state["step"] >= self._splitter_animation_steps:
                 splitter.setSizes(target_sizes)
+                self.splitter_factory.sync_dock_area_collapse(splitter)
                 timer.stop()
                 if timer in self._splitter_animation_timers:
                     self._splitter_animation_timers.remove(timer)

@@ -1450,6 +1450,126 @@ QSplitter::handle:hover {{
         sizes[-1] = main_size
         return sizes
 
+    # ------------------------------------------------------------------
+    # Dock-area title-bar collapse synchronisation
+    # ------------------------------------------------------------------
+
+    #: Pixel threshold below which a pane is considered "collapsed".
+    #: The ADS title bar is ~26 px; 40 px gives a small safety margin.
+    _TITLE_BAR_THRESHOLD: int = 40
+
+    def sync_dock_area_collapse(self, splitter: QSplitter) -> None:
+        """Show or hide CDockAreaWidget title bars based on current splitter sizes.
+
+        When a pane's allocated size (width for H-splitters, height for
+        V-splitters) falls below ``_TITLE_BAR_THRESHOLD`` the title bar
+        and tab bar are hidden so the collapsed pane looks clean.  Once
+        the pane grows back above the threshold they are restored.
+
+        This must be called whenever splitter sizes change – both during
+        interactive drag and after programmatic curtain-snap animations.
+
+        Args:
+            splitter: The QSplitter whose children should be inspected.
+        """
+        is_horizontal = splitter.orientation() == Qt.Orientation.Horizontal
+        sizes = splitter.sizes()
+
+        for pane_index, pane_size in enumerate(sizes):
+            child = splitter.widget(pane_index)
+            if child is None:
+                continue
+
+            # A pane may itself be a nested QSplitter – recurse into it so
+            # that the innermost CDockAreaWidgets are also updated.
+            nested = child.findChildren(QSplitter)
+            for nested_splitter in nested:
+                self.sync_dock_area_collapse(nested_splitter)
+
+            collapsed = pane_size < self._TITLE_BAR_THRESHOLD
+
+            # Find all CDockAreaWidget instances directly inside this pane.
+            # We try the import lazily so the module stays usable without
+            # PySide6QtAds installed (e.g. in pure unit-test environments).
+            try:
+                import PySide6QtAds as QtAds  # noqa: PLC0415
+                dock_areas = child.findChildren(QtAds.CDockAreaWidget)
+                if not dock_areas and isinstance(child, QtAds.CDockAreaWidget):
+                    dock_areas = [child]
+            except (ImportError, AttributeError):
+                dock_areas = []
+
+            for dock_area in dock_areas:
+                self._set_dock_area_collapsed(dock_area, collapsed=collapsed, is_horizontal=is_horizontal)
+
+    def _set_dock_area_collapsed(
+        self,
+        dock_area: Any,
+        *,
+        collapsed: bool,
+        is_horizontal: bool,
+    ) -> None:
+        """Toggle title-bar / tab-bar visibility for a single CDockAreaWidget.
+
+        Args:
+            dock_area: CDockAreaWidget instance
+            collapsed: True when the pane is below the collapse threshold
+            is_horizontal: True when the parent splitter is horizontal
+        """
+        already_collapsed = bool(dock_area.property("ws_dock_collapsed"))
+        if already_collapsed == collapsed:
+            return  # Nothing to do.
+
+        dock_area.setProperty("ws_dock_collapsed", collapsed)
+
+        # Attempt to reach title bar and tab bar via ADS API.
+        title_bar = None
+        tab_bar = None
+        try:
+            if hasattr(dock_area, "titleBar"):
+                title_bar = dock_area.titleBar()
+            if hasattr(dock_area, "tabBar"):
+                tab_bar = dock_area.tabBar()
+        except RuntimeError:
+            return  # C++ object already deleted.
+
+        if collapsed:
+            # Hide both title bar and tab bar; set the minimum size along
+            # the split axis to 0 so the pane can actually reach 0 px.
+            if title_bar is not None:
+                title_bar.setVisible(False)
+            if tab_bar is not None:
+                tab_bar.setVisible(False)
+            if is_horizontal:
+                dock_area.setMinimumWidth(0)
+            else:
+                dock_area.setMinimumHeight(0)
+        else:
+            # Restore visibility.
+            if title_bar is not None:
+                title_bar.setVisible(True)
+            if tab_bar is not None:
+                tab_bar.setVisible(True)
+            # Reset minimum sizes to sensible defaults.
+            if is_horizontal:
+                dock_area.setMinimumWidth(0)
+            else:
+                dock_area.setMinimumHeight(0)
+
+    def sync_all_dock_area_collapse(self, root_widget: Any) -> None:
+        """Synchronise title-bar collapse state for every splitter under root_widget.
+
+        Convenience wrapper that finds all QSplitter children of
+        ``root_widget`` and calls ``sync_dock_area_collapse`` on each.
+
+        Args:
+            root_widget: CDockManager or any container widget.
+        """
+        if root_widget is None:
+            return
+        for splitter in root_widget.findChildren(QSplitter):
+            self.sync_dock_area_collapse(splitter)
+
 
 class SplitterEventHandler(QObject):
     """Event handler for splitter interactions with state tracking and restoration.
@@ -1537,6 +1657,7 @@ class SplitterEventHandler(QObject):
 
         if self._factory is not None:
             self._factory.update_handle_tooltips(splitter)
+            self._factory.sync_dock_area_collapse(splitter)
 
     def restore_splitter(self, splitter: QSplitter) -> None:
         """Restore splitter to previous state or default (double-click restore).
@@ -1738,3 +1859,4 @@ class SplitterEventHandler(QObject):
         sizes = splitter.sizes()
         self._splitter_current_sizes[splitter_key] = list(sizes)
         self._factory.update_handle_tooltips(splitter)
+        self._factory.sync_dock_area_collapse(splitter)
