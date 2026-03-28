@@ -4,7 +4,7 @@
       "id": "main_toolbar",
       "title_key": "toolbar.title",
       "area": "top",
-      "movable": false,
+      "movable": true,
       "floatable": false,
       "icon_size": 20,
       "button_style": "icon_only",
@@ -18,6 +18,9 @@
         { "type": "menu", "menu_id": "layouts_menu", "icon": "grid", "label_key": "toolbar.layouts" },
         { "type": "menu", "menu_id": "themes_menu", "icon": "palette", "label_key": "toolbar.themes" },
         { "type": "separator" },
+        { "type": "action", "action_id": "action_show_theme_editor" },
+        { "type": "action", "action_id": "action_show_plugin_manager" },
+        { "type": "action", "action_id": "action_refresh" },
         { "type": "action", "action_id": "action_show_configuration" }
       ]
     }

@@ -17,7 +17,7 @@ def test_theme_colors_initialization():
     assert theme_colors.tab_inactive_bg == "#cc2d2e31"
     assert theme_colors.tab_inactive_text == "#ffbdc1c6"
     assert theme_colors.tab_padding == 4
-    assert theme_colors.tab_border_radius == 0
+    assert theme_colors.tab_border_radius == 4
     assert theme_colors.titlebar_bg == "#cc2d2e31"
     assert theme_colors.titlebar_text == "#ffe8eaed"
     assert theme_colors.titlebar_btn_hover == "#408ab4f8"

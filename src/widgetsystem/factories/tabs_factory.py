@@ -94,7 +94,19 @@ class TabGroup:
 
 
 class TabsFactory:
-    """Factory for loading and managing tab configurations with nesting support."""
+    """Factory for loading and managing tab configurations with nesting support.
+
+    Architectural note:
+        This factory models the persisted tab configuration layer only.
+        In the original application, complete tab automation/editing also depends on
+        runtime structures managed by controllers such as `TabSubsystem`,
+        `UnifiedTabManager`, `TabNavigationController`, and `TabCommandController`.
+
+        As long as those runtime identities and container relationships are not
+        bridged back into this persistence layer, any editor using `TabsFactory`
+        should be treated as a demo/configuration surface rather than the final
+        authoritative runtime tab model.
+    """
 
     def __init__(
         self,
@@ -176,7 +188,7 @@ class TabsFactory:
         try:
             raw_data_temp: Any = self._validator.load_with_failsafe(self.tabs_file)
         except Exception as e:
-            logger.warning(f"Failsafe load failed, trying direct load: {e}")
+            logger.warning("Failsafe load failed, trying direct load: %s", e)
             with open(self.tabs_file, encoding="utf-8") as f:
                 raw_data_temp = json.load(f)
 

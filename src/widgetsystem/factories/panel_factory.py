@@ -137,7 +137,7 @@ class PanelFactory:
         try:
             raw_data_temp: Any = self._validator.load_with_failsafe(self.panels_file)
         except Exception as e:
-            logger.warning(f"Failsafe load failed, trying direct load: {e}")
+            logger.warning("Failsafe load failed, trying direct load: %s", e)
             with open(self.panels_file, encoding="utf-8") as f:
                 raw_data_temp = json.load(f)
 
@@ -281,6 +281,71 @@ class PanelFactory:
             if self._panels_cache is not None:
                 self._panels_cache[panel_id] = new_panel
 
+            return self.save_to_file()
+        except Exception:
+            return False
+
+    def update_panel(
+        self,
+        panel_id: str,
+        *,
+        name_key: str | None = None,
+        area: str | None = None,
+        closable: bool | None = None,
+        movable: bool | None = None,
+        floatable: bool | None = None,
+        delete_on_close: bool | None = None,
+        dnd_enabled: bool | None = None,
+        tooltip_key: str | None = None,
+        responsive_hidden_at: list[str] | None = None,
+    ) -> bool:
+        """Update an existing panel configuration and persist it.
+
+        Args:
+            panel_id: Identifier of the panel to update
+            name_key: Optional translated name key override
+            area: Optional area override (left/right/bottom/center)
+            closable: Optional closable override
+            movable: Optional movable override
+            floatable: Optional floatable override
+            delete_on_close: Optional delete-on-close override
+            dnd_enabled: Optional drag-and-drop override
+            tooltip_key: Optional tooltip translation key override
+            responsive_hidden_at: Optional responsive breakpoint list override
+
+        Returns:
+            True if update and save succeeded, otherwise False
+        """
+        try:
+            if self._panels_cache is None:
+                self.load_panels()
+
+            if not self._panels_cache or panel_id not in self._panels_cache:
+                return False
+
+            existing = self._panels_cache[panel_id]
+            updated_panel = PanelConfig(
+                id=existing.id,
+                name_key=name_key if name_key is not None else existing.name_key,
+                area=area if area is not None else existing.area,
+                closable=closable if closable is not None else existing.closable,
+                movable=movable if movable is not None else existing.movable,
+                floatable=floatable if floatable is not None else existing.floatable,
+                delete_on_close=(
+                    delete_on_close
+                    if delete_on_close is not None
+                    else existing.delete_on_close
+                ),
+                dnd_enabled=dnd_enabled if dnd_enabled is not None else existing.dnd_enabled,
+                tooltip_key=tooltip_key if tooltip_key is not None else existing.tooltip_key,
+                responsive_hidden_at=(
+                    responsive_hidden_at
+                    if responsive_hidden_at is not None
+                    else (existing.responsive_hidden_at or [])
+                ),
+            )
+
+            self._panels_cache[panel_id] = updated_panel
             return self.save_to_file()
         except Exception:
             return False

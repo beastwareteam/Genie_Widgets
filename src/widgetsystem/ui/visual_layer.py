@@ -29,6 +29,43 @@ from widgetsystem.factories.tabs_factory import TabsFactory
 logger = logging.getLogger(__name__)
 
 
+def _get_selected_tree_data(tree: QTreeWidget) -> tuple[str, str] | None:
+    """Return selected user data tuple from a tree widget."""
+    selected_items = tree.selectedItems()
+    if not selected_items:
+        return None
+
+    data = selected_items[0].data(0, Qt.ItemDataRole.UserRole)
+    if (
+        isinstance(data, tuple)
+        and len(data) == 2
+        and isinstance(data[0], str)
+        and isinstance(data[1], str)
+    ):
+        return (data[0], data[1])
+    return None
+
+
+def _select_tree_item_by_data(tree: QTreeWidget, selected_data: tuple[str, str]) -> bool:
+    """Select first tree item matching user data tuple."""
+    items_to_visit = [tree.topLevelItem(index) for index in range(tree.topLevelItemCount())]
+
+    while items_to_visit:
+        current_item = items_to_visit.pop()
+        if current_item is None:
+            continue
+
+        data = current_item.data(0, Qt.ItemDataRole.UserRole)
+        if data == selected_data:
+            tree.setCurrentItem(current_item)
+            return True
+
+        for child_index in range(current_item.childCount()):
+            items_to_visit.append(current_item.child(child_index))
+
+    return False
+
+
 @dataclass
 class ViewerConfig:
     """Configuration for viewers."""
@@ -180,7 +217,12 @@ class ListsViewer(QWidget):
         self.tree.setHeaderLabel(self._translate("visual.lists.tree", "Listen-Hierarchie"))
         if hasattr(self, "_props_title"):
             self._props_title.setText(self._translate("visual.properties.title", "Eigenschaften"))
+        selected_data = _get_selected_tree_data(self.tree)
         self.refresh()
+        if selected_data and _select_tree_item_by_data(self.tree, selected_data):
+            self._on_item_selected()
+        elif self.viewer_config.show_properties:
+            self.properties_text.clear()
 
     def refresh(self) -> None:
         """Refresh the viewer."""
@@ -312,7 +354,12 @@ class MenusViewer(QWidget):
         self.tree.setHeaderLabel(self._translate("visual.menus.tree", "Menü-Struktur"))
         if hasattr(self, "_props_title"):
             self._props_title.setText(self._translate("visual.properties.title", "Eigenschaften"))
+        selected_data = _get_selected_tree_data(self.tree)
         self.refresh()
+        if selected_data and _select_tree_item_by_data(self.tree, selected_data):
+            self._on_item_selected()
+        elif self.viewer_config.show_properties:
+            self.properties_text.clear()
 
     def refresh(self) -> None:
         """Refresh the viewer."""
@@ -438,7 +485,12 @@ class TabsViewer(QWidget):
         self.tree.setHeaderLabel(self._translate("visual.tabs.tree", "Tab-Gruppen"))
         if hasattr(self, "_props_title"):
             self._props_title.setText(self._translate("visual.properties.title", "Eigenschaften"))
+        selected_data = _get_selected_tree_data(self.tree)
         self.refresh()
+        if selected_data and _select_tree_item_by_data(self.tree, selected_data):
+            self._on_item_selected()
+        elif self.viewer_config.show_properties:
+            self.properties_text.clear()
 
     def refresh(self) -> None:
         """Refresh the viewer."""

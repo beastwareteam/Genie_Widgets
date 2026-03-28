@@ -18,8 +18,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import QApplication, QMessageBox, QTabWidget
 
+from widgetsystem.factories.i18n_factory import I18nFactory
 from widgetsystem.ui.widget_features_editor import (
     WidgetFeaturesEditor,
     WidgetFeaturesEditorDialog,
@@ -417,6 +418,82 @@ class TestTreeInteraction:
         if root:
             root.setSelected(True)
             editor._on_tree_selection_changed()
+
+
+class TestWidgetFeaturesEditorI18n:
+    """Tests for i18n support in widget features editor components."""
+
+    def test_property_editor_german_labels(
+        self,
+        qapp: QApplication,
+        temp_config_dir: Path,
+    ) -> None:
+        """Property editor should render translated static labels in German."""
+        i18n_de = I18nFactory(config_path="config", locale="de")
+        editor = WidgetPropertyEditor(temp_config_dir, i18n_factory=i18n_de)
+
+        assert editor._tree_group.title() == "Widgets"
+        assert editor.tree.headerItem().text(0) == "Widget-Hierarchie"
+        assert editor._properties_group.title() == "Eigenschaften"
+        assert editor._save_btn.text() == "Änderungen speichern"
+
+    def test_dialog_title_and_tabs_translated(
+        self,
+        qapp: QApplication,
+        temp_config_dir: Path,
+    ) -> None:
+        """Dialog title and tab captions should follow i18n locale."""
+        i18n_de = I18nFactory(config_path="config", locale="de")
+        dialog = WidgetFeaturesEditorDialog(temp_config_dir, i18n_factory=i18n_de)
+
+        assert dialog.windowTitle() == "Widget-Feature-Editor"
+        tab_widget = dialog.findChild(QTabWidget)
+        assert tab_widget is not None
+        assert tab_widget.tabText(0) == "Eigenschaften"
+        assert tab_widget.tabText(1) == "Statistiken"
+
+    def test_main_widget_runtime_locale_switch(
+        self,
+        qapp: QApplication,
+        temp_config_dir: Path,
+    ) -> None:
+        """Main widget should update header on runtime locale switch."""
+        i18n_de = I18nFactory(config_path="config", locale="de")
+        i18n_en = I18nFactory(config_path="config", locale="en")
+
+        widget = WidgetFeaturesEditor(temp_config_dir, i18n_factory=i18n_en)
+        assert widget._header.text() == "Widget Features Editor"
+
+        widget.set_i18n_factory(i18n_de)
+        assert widget._header.text() == "Widget-Feature-Editor"
+
+    def test_dialog_runtime_locale_switch(
+        self,
+        qapp: QApplication,
+        temp_config_dir: Path,
+    ) -> None:
+        """Dialog should update title, tabs and close button on locale switch."""
+        i18n_en = I18nFactory(config_path="config", locale="en")
+        i18n_de = I18nFactory(config_path="config", locale="de")
+
+        dialog = WidgetFeaturesEditorDialog(temp_config_dir, i18n_factory=i18n_en)
+        assert dialog.windowTitle() == "Widget Features Editor"
+
+        tab_widget = dialog.findChild(QTabWidget)
+        assert tab_widget is not None
+        assert tab_widget.tabText(0) == "Properties"
+        assert tab_widget.tabText(1) == "Statistics"
+
+        close_button = dialog.button_box.button(dialog.button_box.StandardButton.Close)
+        assert close_button is not None
+        assert close_button.text() == "Close"
+
+        dialog.set_i18n_factory(i18n_de)
+
+        assert dialog.windowTitle() == "Widget-Feature-Editor"
+        assert tab_widget.tabText(0) == "Eigenschaften"
+        assert tab_widget.tabText(1) == "Statistiken"
+        assert close_button.text() == "Schließen"
 
             # Root items store config name as string, not dict
             # Property table might be empty or have string data

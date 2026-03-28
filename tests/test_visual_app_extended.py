@@ -27,8 +27,12 @@ def _dummy_window() -> SimpleNamespace:
     i18n = MagicMock()
     i18n.translate.side_effect = lambda _key, default="": default or ""
 
+    def _translate(key: str, default: str) -> str:
+        return i18n.translate(key, default=default)
+
     return SimpleNamespace(
         i18n_factory=i18n,
+        _translate=_translate,
         theme_factory=MagicMock(),
         dock_manager=MagicMock(),
         docks=[],
@@ -40,6 +44,9 @@ def _dummy_window() -> SimpleNamespace:
         _show_dashboard=MagicMock(),
         _show_configuration=MagicMock(),
         _refresh_viewers=MagicMock(),
+        _show_theme_editor=MagicMock(),
+        _show_color_picker=MagicMock(),
+        _show_widget_editor=MagicMock(),
         _show_lists_viewer=MagicMock(),
         _show_menus_viewer=MagicMock(),
         _show_tabs_viewer=MagicMock(),
@@ -311,6 +318,103 @@ class TestVisualAppActionsAndDialogs:
         with patch("widgetsystem.ui.visual_app.QMessageBox.about") as about_box:
             VisualMainWindow._show_about(window)  # type: ignore[arg-type]
             about_box.assert_called_once()
+
+    def test_show_theme_editor_passes_i18n_factory(self) -> None:
+        """Theme editor dialog receives the active i18n factory."""
+        window = _dummy_window()
+        dialog = MagicMock()
+
+        with patch("widgetsystem.ui.ThemeEditorDialog", return_value=dialog) as dialog_cls:
+            VisualMainWindow._show_theme_editor(window)  # type: ignore[arg-type]
+
+        dialog_cls.assert_called_once()
+        assert dialog_cls.call_args.kwargs["i18n_factory"] is window.i18n_factory
+        dialog.exec.assert_called_once()
+
+    def test_show_color_picker_passes_i18n_factory(self) -> None:
+        """ARGB color picker dialog receives the active i18n factory."""
+        window = _dummy_window()
+        dialog = MagicMock()
+        dialog.exec.return_value = False
+
+        with patch("widgetsystem.ui.ARGBColorPickerDialog", return_value=dialog) as dialog_cls:
+            VisualMainWindow._show_color_picker(window)  # type: ignore[arg-type]
+
+        dialog_cls.assert_called_once()
+        assert dialog_cls.call_args.kwargs["i18n_factory"] is window.i18n_factory
+        dialog.exec.assert_called_once()
+
+    def test_show_widget_editor_passes_i18n_factory(self) -> None:
+        """Widget features dialog receives the active i18n factory."""
+        window = _dummy_window()
+        dialog = MagicMock()
+
+        with patch("widgetsystem.ui.WidgetFeaturesEditorDialog", return_value=dialog) as dialog_cls:
+            VisualMainWindow._show_widget_editor(window)  # type: ignore[arg-type]
+
+        dialog_cls.assert_called_once()
+        assert dialog_cls.call_args.kwargs["i18n_factory"] is window.i18n_factory
+        dialog.exec.assert_called_once()
+
+
+class TestVisualAppI18nRuntime:
+    """Test runtime locale updates for VisualMainWindow."""
+
+    def test_set_i18n_factory_refreshes_toolbar_menu_and_docks(self) -> None:
+        """Locale switch updates translated texts and propagates to viewers."""
+        window = _dummy_window()
+        new_i18n = MagicMock()
+        new_i18n.translate.side_effect = lambda key, default="": f"tr:{key}" if key else default
+        window._translate = lambda key, default: window.i18n_factory.translate(  # type: ignore[attr-defined]
+            key,
+            default=default,
+        )
+
+        window.setWindowTitle = MagicMock()
+        window.toolbar = MagicMock()
+        window.dashboard_btn = MagicMock()
+        window.config_btn = MagicMock()
+        window.refresh_btn = MagicMock()
+        window.theme_button = MagicMock()
+        window.theme_editor_btn = MagicMock()
+        window.color_picker_btn = MagicMock()
+        window.widget_editor_btn = MagicMock()
+
+        window.file_menu = MagicMock()
+        window.exit_action = MagicMock()
+        window.view_menu = MagicMock()
+        window.show_lists_action = MagicMock()
+        window.show_menus_action = MagicMock()
+        window.show_tabs_action = MagicMock()
+        window.show_panels_action = MagicMock()
+        window.help_menu = MagicMock()
+        window.about_action = MagicMock()
+
+        window.lists_dock = MagicMock()
+        window.menus_dock = MagicMock()
+        window.tabs_dock = MagicMock()
+        window.panels_dock = MagicMock()
+
+        window.lists_viewer = MagicMock()
+        window.menus_viewer = MagicMock()
+        window.tabs_viewer = MagicMock()
+        window.panels_viewer = MagicMock()
+        window._refresh_translated_texts = lambda: VisualMainWindow._refresh_translated_texts(  # type: ignore[attr-defined]
+            window,
+        )
+
+        VisualMainWindow.set_i18n_factory(window, new_i18n)  # type: ignore[arg-type]
+
+        window.setWindowTitle.assert_called_once_with("tr:visual_app.window_title")
+        window.dashboard_btn.setText.assert_called_once_with("tr:visual_app.toolbar.dashboard")
+        window.file_menu.setTitle.assert_called_once_with("tr:menu.file")
+        window.about_action.setText.assert_called_once_with("tr:visual_app.menu.about")
+        window.lists_dock.setWindowTitle.assert_called_once_with("tr:visual.tab.lists")
+
+        window.lists_viewer.set_i18n_factory.assert_called_once_with(new_i18n)
+        window.menus_viewer.set_i18n_factory.assert_called_once_with(new_i18n)
+        window.tabs_viewer.set_i18n_factory.assert_called_once_with(new_i18n)
+        window.panels_viewer.set_i18n_factory.assert_called_once_with(new_i18n)
 
 
 class TestVisualAppPrintHelpers:

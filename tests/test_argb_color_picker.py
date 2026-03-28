@@ -16,6 +16,7 @@ import pytest
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
+from widgetsystem.factories.i18n_factory import I18nFactory
 from widgetsystem.ui.argb_color_picker import (
     QUICK_COLORS,
     ARGBColorPicker,
@@ -403,3 +404,47 @@ class TestSignalBlocking:
             picker.blue_spin.setValue(i * 25)
 
         # If we get here, no infinite loop occurred
+
+
+class TestARGBColorPickerI18n:
+    """Tests for i18n support in ARGB color picker."""
+
+    def test_picker_german_texts(self, qapp: QApplication) -> None:
+        """Picker static labels should be translated with de locale."""
+        i18n_de = I18nFactory(config_path="config", locale="de")
+        picker = ARGBColorPicker(i18n_factory=i18n_de)
+
+        assert picker.preview_group.title() == "Farbvorschau"
+        assert picker.input_group.title() == "Hex-Farbeingabe"
+        assert picker.sliders_group.title() == "Farbkomponenten"
+        assert picker.quick_group.title() == "Schnellfarben"
+        assert picker.red_label.text() == "Rot (R):"
+
+    def test_picker_runtime_locale_switch(self, qapp: QApplication) -> None:
+        """Runtime locale switch should update picker labels."""
+        i18n_de = I18nFactory(config_path="config", locale="de")
+        i18n_en = I18nFactory(config_path="config", locale="en")
+
+        picker = ARGBColorPicker(i18n_factory=i18n_de)
+        assert picker.preview_group.title() == "Farbvorschau"
+
+        picker.set_i18n_factory(i18n_en)
+        assert picker.preview_group.title() == "Color Preview"
+        assert picker.red_label.text() == "Red (R):"
+
+    def test_dialog_title_translated(self, qapp: QApplication) -> None:
+        """Dialog title and buttons should be translated by locale."""
+        i18n_de = I18nFactory(config_path="config", locale="de")
+        i18n_en = I18nFactory(config_path="config", locale="en")
+
+        dialog = ARGBColorPickerDialog(i18n_factory=i18n_de)
+        assert dialog.windowTitle() == "ARGB-Farbauswahl"
+        assert dialog.ok_button is not None
+        assert dialog.cancel_button is not None
+        assert dialog.ok_button.text() == "OK"
+        assert dialog.cancel_button.text() == "Abbrechen"
+
+        dialog.set_i18n_factory(i18n_en)
+        assert dialog.windowTitle() == "ARGB Color Picker"
+        assert dialog.ok_button.text() == "OK"
+        assert dialog.cancel_button.text() == "Cancel"

@@ -173,6 +173,33 @@ class ThemeProfile:
                 return self.as_qss_color(color_value)
             return str(color_value)
 
+        def adjusted_qss_color(
+            attr_name: str,
+            *,
+            lighter_factor: int | None = None,
+            darker_factor: int | None = None,
+            alpha_scale: float = 1.0,
+        ) -> str:
+            """Return a transformed theme color for subtle depth effects."""
+            color_value = getattr(c, attr_name)
+            if not isinstance(color_value, str):
+                return str(color_value)
+
+            color = QColor(self.apply_global_transforms(color_value))
+            if lighter_factor is not None:
+                color = color.lighter(lighter_factor)
+            if darker_factor is not None:
+                color = color.darker(darker_factor)
+
+            scaled_alpha = max(0, min(255, round(color.alpha() * alpha_scale)))
+            color.setAlpha(scaled_alpha)
+            rgba_tuple: tuple[int, int, int, int] = color.getRgb()  # type: ignore[assignment]
+            red, green, blue, alpha = rgba_tuple
+            return f"rgba({red}, {green}, {blue}, {alpha})"
+
+        splitter_width = max(1, c.splitter_width)
+        horizontal_bar_height = max(1, splitter_width - 1)
+
         return f"""
 /* ============================================================================
    {self.name} - Generated Theme Profile
@@ -210,12 +237,49 @@ ads--CDockAreaWidget {{
 
 /* 3. Splitters */
 ads--CDockSplitter::handle {{
-    background: {qss_color("splitter_handle")};
-    width: {c.splitter_width}px;
-    height: {c.splitter_width}px;
+    background: {adjusted_qss_color("splitter_handle", alpha_scale=0.92)};
+    width: {splitter_width}px;
+    height: {splitter_width}px;
     margin: 0px;
     padding: 0px;
     border: none;
+}}
+
+ads--CDockSplitter::handle:horizontal {{
+    width: {splitter_width}px;
+    background: qlineargradient(
+        x1:0,
+        y1:0,
+        x2:1,
+        y2:0,
+        stop:0 {adjusted_qss_color("splitter_handle", lighter_factor=142, alpha_scale=0.98)},
+        stop:0.38 {adjusted_qss_color("splitter_handle", lighter_factor=112, alpha_scale=0.94)},
+        stop:1 {adjusted_qss_color("splitter_handle", darker_factor=155, alpha_scale=0.98)}
+    );
+}}
+
+ads--CDockSplitter::handle:vertical {{
+    height: {horizontal_bar_height}px;
+    background: qlineargradient(
+        x1:0,
+        y1:0,
+        x2:0,
+        y2:1,
+        stop:0 {adjusted_qss_color("splitter_handle", lighter_factor=145, alpha_scale=0.98)},
+        stop:0.34 {adjusted_qss_color("splitter_handle", lighter_factor=114, alpha_scale=0.94)},
+        stop:1 {adjusted_qss_color("splitter_handle", darker_factor=165, alpha_scale=0.98)}
+    );
+}}
+
+ads--CDockSplitter::handle:hover {{
+    background: qlineargradient(
+        x1:0,
+        y1:0,
+        x2:1,
+        y2:1,
+        stop:0 {adjusted_qss_color("tab_active_border", lighter_factor=115, alpha_scale=0.72)},
+        stop:1 {adjusted_qss_color("splitter_handle", darker_factor=140, alpha_scale=0.92)}
+    );
 }}
 
 ads--CDockSplitter {{

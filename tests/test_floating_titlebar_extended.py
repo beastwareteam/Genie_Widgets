@@ -158,6 +158,7 @@ class TestCustomFloatingTitleBarMethods:
             close_requested=close_signal,
             setMaximumHeight=Mock(),
             setMinimumHeight=Mock(),
+            _translate=lambda _key, default: default,
         )
 
         with patch("widgetsystem.ui.floating_titlebar.QHBoxLayout", return_value=Mock()):

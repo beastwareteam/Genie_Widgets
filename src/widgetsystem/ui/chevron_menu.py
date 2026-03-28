@@ -45,6 +45,8 @@ class ChevronMenu(QMenu):
         self._action_callbacks: dict[str, Callable[[str], None]] = {}
         self._i18n_factory = i18n_factory
         self._translated_cache: dict[str, str] = {}
+        self._action_label_keys: dict[QAction, str] = {}
+        self._submenu_label_keys: dict[QAction, str] = {}
         # Connect to triggered signal with proper type handling
         self.triggered.connect(self._on_action_triggered)
 
@@ -56,6 +58,25 @@ class ChevronMenu(QMenu):
         """
         self._i18n_factory = i18n_factory
         self._translated_cache.clear()
+        self._refresh_translated_texts_recursive()
+
+    def _refresh_translated_texts_recursive(self) -> None:
+        """Refresh translated labels for existing actions and submenus."""
+        for action, label_key in self._action_label_keys.items():
+            action.setText(self._translate(label_key, label_key))
+
+        for action, label_key in self._submenu_label_keys.items():
+            label = self._translate(label_key, label_key)
+            action.setText(f"{label} {CHEVRON_CLOSED}")
+            submenu_prefix = self._translate(
+                "chevron_menu.tooltip.submenu_prefix",
+                "Submenu",
+            )
+            action.setToolTip(f"{submenu_prefix}: {label}")
+
+            submenu = action.menu()
+            if isinstance(submenu, ChevronMenu):
+                submenu.set_i18n_factory(self._i18n_factory)
 
     def _translate(self, key: str, default: str | None = None) -> str:
         """Translate a key using the i18n factory.
@@ -109,6 +130,7 @@ class ChevronMenu(QMenu):
             # Add submenu with chevron indicator
             menu_action = self.addMenu(submenu)
             if menu_action:
+                self._submenu_label_keys[menu_action] = item.label_key
                 menu_action.setText(f"{label} {CHEVRON_CLOSED}")
                 submenu_prefix = self._translate(
                     "chevron_menu.tooltip.submenu_prefix",
@@ -122,6 +144,7 @@ class ChevronMenu(QMenu):
             # Regular action
             label = self._translate(item.label_key, item.label_key)
             action = self.addAction(label)
+            self._action_label_keys[action] = item.label_key
             action.setData(item.id)
 
             if item.shortcut:
@@ -192,6 +215,8 @@ class ChevronMenuBar:
             label_key = self._menu_label_keys.get(menu_id, menu_id)
             if i18n_factory and label_key:
                 menu.setTitle(i18n_factory.translate(label_key, default=label_key))
+            else:
+                menu.setTitle(label_key or menu_id)
 
     def create_menu_bar(
         self,

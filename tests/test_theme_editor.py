@@ -19,6 +19,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QApplication, QComboBox, QLineEdit, QSpinBox
 
+from widgetsystem.factories.i18n_factory import I18nFactory
 from widgetsystem.ui.theme_editor import (
     ARGBColorButton,
     LiveThemeEditor,
@@ -70,6 +71,56 @@ def temp_config_dir() -> Path:
             },
         ]
         (config_path / "themes.json").write_text(json.dumps(themes), encoding="utf-8")
+
+        yield config_path
+
+
+@pytest.fixture
+def temp_config_dir_with_i18n() -> Path:
+    """Create temporary config directory with theme and i18n files."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config_path = Path(tmpdir)
+
+        themes = {
+            "themes": [
+                {
+                    "id": "dark",
+                    "name": "Dark Theme",
+                    "description": "A dark theme",
+                    "colors": {
+                        "background": "#FF1E1E1E",
+                        "foreground": "#FFFFFFFF",
+                    },
+                }
+            ]
+        }
+        (config_path / "themes.json").write_text(json.dumps(themes), encoding="utf-8")
+
+        i18n_de = {
+            "theme_editor.dialog_title": "Live-Theme-Editor",
+            "theme_editor.select_theme": "Design auswählen:",
+            "theme_editor.properties": "Design-Eigenschaften",
+            "theme_editor.save_theme": "Design speichern",
+            "action.export": "Exportieren",
+            "button.reset": "Zurücksetzen",
+            "theme_editor.opacity": "Deckkraft",
+            "theme_editor.select_color": "Farbe wählen",
+            "dialog.close": "Schließen",
+        }
+        (config_path / "i18n.de.json").write_text(json.dumps(i18n_de), encoding="utf-8")
+
+        i18n_en = {
+            "theme_editor.dialog_title": "Live Theme Editor",
+            "theme_editor.select_theme": "Select Theme:",
+            "theme_editor.properties": "Theme Properties",
+            "theme_editor.save_theme": "Save Theme",
+            "action.export": "Export",
+            "button.reset": "Reset",
+            "theme_editor.opacity": "opacity",
+            "theme_editor.select_color": "Select Color",
+            "dialog.close": "Close",
+        }
+        (config_path / "i18n.en.json").write_text(json.dumps(i18n_en), encoding="utf-8")
 
         yield config_path
 
@@ -444,3 +495,88 @@ class TestEditorEdgeCases:
 
             # Should handle theme without colors
             assert editor.current_theme is not None
+
+
+class TestThemeEditorI18n:
+    """Tests for i18n support in theme editor components."""
+
+    def test_dialog_title_translated(self, qapp: QApplication, temp_config_dir_with_i18n: Path) -> None:
+        """Dialog title should be translated when i18n is provided."""
+        i18n = I18nFactory(config_path=temp_config_dir_with_i18n, locale="de")
+        dialog = ThemeEditorDialog(temp_config_dir_with_i18n, i18n_factory=i18n)
+        assert dialog.windowTitle() == "Live-Theme-Editor"
+
+    def test_editor_static_labels_translated(
+        self,
+        qapp: QApplication,
+        temp_config_dir_with_i18n: Path,
+    ) -> None:
+        """Editor static labels should be translated in German."""
+        i18n = I18nFactory(config_path=temp_config_dir_with_i18n, locale="de")
+        editor = LiveThemeEditor(temp_config_dir_with_i18n, i18n_factory=i18n)
+
+        assert editor.select_theme_label.text() == "Design auswählen:"
+        assert editor.editor_group.title() == "Design-Eigenschaften"
+        assert editor.save_btn.text() == "Design speichern"
+        assert editor.export_btn.text() == "Exportieren"
+        assert editor.reset_btn.text() == "Zurücksetzen"
+
+    def test_runtime_locale_switch_updates_texts(
+        self,
+        qapp: QApplication,
+        temp_config_dir_with_i18n: Path,
+    ) -> None:
+        """Switching i18n factory at runtime should update visible texts."""
+        editor = LiveThemeEditor(temp_config_dir_with_i18n)
+        assert editor.save_btn.text() == "Save Theme"
+
+        i18n = I18nFactory(config_path=temp_config_dir_with_i18n, locale="de")
+        editor.set_i18n_factory(i18n)
+
+        assert editor.save_btn.text() == "Design speichern"
+
+    def test_dialog_runtime_locale_switch_updates_title_and_close_button(
+        self,
+        qapp: QApplication,
+        temp_config_dir_with_i18n: Path,
+    ) -> None:
+        """Dialog locale switch should refresh title and close button text."""
+        i18n_de = I18nFactory(config_path=temp_config_dir_with_i18n, locale="de")
+        i18n_en = I18nFactory(config_path=temp_config_dir_with_i18n, locale="en")
+
+        dialog = ThemeEditorDialog(temp_config_dir_with_i18n, i18n_factory=i18n_en)
+        assert dialog.windowTitle() == "Live Theme Editor"
+        assert dialog.close_button is not None
+        assert dialog.close_button.text() == "Close"
+
+        dialog.set_i18n_factory(i18n_de)
+
+        assert dialog.windowTitle() == "Live-Theme-Editor"
+        assert dialog.close_button.text() == "Schließen"
+        assert dialog.editor.save_btn.text() == "Design speichern"
+
+    def test_runtime_locale_switch_preserves_selected_theme(
+        self,
+        qapp: QApplication,
+        temp_config_dir: Path,
+    ) -> None:
+        """Locale switch should keep the currently selected theme in the combo box."""
+        (temp_config_dir / "i18n.de.json").write_text("{}", encoding="utf-8")
+        (temp_config_dir / "i18n.en.json").write_text("{}", encoding="utf-8")
+
+        i18n_de = I18nFactory(config_path=temp_config_dir, locale="de")
+        i18n_en = I18nFactory(config_path=temp_config_dir, locale="en")
+
+        editor = LiveThemeEditor(temp_config_dir, i18n_factory=i18n_de)
+        assert editor.theme_combo.count() >= 2
+
+        editor.theme_combo.setCurrentIndex(1)
+        current_data = editor.theme_combo.currentData()
+        assert isinstance(current_data, dict)
+        assert current_data.get("id") == "light"
+
+        editor.set_i18n_factory(i18n_en)
+
+        switched_data = editor.theme_combo.currentData()
+        assert isinstance(switched_data, dict)
+        assert switched_data.get("id") == "light"

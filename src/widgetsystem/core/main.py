@@ -3,7 +3,7 @@
 import sys
 from collections.abc import Callable, Iterable
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import PySide6QtAds as QtAds
 from PySide6.QtCore import QSize, Qt, QTimer
@@ -39,6 +39,7 @@ from widgetsystem.factories.list_factory import ListFactory
 from widgetsystem.factories.menu_factory import MenuFactory, MenuItem
 from widgetsystem.factories.panel_factory import PanelConfig, PanelFactory
 from widgetsystem.factories.responsive_factory import ResponsiveFactory
+from widgetsystem.factories.splitter_factory import SplitterEventHandler, SplitterFactory
 from widgetsystem.factories.tabs_factory import Tab, TabGroup, TabsFactory
 from widgetsystem.factories.theme_factory import ThemeDefinition, ThemeFactory
 from widgetsystem.factories.toolbar_factory import ToolbarFactory
@@ -117,6 +118,9 @@ class MainWindow(QMainWindow):
         # These will be removed in future versions once all code uses controllers
         self.panel_counter = 0
         self._docks: list[Any] = []
+        self._toolbar: QToolBar | None = None
+        self.layouts_menu: QMenu | None = None
+        self.themes_menu: QMenu | None = None
         self.action_handlers: dict[str, Any] = {}
         self.registered_action_names: set[str] = set()
         self.registered_shortcuts: set[str] = set()
@@ -135,6 +139,16 @@ class MainWindow(QMainWindow):
 
         # Initialize custom gradient system (replaces QtAds default gradients)
         self.gradient_renderer = get_gradient_renderer()
+
+        # Splitter behavior: native collapse resistance + corner controls
+        self._splitter_handle_width = max(1, self._dims.dock.splitter_width)
+        self._splitter_horizontal_bar_width = max(1, self._splitter_handle_width - 1)
+        self._splitter_min_remainder = max(4, self._splitter_handle_width * 2)
+        self.splitter_factory = SplitterFactory()
+        self.splitter_event_handler = SplitterEventHandler(self)
+        self.splitter_factory.configure_handler(self.splitter_event_handler)
+        self.splitter_event_handler.set_factory(self.splitter_factory)
+        self.splitter_event_handler.set_min_remainder(self._splitter_min_remainder)
 
         # Timer for continuous splitter width enforcement (catches DnD operations)
         self._splitter_timer = QTimer(self)
@@ -315,7 +329,7 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------------
 
     def _set_narrow_splitters(self) -> None:
-        """Set all splitters to ultra-narrow width (1px).
+        """Refresh splitter behavior, widths, tooltips, and corner controls.
 
         This is called by a QTimer every 300ms to catch splitters recreated
         by QtAds during drag-and-drop operations.
@@ -330,10 +344,36 @@ class MainWindow(QMainWindow):
         if not splitters:
             return
 
-        # Apply 1px to all splitters that aren't already 1px
         for splitter in splitters:
-            if splitter.handleWidth() != 1:
-                splitter.setHandleWidth(1)
+            target_width = self._splitter_width_for(splitter)
+            self.splitter_factory.apply_modern_behavior(
+                splitter,
+                handle_width=target_width,
+                min_remainder=self._splitter_min_remainder,
+            )
+            self.splitter_event_handler.track_splitter(splitter)
+
+            if not bool(splitter.property("ws_splitter_moved_connected")):
+                self._connect_qt_signal(
+                    splitter,
+                    "splitterMoved",
+                    lambda _pos, _index, tracked_splitter=splitter: self.splitter_event_handler.on_splitter_moved(
+                        tracked_splitter
+                    ),
+                )
+                splitter.setProperty("ws_splitter_moved_connected", True)
+
+            self.splitter_factory.update_handle_tooltips(splitter)
+
+        if not self.splitter_factory.is_corner_drag_active():
+            self.splitter_factory.install_corner_handles(self.dock_manager)
+
+    def _splitter_width_for(self, splitter: Any) -> int:
+        """Return the desired handle thickness for the given splitter orientation."""
+        orientation = splitter.orientation()
+        if orientation == Qt.Orientation.Vertical:
+            return self._splitter_horizontal_bar_width
+        return self._splitter_handle_width
 
     def _apply_custom_gradients(self) -> None:
         """Re-apply stylesheet to dock manager to ensure gradient overrides work.
@@ -806,6 +846,31 @@ class MainWindow(QMainWindow):
             undo_manager.redo()
             print("[REDO] Tab operation redone")
 
+    def _on_refresh(self) -> None:
+        """Refresh toolbar menus, splitter overlays, and dock-related UI state."""
+        try:
+            self._populate_layouts_menu()
+        except Exception as e:
+            print(f"[REFRESH] Layout menu refresh failed: {e}")
+
+        try:
+            self._populate_themes_menu()
+        except Exception as e:
+            print(f"[REFRESH] Theme menu refresh failed: {e}")
+
+        try:
+            self._set_narrow_splitters()
+        except Exception as e:
+            print(f"[REFRESH] Splitter refresh failed: {e}")
+
+        try:
+            if hasattr(self, "dock_manager") and self.dock_manager:
+                self.dock_manager.update()
+        except Exception:
+            pass
+
+        print("[REFRESH] Main UI refreshed")
+
     def _get_action_handler(self, action_name: str | ActionName) -> Any:
         """Get handler function for named action.
 
@@ -860,7 +925,7 @@ class MainWindow(QMainWindow):
             "show_configuration": self._show_configuration_panel,
             "undo": self._on_undo,
             "redo": self._on_redo,
-            "refresh": lambda: print("[REFRESH] Refresh triggered"),
+            "refresh": self._on_refresh,
         }
 
     # ------------------------------------------------------------------
@@ -1014,6 +1079,8 @@ class MainWindow(QMainWindow):
     def _create_toolbar_fallback(self) -> None:
         """Create toolbar with hardcoded buttons (fallback)."""
         toolbar = QToolBar(self.i18n_factory.translate("toolbar.title", default="Dock Tools"))
+        toolbar.setMovable(True)
+        toolbar.setFloatable(False)
 
         toolbar.setStyleSheet("""
             QToolBar {
@@ -1036,6 +1103,28 @@ class MainWindow(QMainWindow):
         self._setup_toolbar_menus()
 
         toolbar.addSeparator()
+        theme_editor_btn = QToolButton()
+        theme_editor_btn.setText("🎨")
+        theme_editor_btn.setToolTip(
+            self.i18n_factory.translate("action.show_theme_editor", default="Theme Editor"),
+        )
+        self._connect_qt_signal(theme_editor_btn, "clicked", self._show_theme_editor)
+        toolbar.addWidget(theme_editor_btn)
+
+        plugin_btn = QToolButton()
+        plugin_btn.setText("🧩")
+        plugin_btn.setToolTip(
+            self.i18n_factory.translate("action.show_plugin_manager", default="Plugin Manager"),
+        )
+        self._connect_qt_signal(plugin_btn, "clicked", self._show_plugin_manager)
+        toolbar.addWidget(plugin_btn)
+
+        refresh_btn = QToolButton()
+        refresh_btn.setText("↻")
+        refresh_btn.setToolTip(self.i18n_factory.translate("action.refresh", default="Refresh"))
+        self._connect_qt_signal(refresh_btn, "clicked", self._on_refresh)
+        toolbar.addWidget(refresh_btn)
+
         config_btn = QToolButton()
         config_btn.setText("⚙")
         config_btn.setToolTip(self.i18n_factory.translate("toolbar.config", default="Config"))
@@ -1062,8 +1151,12 @@ class MainWindow(QMainWindow):
 
     def _setup_toolbar_menus(self) -> None:
         """Setup dynamic dropdown menus in toolbar."""
+        toolbar = self._toolbar
+        if toolbar is None:
+            return
+
         # Create layouts menu if not exists
-        if not hasattr(self, "layouts_menu"):
+        if self.layouts_menu is None:
             self.layouts_menu = QMenu(
                 self.i18n_factory.translate("toolbar.layouts", default="Layouts"),
                 self,
@@ -1074,10 +1167,10 @@ class MainWindow(QMainWindow):
             layouts_button.setToolTip(self.i18n_factory.translate("toolbar.layouts", default="Layouts"))
             layouts_button.setMenu(self.layouts_menu)
             layouts_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-            self._toolbar.addWidget(layouts_button)
+            toolbar.addWidget(layouts_button)
 
         # Create themes menu if not exists
-        if not hasattr(self, "themes_menu"):
+        if self.themes_menu is None:
             self.themes_menu = QMenu(
                 self.i18n_factory.translate("toolbar.themes", default="Themes"),
                 self,
@@ -1088,31 +1181,35 @@ class MainWindow(QMainWindow):
             themes_button.setToolTip(self.i18n_factory.translate("toolbar.themes", default="Themes"))
             themes_button.setMenu(self.themes_menu)
             themes_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-            self._toolbar.addWidget(themes_button)
+            toolbar.addWidget(themes_button)
 
     def _populate_layouts_menu(self) -> None:
         """Populate layouts menu from LayoutFactory."""
-        self.layouts_menu.clear()
+        menu = self.layouts_menu
+        if menu is None:
+            return
+
+        menu.clear()
         try:
             layouts = self.layout_factory.list_layouts()
             if not layouts:
-                empty_action = self.layouts_menu.addAction(
+                empty_action = menu.addAction(
                     self.i18n_factory.translate("layout.none_found", default="No layouts found"),
                 )
                 empty_action.setEnabled(False)
             else:
                 for layout in layouts:
-                    action = self.layouts_menu.addAction(layout.name)
+                    action = menu.addAction(layout.name)
                     action.triggered.connect(
                         lambda checked=False, layout=layout: self._load_named_layout(layout),
                     )
 
-            self.layouts_menu.addSeparator()
-            self.layouts_menu.addAction(
+            menu.addSeparator()
+            menu.addAction(
                 self.i18n_factory.translate("layout.reload", default="Reload Layout List"),
             ).triggered.connect(self._reload_layouts_menu)
         except Exception as e:
-            error_action = self.layouts_menu.addAction(f"Error: {str(e)[:30]}")
+            error_action = menu.addAction(f"Error: {str(e)[:30]}")
             error_action.setEnabled(False)
 
     def _reload_layouts_menu(self) -> None:
@@ -1121,12 +1218,16 @@ class MainWindow(QMainWindow):
 
     def _populate_themes_menu(self) -> None:
         """Populate themes menu from ThemeFactory (legacy) and ThemeManager."""
-        self.themes_menu.clear()
+        menu = self.themes_menu
+        if menu is None:
+            return
+
+        menu.clear()
         try:
             # Add themes from ThemeManager (includes both legacy and profiles)
             theme_names = self.theme_manager.theme_names()
             if not theme_names:
-                empty_action = self.themes_menu.addAction(
+                empty_action = menu.addAction(
                     self.i18n_factory.translate("theme.none_found", default="No themes found"),
                 )
                 empty_action.setEnabled(False)
@@ -1134,19 +1235,19 @@ class MainWindow(QMainWindow):
                 for theme_id in theme_names:
                     theme = self.theme_manager.get_theme(theme_id)
                     if theme:
-                        action = self.themes_menu.addAction(theme.name)
+                        action = menu.addAction(theme.name)
                         action.triggered.connect(
                             lambda checked=False, tid=theme_id: (
                                 self.theme_manager.set_current_theme(tid)
                             ),
                         )
 
-            self.themes_menu.addSeparator()
-            self.themes_menu.addAction(
+            menu.addSeparator()
+            menu.addAction(
                 self.i18n_factory.translate("theme.reload", default="Reload Theme List"),
             ).triggered.connect(self._reload_themes_menu)
         except Exception as e:
-            error_action = self.themes_menu.addAction(f"Error: {str(e)[:30]}")
+            error_action = menu.addAction(f"Error: {str(e)[:30]}")
             error_action.setEnabled(False)
 
     def _reload_themes_menu(self) -> None:
@@ -1155,6 +1256,11 @@ class MainWindow(QMainWindow):
         self.theme_manager.clear()
         self._register_theme_profiles()
         self._populate_themes_menu()
+
+    @staticmethod
+    def _invoke_callable(func: Any) -> Any:
+        """Invoke a callable object and return its result."""
+        return func()
 
     # ------------------------------------------------------------------
     # Layout persistence
@@ -1452,13 +1558,13 @@ class MainWindow(QMainWindow):
                         profile_name = getattr(profile, "name", None)
                         if not isinstance(profile_name, str):
                             continue
-                        generate_qss = getattr(profile, "generate_qss", None)
-                        if generate_qss is None or not callable(generate_qss):
+                        qss_generator = getattr(profile, "generate_qss", None)
+                        if not isinstance(qss_generator, Callable):
                             continue
                         theme = Theme(f"profile_{profile_id}", profile_name)
                         qss_content = None
                         try:
-                            result = generate_qss()
+                            result = self._invoke_callable(cast(Any, qss_generator))
                             qss_content = result if isinstance(result, str) else None
                         except TypeError:
                             # generate_qss might not be callable, skip this profile

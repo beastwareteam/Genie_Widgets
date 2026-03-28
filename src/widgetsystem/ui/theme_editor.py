@@ -372,6 +372,19 @@ class LiveThemeEditor(QWidget):
     def _load_themes(self) -> None:
         """Load available themes."""
         try:
+            selected_theme_id: str | None = None
+            selected_theme_name: str | None = None
+            current_data = self.theme_combo.currentData()
+            if isinstance(current_data, dict):
+                current_id = current_data.get("id")
+                if isinstance(current_id, str):
+                    selected_theme_id = current_id
+                current_name = current_data.get("name")
+                if isinstance(current_name, str):
+                    selected_theme_name = current_name
+            if selected_theme_name is None:
+                selected_theme_name = self.theme_combo.currentText()
+
             themes = self.theme_factory.load_themes()
             if not themes:
                 # Backward-compatible fallback for plain list format in themes.json
@@ -381,10 +394,21 @@ class LiveThemeEditor(QWidget):
                     if isinstance(raw_data, list):
                         themes = raw_data
             self.theme_combo.clear()
+            selected_index = -1
             for theme in themes:
                 fallback_unknown = self._translate("theme_editor.unknown", "Unknown")
                 theme_name = theme.get("name", theme.get("id", fallback_unknown))
                 self.theme_combo.addItem(theme_name, theme)
+
+                if selected_index < 0:
+                    theme_id = theme.get("id")
+                    if isinstance(theme_id, str) and selected_theme_id == theme_id:
+                        selected_index = self.theme_combo.count() - 1
+                    elif isinstance(theme_name, str) and selected_theme_name == theme_name:
+                        selected_index = self.theme_combo.count() - 1
+
+            if selected_index >= 0:
+                self.theme_combo.setCurrentIndex(selected_index)
         except Exception as e:
             logger.exception(f"Error loading themes: {e}")
 

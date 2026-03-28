@@ -29,7 +29,7 @@ from PySide6.QtWidgets import (
 from widgetsystem.factories.i18n_factory import I18nFactory
 from widgetsystem.factories.list_factory import ListFactory, ListGroup, ListItem
 from widgetsystem.factories.menu_factory import MenuFactory, MenuItem
-from widgetsystem.factories.panel_factory import PanelFactory
+from widgetsystem.factories.panel_factory import PanelConfig, PanelFactory
 from widgetsystem.factories.tabs_factory import Tab, TabsFactory
 from widgetsystem.factories.ui_config_factory import UIConfigFactory
 
@@ -50,6 +50,7 @@ class ConfigurationPanel(QWidget):
     config_changed = Signal(str)  # Emitted when configuration changes (category)
     item_added = Signal(str, str)  # Emitted when item is added (category, id)
     item_deleted = Signal(str, str)  # Emitted when item is deleted (category, id)
+    item_selected = Signal(str, str)  # Emitted when item is selected (category, id)
 
     def __init__(
         self,
@@ -67,6 +68,18 @@ class ConfigurationPanel(QWidget):
         self.tabs_tree: QTreeWidget | None = None
         self.panels_list: QListWidget | None = None
         self.config_tabs: QTabWidget | None = None
+        self.panel_id_value: QLabel | None = None
+        self.panel_name_key_input: QLineEdit | None = None
+        self.panel_tooltip_key_input: QLineEdit | None = None
+        self.panel_area_editor_combo: QComboBox | None = None
+        self.panel_closable_editor: QCheckBox | None = None
+        self.panel_movable_editor: QCheckBox | None = None
+        self.panel_floatable_editor: QCheckBox | None = None
+        self.panel_delete_on_close_editor: QCheckBox | None = None
+        self.panel_dnd_enabled_editor: QCheckBox | None = None
+        self.panel_responsive_hidden_input: QLineEdit | None = None
+        self.panel_apply_btn: QPushButton | None = None
+        self._selected_panel_id: str | None = None
 
         # Initialize factories
         self.list_factory = ListFactory(self.config_path)
@@ -105,6 +118,7 @@ class ConfigurationPanel(QWidget):
                 if pages:
                     # Create tab for each category
                     category_widget = self._create_category_widget(category)
+                    category_widget.setProperty("config_category", category)
                     tab_title = self.i18n_factory.translate(
                         f"config.{category}.title",
                         default=category.title(),
@@ -130,7 +144,7 @@ class ConfigurationPanel(QWidget):
         self._rebuild_tabs()
 
     @staticmethod
-    def _connect_signal(signal: object, callback: Callable[[], None]) -> None:
+    def _connect_signal(signal: object, callback: Callable[..., None]) -> None:
         """Connect Qt signal with typed fallback for static analyzers."""
         cast(Any, signal).connect(callback)  # pyright: ignore[reportAttributeAccessIssue]  # pylint: disable=no-member
 
@@ -417,6 +431,8 @@ class ConfigurationPanel(QWidget):
         if self.panels_list is None:
             return
 
+        selected_panel_id = self._selected_panel_id
+
         # Clear the list
         panels_list = self.panels_list
         panels_list.clear()
@@ -430,14 +446,242 @@ class ConfigurationPanel(QWidget):
                 )
                 item.setData(Qt.ItemDataRole.UserRole, panel.id)
                 panels_list.addItem(item)
+
+            if selected_panel_id:
+                for index in range(panels_list.count()):
+                    candidate = panels_list.item(index)
+                    candidate_id = candidate.data(Qt.ItemDataRole.UserRole)
+                    if isinstance(candidate_id, str) and candidate_id == selected_panel_id:
+                        panels_list.setCurrentItem(candidate)
+                        break
         except Exception:
             pass
 
+    def _set_panel_editor_enabled(self, enabled: bool) -> None:
+        """Enable or disable selected-panel editor widgets."""
+        editor_widgets: list[QWidget | None] = [
+            self.panel_name_key_input,
+            self.panel_tooltip_key_input,
+            self.panel_area_editor_combo,
+            self.panel_closable_editor,
+            self.panel_movable_editor,
+            self.panel_floatable_editor,
+            self.panel_delete_on_close_editor,
+            self.panel_dnd_enabled_editor,
+            self.panel_responsive_hidden_input,
+            self.panel_apply_btn,
+        ]
+        for widget in editor_widgets:
+            if widget is not None:
+                widget.setEnabled(enabled)
+
+    def _populate_panel_editor(self, panel: PanelConfig) -> None:
+        """Populate selected-panel editor fields from config."""
+        if self.panel_id_value is not None:
+            self.panel_id_value.setText(panel.id)
+        if self.panel_name_key_input is not None:
+            self.panel_name_key_input.setText(panel.name_key)
+        if self.panel_tooltip_key_input is not None:
+            self.panel_tooltip_key_input.setText(panel.tooltip_key)
+        if self.panel_area_editor_combo is not None:
+            index = self.panel_area_editor_combo.findData(panel.area)
+            if index >= 0:
+                self.panel_area_editor_combo.setCurrentIndex(index)
+        if self.panel_closable_editor is not None:
+            self.panel_closable_editor.setChecked(panel.closable)
+        if self.panel_movable_editor is not None:
+            self.panel_movable_editor.setChecked(panel.movable)
+        if self.panel_floatable_editor is not None:
+            self.panel_floatable_editor.setChecked(panel.floatable)
+        if self.panel_delete_on_close_editor is not None:
+            self.panel_delete_on_close_editor.setChecked(panel.delete_on_close)
+        if self.panel_dnd_enabled_editor is not None:
+            self.panel_dnd_enabled_editor.setChecked(panel.dnd_enabled)
+        if self.panel_responsive_hidden_input is not None:
+            self.panel_responsive_hidden_input.setText(",".join(panel.responsive_hidden_at or []))
+
+    def _on_panel_selection_changed(
+        self,
+        current: QListWidgetItem | None,
+        _previous: QListWidgetItem | None,
+    ) -> None:
+        """Load selected panel details into the editor."""
+        if current is None:
+            self._selected_panel_id = None
+            if self.panel_id_value is not None:
+                self.panel_id_value.setText("-")
+            self._set_panel_editor_enabled(False)
+            return
+
+        panel_id = current.data(Qt.ItemDataRole.UserRole)
+        if not isinstance(panel_id, str):
+            return
+
+        panel = self.panel_factory.get_panel(panel_id)
+        if panel is None:
+            return
+
+        self._selected_panel_id = panel_id
+        self._populate_panel_editor(panel)
+        self._set_panel_editor_enabled(True)
+        self.item_selected.emit("panels", panel_id)
+
+    def _on_apply_selected_panel(self) -> None:
+        """Apply current selected-panel editor values to configuration."""
+        panel_id = self._selected_panel_id
+        if not panel_id:
+            QMessageBox.warning(
+                self,
+                self.i18n_factory.translate("dialog.warning", default="Warning"),
+                self.i18n_factory.translate(
+                    "config.validation.panel_selection_required",
+                    default="Please select a panel first",
+                ),
+            )
+            return
+
+        if (
+            self.panel_name_key_input is None
+            or self.panel_tooltip_key_input is None
+            or self.panel_area_editor_combo is None
+            or self.panel_closable_editor is None
+            or self.panel_movable_editor is None
+            or self.panel_floatable_editor is None
+            or self.panel_delete_on_close_editor is None
+            or self.panel_dnd_enabled_editor is None
+            or self.panel_responsive_hidden_input is None
+        ):
+            return
+
+        responsive_hidden_at = [
+            value.strip()
+            for value in self.panel_responsive_hidden_input.text().split(",")
+            if value.strip()
+        ]
+
+        success = self.panel_factory.update_panel(
+            panel_id,
+            name_key=self.panel_name_key_input.text().strip(),
+            tooltip_key=self.panel_tooltip_key_input.text().strip(),
+            area=str(self.panel_area_editor_combo.currentData() or "center"),
+            closable=self.panel_closable_editor.isChecked(),
+            movable=self.panel_movable_editor.isChecked(),
+            floatable=self.panel_floatable_editor.isChecked(),
+            delete_on_close=self.panel_delete_on_close_editor.isChecked(),
+            dnd_enabled=self.panel_dnd_enabled_editor.isChecked(),
+            responsive_hidden_at=responsive_hidden_at,
+        )
+
+        if not success:
+            QMessageBox.warning(
+                self,
+                self.i18n_factory.translate("message.error", default="Error"),
+                self.i18n_factory.translate(
+                    "config.error.save_panel_failed",
+                    default="Failed to save panel to configuration file",
+                ),
+            )
+            return
+
+        self.panel_factory = PanelFactory(self.config_path)
+        self._refresh_panels_tree()
+        self.config_changed.emit("panels")
+
+    def select_config_item(self, category: str, item_id: str) -> bool:
+        """Select a configuration item programmatically (automation helper).
+
+        Args:
+            category: Category name (currently supports: panels)
+            item_id: Configuration item id
+
+        Returns:
+            True when a matching item was selected
+        """
+        if category != "panels" or self.panels_list is None:
+            return False
+
+        if self.config_tabs is not None:
+            for index in range(self.config_tabs.count()):
+                widget = self.config_tabs.widget(index)
+                category_prop = widget.property("config_category") if widget is not None else None
+                if category_prop == "panels":
+                    self.config_tabs.setCurrentIndex(index)
+                    break
+
+        for index in range(self.panels_list.count()):
+            item = self.panels_list.item(index)
+            current_id = item.data(Qt.ItemDataRole.UserRole)
+            if isinstance(current_id, str) and current_id == item_id:
+                self.panels_list.setCurrentItem(item)
+                return True
+
+        return False
+
+    def get_selected_config_payload(self) -> dict[str, Any] | None:
+        """Return selected configuration payload (automation helper).
+
+        Returns:
+            Selected panel configuration as a dictionary or None
+        """
+        if not self._selected_panel_id:
+            return None
+
+        panel = self.panel_factory.get_panel(self._selected_panel_id)
+        if panel is None:
+            return None
+
+        return {
+            "category": "panels",
+            "id": panel.id,
+            "name_key": panel.name_key,
+            "tooltip_key": panel.tooltip_key,
+            "area": panel.area,
+            "closable": panel.closable,
+            "movable": panel.movable,
+            "floatable": panel.floatable,
+            "delete_on_close": panel.delete_on_close,
+            "dnd_enabled": panel.dnd_enabled,
+            "responsive_hidden_at": panel.responsive_hidden_at or [],
+        }
+
     def _setup_tabs_editor(self, parent_layout: QVBoxLayout) -> None:
-        """Setup tab editor interface."""
+        """Setup tab editor interface.
+
+        Architectural note:
+            This editor currently operates on persisted demo configuration from
+            `config/tabs.json`. A full implementation for the original app must
+            additionally integrate the runtime tab architecture, including:
+            - `TabSubsystem`
+            - `UnifiedTabManager`
+            - `TabNavigationController`
+            - `TabCommandController`
+
+            Required implementation step:
+            Runtime tab/container identities from the original application must be
+            mapped to persisted config identities before full automation/editing can
+            be considered complete. Until then, this editor remains a demo-oriented
+            configuration surface and not the final architecture source of truth.
+        """
         title = QLabel(self.i18n_factory.translate("config.tab_editor.label", default="Tab Editor"))
         title.setStyleSheet("font-weight: bold; font-size: 12px;")
         parent_layout.addWidget(title)
+
+        architecture_note = QLabel(
+            self.i18n_factory.translate(
+                "config.tabs.architecture_note",
+                default=(
+                    "Demo-Hinweis: Die Tab-Bearbeitung arbeitet hier aktuell nur auf "
+                    "Konfigurationsbasis. Für die Original-App ist zusätzlich eine "
+                    "Anbindung an Runtime-Tabstrukturen und Tab-Controller notwendig."
+                ),
+            ),
+        )
+        architecture_note.setWordWrap(True)
+        architecture_note.setStyleSheet(
+            "color: #c8b48a; background-color: rgba(255, 196, 64, 0.08); "
+            "border: 1px solid rgba(255, 196, 64, 0.22); border-radius: 4px; padding: 6px;"
+        )
+        parent_layout.addWidget(architecture_note)
 
         info = QLabel(
             self.i18n_factory.translate(
@@ -541,6 +785,8 @@ class ConfigurationPanel(QWidget):
         except Exception:
             pass
 
+        self._connect_signal(self.panels_list.currentItemChanged, self._on_panel_selection_changed)
+
         parent_layout.addWidget(self.panels_list)
 
         # Properties
@@ -594,6 +840,103 @@ class ConfigurationPanel(QWidget):
             ),
         )
         props_layout.addRow(add_panel_btn)
+
+        selected_header = QLabel(
+            self.i18n_factory.translate(
+                "config.panel.selected_header",
+                default="Selected panel (inspect/edit)",
+            ),
+        )
+        selected_header.setStyleSheet("font-weight: bold; padding-top: 6px;")
+        props_layout.addRow(selected_header)
+
+        self.panel_id_value = QLabel("-")
+        props_layout.addRow(
+            self.i18n_factory.translate("config.panel.id", default="ID:"),
+            self.panel_id_value,
+        )
+
+        self.panel_name_key_input = QLineEdit()
+        props_layout.addRow(
+            self.i18n_factory.translate("config.panel.name_key", default="Name key:"),
+            self.panel_name_key_input,
+        )
+
+        self.panel_tooltip_key_input = QLineEdit()
+        props_layout.addRow(
+            self.i18n_factory.translate("config.panel.tooltip_key", default="Tooltip key:"),
+            self.panel_tooltip_key_input,
+        )
+
+        self.panel_area_editor_combo = QComboBox()
+        self.panel_area_editor_combo.addItem(
+            self.i18n_factory.translate("config.panel.area.left", default="Left"),
+            "left",
+        )
+        self.panel_area_editor_combo.addItem(
+            self.i18n_factory.translate("config.panel.area.right", default="Right"),
+            "right",
+        )
+        self.panel_area_editor_combo.addItem(
+            self.i18n_factory.translate("config.panel.area.bottom", default="Bottom"),
+            "bottom",
+        )
+        self.panel_area_editor_combo.addItem(
+            self.i18n_factory.translate("config.panel.area.center", default="Center"),
+            "center",
+        )
+        props_layout.addRow(
+            self.i18n_factory.translate("config.panel_area", default="Area:"),
+            self.panel_area_editor_combo,
+        )
+
+        self.panel_closable_editor = QCheckBox()
+        props_layout.addRow(
+            self.i18n_factory.translate("config.panel_closable", default="Closable:"),
+            self.panel_closable_editor,
+        )
+
+        self.panel_movable_editor = QCheckBox()
+        props_layout.addRow(
+            self.i18n_factory.translate("config.panel.movable", default="Movable:"),
+            self.panel_movable_editor,
+        )
+
+        self.panel_floatable_editor = QCheckBox()
+        props_layout.addRow(
+            self.i18n_factory.translate("config.panel.floatable", default="Floatable:"),
+            self.panel_floatable_editor,
+        )
+
+        self.panel_delete_on_close_editor = QCheckBox()
+        props_layout.addRow(
+            self.i18n_factory.translate("config.panel.delete_on_close", default="Delete on close:"),
+            self.panel_delete_on_close_editor,
+        )
+
+        self.panel_dnd_enabled_editor = QCheckBox()
+        props_layout.addRow(
+            self.i18n_factory.translate("config.panel.dnd_enabled", default="DnD enabled:"),
+            self.panel_dnd_enabled_editor,
+        )
+
+        self.panel_responsive_hidden_input = QLineEdit()
+        self.panel_responsive_hidden_input.setPlaceholderText("sm,md")
+        props_layout.addRow(
+            self.i18n_factory.translate(
+                "config.panel.responsive_hidden_at",
+                default="Hidden at breakpoints:",
+            ),
+            self.panel_responsive_hidden_input,
+        )
+
+        self.panel_apply_btn = QPushButton(
+            self.i18n_factory.translate("button.apply", default="Apply"),
+        )
+        self._connect_signal(self.panel_apply_btn.clicked, self._on_apply_selected_panel)
+        props_layout.addRow(self.panel_apply_btn)
+
+        self._set_panel_editor_enabled(False)
 
         parent_layout.addWidget(properties_widget)
 
@@ -879,8 +1222,11 @@ class ConfigurationPanel(QWidget):
                 # Reload the factory
                 self.panel_factory = PanelFactory(self.config_path)
                 # Refresh the UI
+                self._selected_panel_id = panel_id
                 self._refresh_panels_tree()
+                self.select_config_item("panels", panel_id)
                 self.config_changed.emit("panels")
+                self.item_added.emit("panels", panel_id)
                 QMessageBox.information(
                     self,
                     self.i18n_factory.translate("message.success", default="Success"),

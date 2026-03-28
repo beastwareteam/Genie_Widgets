@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import logging
+import warnings
+from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -187,10 +189,10 @@ class ActionRegistry(QObject):
             handler: The handler function
         """
         # Disconnect any existing connections first
-        try:
-            action.triggered.disconnect()
-        except RuntimeError:
-            pass  # No connections to disconnect
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            with suppress(RuntimeError):
+                action.triggered.disconnect()
 
         # Connect new handler
         action.triggered.connect(lambda _checked=False: handler())
