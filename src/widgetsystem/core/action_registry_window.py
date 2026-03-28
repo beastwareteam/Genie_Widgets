@@ -533,19 +533,37 @@ class ActionRegistryDemo(QMainWindow):
         self._schedule_splitter_refresh()
 
     def _curtain_snap(self, side: str) -> None:
-        """Animate splitters like curtains with smooth resistance near the end."""
+        """Animate splitters like curtains with smooth resistance near the end.
+
+        ``side`` controls which panes collapse and which expands:
+
+        * ``"left"``  / ``"right"``          – horizontal splitters only
+        * ``"top"``   / ``"bottom"``          – vertical splitters only
+        * ``"expand_center"``                 – all splitters, centre pane expands
+        * ``"collapse_center"``               – all splitters, outer panes expand
+        """
         if self.dock_manager is None:
             return
+
+        # Determine which splitter orientations the side applies to.
+        h_sides = {"left", "right", "expand_center", "collapse_center"}
+        v_sides = {"top", "bottom", "expand_center", "collapse_center"}
 
         self._stop_splitter_animations()
         splitters = self.dock_manager.findChildren(QSplitter)
         for splitter in splitters:
+            is_h = splitter.orientation() == Qt.Orientation.Horizontal
+            is_v = splitter.orientation() == Qt.Orientation.Vertical
+            if is_h and side not in h_sides:
+                continue
+            if is_v and side not in v_sides:
+                continue
             target_sizes = self._build_curtain_target_sizes(splitter, side)
             if target_sizes is None:
                 continue
             self._animate_splitter_sizes(splitter, target_sizes)
 
-        self._log(f"Curtain snap applied: {side}")
+        self._log(f"Curtain snap: {side}")
 
     def _build_curtain_target_sizes(self, splitter: Any, side: str) -> list[int] | None:
         """Build target sizes with a small remainder so collapsed panes stay usable (delegated to factory)."""
@@ -800,13 +818,29 @@ class ActionRegistryDemo(QMainWindow):
         )
         layout.addWidget(add_button)
 
-        curtain_left_button = QPushButton("Vorhang: nach links")
+        curtain_left_button = QPushButton("◀ Vorhang links (H)")
         self._connect_signal(curtain_left_button.clicked, lambda checked=False: self._curtain_snap("left"))
         layout.addWidget(curtain_left_button)
 
-        curtain_right_button = QPushButton("Vorhang: nach rechts")
+        curtain_right_button = QPushButton("▶ Vorhang rechts (H)")
         self._connect_signal(curtain_right_button.clicked, lambda checked=False: self._curtain_snap("right"))
         layout.addWidget(curtain_right_button)
+
+        curtain_top_button = QPushButton("▲ Vorhang oben (V)")
+        self._connect_signal(curtain_top_button.clicked, lambda checked=False: self._curtain_snap("top"))
+        layout.addWidget(curtain_top_button)
+
+        curtain_bottom_button = QPushButton("▼ Vorhang unten (V)")
+        self._connect_signal(curtain_bottom_button.clicked, lambda checked=False: self._curtain_snap("bottom"))
+        layout.addWidget(curtain_bottom_button)
+
+        curtain_expand_center_button = QPushButton("⬡ Mitte expandieren")
+        self._connect_signal(curtain_expand_center_button.clicked, lambda checked=False: self._curtain_snap("expand_center"))
+        layout.addWidget(curtain_expand_center_button)
+
+        curtain_collapse_center_button = QPushButton("⬢ Mitte einklappen")
+        self._connect_signal(curtain_collapse_center_button.clicked, lambda checked=False: self._curtain_snap("collapse_center"))
+        layout.addWidget(curtain_collapse_center_button)
 
         dock.setWidget(container)
         dock.setFeature(QtAds.CDockWidget.DockWidgetFeature.DockWidgetClosable, True)

@@ -61,6 +61,9 @@ class CornerSplitterHandle(QWidget):
         # Axis locking
         self._locked_axis: Qt.Orientation | None = None
 
+        # Optional factory reference for cascade collapse during drag
+        self._factory: "SplitterFactory | None" = None
+
     def is_drag_active(self) -> bool:
         """Return whether this corner handle is currently dragging."""
         return self._drag_active
@@ -155,6 +158,46 @@ class CornerSplitterHandle(QWidget):
             if existing_splitter is splitter and existing_index == handle_index:
                 return
         bindings.append((splitter, handle_index))
+
+    def set_factory(self, factory: "SplitterFactory") -> None:
+        """Attach the SplitterFactory so drag movements can trigger cascade collapse.
+
+        Args:
+            factory: SplitterFactory instance owning this corner handle
+        """
+        self._factory = factory
+
+    def _try_cascade(
+        self,
+        splitter: QSplitter,
+        handle_index: int,
+        *,
+        direction: int,
+        drag_step: int,
+        edge_hint: str | None,
+    ) -> None:
+        """Delegate cascade collapse to the factory if available.
+
+        Called after a corner-handle drag move reaches the snap zone so that
+        neighbouring panes collapse in sequence (outside-in) just like a
+        regular splitter-handle drag does via SplitterEventHandler.
+
+        Args:
+            splitter: The splitter whose handle was moved
+            handle_index: Index of the moved handle
+            direction: -1 for left/top, +1 for right/bottom
+            drag_step: Pixel magnitude of this drag step
+            edge_hint: "min" or "max" edge that is active
+        """
+        if self._factory is None:
+            return
+        self._factory.apply_hierarchical_drag_cascade(
+            splitter,
+            handle_index,
+            direction,
+            drag_step,
+            edge_hint=edge_hint,
+        )
 
     def paintEvent(self, _event: Any) -> None:
         """Draw corner indicator with state-dependent colors.
@@ -333,10 +376,12 @@ class CornerSplitterHandle(QWidget):
                 direction=-1,
                 overshoot_px=overshoot,
             ):
+                self._try_cascade(splitter, handle_index, direction=-1, drag_step=abs(delta), edge_hint="min")
                 return
 
         if delta < 0 and target_pos <= min_pos + collapse_snap:
             splitter.moveSplitter(min_pos, handle_index)
+            self._try_cascade(splitter, handle_index, direction=-1, drag_step=abs(delta), edge_hint="min")
             return
 
         if hierarchical_collapse_enabled and delta > 0 and target_pos >= max_pos - collapse_snap:
@@ -347,10 +392,12 @@ class CornerSplitterHandle(QWidget):
                 direction=1,
                 overshoot_px=overshoot,
             ):
+                self._try_cascade(splitter, handle_index, direction=1, drag_step=abs(delta), edge_hint="max")
                 return
 
         if delta > 0 and target_pos >= max_pos - collapse_snap:
             splitter.moveSplitter(max_pos, handle_index)
+            self._try_cascade(splitter, handle_index, direction=1, drag_step=abs(delta), edge_hint="max")
             return
 
         legal_target = splitter.closestLegalPosition(target_pos, handle_index)
@@ -663,17 +710,30 @@ class SplitterFactory:
         direction: int,
         drag_step: int,
         edge_hint: str | None = None,
+        collapse_mode: str = "outside_in",
     ) -> bool:
         """Apply ordered cascade collapse while dragging a splitter handle.
 
-        The cascade starts at the pane adjacent to the dragged handle and continues
-        hierarchically toward the edge in drag direction.
+        Two collapse modes are supported:
+
+        ``outside_in`` (default)
+            The cascade starts at the pane adjacent to the dragged handle and
+            continues toward the nearest edge in the drag direction.  This is
+            the classic curtain collapse: drag left → leftmost panes disappear
+            first, then the ones further right follow in sequence.
+
+        ``inside_out``
+            The cascade starts at the *centre* of the splitter and expands
+            toward both edges simultaneously.  Useful for a "fold / unfold"
+            effect where the middle content collapses outward.
 
         Args:
             splitter: Target splitter
             handle_index: Moved handle index (1..count-1)
             direction: -1 for top/left, +1 for bottom/right
             drag_step: Pixel movement magnitude for this drag step
+            edge_hint: Force active edge: ``"min"``, ``"max"``, or ``None``
+            collapse_mode: ``"outside_in"`` or ``"inside_out"``
 
         Returns:
             True if a cascade update was applied
@@ -722,18 +782,27 @@ class SplitterFactory:
         remaining = budget
         applied = False
 
-        if near_min:
-            # Left/top edge active:
-            # - further drag to edge  => collapse chain
-            # - drag away from edge   => reopen chain
-            # In both cases predecessor handles represent this edge side.
-            handle_chain = range(handle_index - 1, 0, -1)
+        if collapse_mode == "inside_out":
+            # Build a handle chain that alternates outward from the centre:
+            # centre → left neighbour, centre → right neighbour, etc.
+            centre = splitter.count() // 2
+            left_chain = list(range(centre - 1, 0, -1))
+            right_chain = list(range(centre, splitter.count()))
+            # Interleave: left[0], right[0], left[1], right[1], …
+            interleaved: list[int] = []
+            for l_idx, r_idx in zip(left_chain, right_chain, strict=False):
+                interleaved.append(l_idx)
+                interleaved.append(r_idx)
+            # Append any remainder (asymmetric count)
+            longer = left_chain if len(left_chain) > len(right_chain) else right_chain
+            interleaved.extend(longer[min(len(left_chain), len(right_chain)):])
+            handle_chain: list[int] = interleaved
+        elif near_min:
+            # Outside-in, left/top edge active: collapse from dragged handle backward.
+            handle_chain = list(range(handle_index - 1, 0, -1))
         else:
-            # Right/bottom edge active:
-            # - further drag to edge  => collapse chain
-            # - drag away from edge   => reopen chain
-            # In both cases following handles represent this edge side.
-            handle_chain = range(handle_index + 1, splitter.count())
+            # Outside-in, right/bottom edge active: collapse from dragged handle forward.
+            handle_chain = list(range(handle_index + 1, splitter.count()))
 
         for chain_handle_index in handle_chain:
             if remaining <= 0:
@@ -1211,6 +1280,7 @@ QSplitter::handle:hover {{
             size,
         )
         corner_handle.set_splitters(h_splitter, h_idx, v_splitter, v_idx)
+        corner_handle.set_factory(self)
 
         corner_handle.show()
         corner_handle.raise_()
@@ -1311,9 +1381,16 @@ QSplitter::handle:hover {{
     ) -> list[int] | None:
         """Build target sizes with a small remainder for curtain-snap effect.
 
+        Supported ``side`` values:
+
+        * ``"left"``  / ``"top"``    – leftmost / topmost pane expands, rest collapse
+        * ``"right"`` / ``"bottom"`` – rightmost / bottommost pane expands, rest collapse
+        * ``"collapse_center"``      – centre pane(s) collapse, outer panes expand equally
+        * ``"expand_center"``        – outer panes collapse to remainder, centre pane expands
+
         Args:
             splitter: QSplitter to calculate sizes for
-            side: "left" or "right" indicating which panel expands
+            side: Collapse direction (see above)
             min_remainder: Minimum size for collapsed panels
             handle_width: Width of splitter handles
 
@@ -1332,13 +1409,45 @@ QSplitter::handle:hover {{
         collapsed_total = remainder * (count - 1)
         main_size = max(total - collapsed_total, remainder)
 
-        if side == "left":
+        # "left" and "top" are equivalent: the first pane in the splitter expands.
+        if side in ("left", "top"):
+            sizes = [remainder] * count
+            sizes[0] = main_size
+            return sizes
+
+        # "right" and "bottom": last pane expands.
+        if side in ("right", "bottom"):
             sizes = [remainder] * count
             sizes[-1] = main_size
             return sizes
 
+        # "expand_center": middle pane(s) take all the space, outer panes collapse.
+        if side == "expand_center":
+            sizes = [remainder] * count
+            centre = count // 2
+            # For even counts give the extra space to the right-centre pane.
+            centre_space = max(total - remainder * (count - 1), remainder)
+            sizes[centre] = centre_space
+            return sizes
+
+        # "collapse_center": outer panes split the space equally, centre collapses.
+        if side == "collapse_center":
+            sizes = [remainder] * count
+            centre = count // 2
+            outer_count = count - 1  # centre collapses
+            outer_space = max(total - remainder, remainder)
+            per_outer = max(outer_space // max(outer_count, 1), remainder)
+            for idx in range(count):
+                if idx != centre:
+                    sizes[idx] = per_outer
+            # Adjust rounding remainder into first outer pane.
+            rounding = total - sum(sizes)
+            sizes[0] = max(remainder, sizes[0] + rounding)
+            return sizes
+
+        # Unknown side – fall back to right.
         sizes = [remainder] * count
-        sizes[0] = main_size
+        sizes[-1] = main_size
         return sizes
 
 
