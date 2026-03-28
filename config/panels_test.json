@@ -1,0 +1,26 @@
+{
+  "panels": [
+    {
+      "id": "left_panel",
+      "name_key": "Left Panel",
+      "area": "left",
+      "closable": true,
+      "movable": true,
+      "floatable": true,
+      "delete_on_close": false,
+      "dnd_enabled": true,
+      "responsive_hidden_at": []
+    },
+    {
+      "id": "bottom_panel",
+      "name_key": "Bottom Panel",
+      "area": "bottom",
+      "closable": true,
+      "movable": true,
+      "floatable": true,
+      "delete_on_close": false,
+      "dnd_enabled": true,
+      "responsive_hidden_at": []
+    }
+  ]
+}

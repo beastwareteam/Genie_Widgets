@@ -1,0 +1,48 @@
+{
+  "tab_groups": [
+    {
+      "id": "main_tabs",
+      "title_key": "tabs.main",
+      "dock_area": "center",
+      "orientation": "horizontal",
+      "tabs": [
+        {
+          "id": "tab_alpha",
+          "title_key": "Alpha",
+          "component": "alpha",
+          "closable": true,
+          "movable": true,
+          "floatable": true,
+          "active": true
+        },
+        {
+          "id": "tab_beta",
+          "title_key": "Beta",
+          "component": "beta",
+          "closable": true,
+          "movable": true,
+          "floatable": true,
+          "active": false
+        },
+        {
+          "id": "tab_gamma",
+          "title_key": "Gamma",
+          "component": "gamma",
+          "closable": true,
+          "movable": true,
+          "floatable": true,
+          "active": false
+        },
+        {
+          "id": "tab_delta",
+          "title_key": "Delta",
+          "component": "delta",
+          "closable": true,
+          "movable": true,
+          "floatable": true,
+          "active": false
+        }
+      ]
+    }
+  ]
+}
