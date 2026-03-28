@@ -140,3 +140,16 @@ Thumbs.db
 *.rar
 demo_output.log
 .cursorignore
+
+# Runtime/demo artifacts
+config/.backup/
+config/custom_actions.json
+pytest_output.txt
+test_batch.txt
+all_phase1_tests.txt
+phase1_complete_summary.txt
+phase1_test_summary.txt
+phase1_tests_all.txt
+chevron_tests.txt
+screenshot_tabs.png
+test_x_icon.png

@@ -1,0 +1,68 @@
+ M .gitignore
+ M config/i18n.de.json
+ M config/i18n.en.json
+ D layout.xml
+ M src/widgetsystem/core/action_registry.py
+ M src/widgetsystem/core/main.py
+ M src/widgetsystem/core/theme_profile.py
+ M src/widgetsystem/factories/__init__.py
+ M src/widgetsystem/ui/chevron_menu.py
+ M src/widgetsystem/ui/config_panel.py
+ M src/widgetsystem/ui/theme_editor.py
+ M src/widgetsystem/ui/visual_layer.py
+ M tests/test_argb_color_picker.py
+ M tests/test_floating_titlebar_extended.py
+ M tests/test_theme_editor.py
+ M tests/test_theme_profile.py
+ M tests/test_visual_app_extended.py
+ M tests/test_widget_features_editor.py
+?? .claude/
+?? archive/backups/
+?? config/panels_test.json
+?? config/tabs_test.json
+?? docs/CORNER_HANDLES_INTEGRATION.md
+?? docs/CORNER_SPLITTER_HANDLES.md
+?? docs/TOOLBAR_CUSTOM_ACTION_IMPLEMENTATION_GUIDELINES.md
+?? docs/tracking/
+?? examples/complete_demo_backup.py
+?? examples/demo_action_registry.py
+?? examples/vscode_splitter_pyside6.py
+?? schemas/custom_actions.schema.json
+?? src/widgetsystem/core/action_registry_window.py
+?? src/widgetsystem/factories/adaptive_splitter_controller.py
+?? src/widgetsystem/factories/splitter_factory.py
+?? start_app.bat
+?? start_with_fixes.bat
+?? test_collapse.py
+?? test_dnd_cli.py
+?? test_dnd_debug.py
+?? test_tab_nesting.py
+?? test_tabs_e2e.py
+?? test_titlebar_collapse.py
+?? tests/test_adaptive_splitter.py
+?? tests/test_chevron_menu_i18n_runtime.py
+?? tests/test_config_panel_i18n_combos.py
+?? tests/test_config_panel_i18n_dialogs.py
+?? tests/test_config_panel_i18n_runtime.py
+?? tests/test_config_validator.py
+?? tests/test_floating_titlebar_i18n.py
+?? tests/test_gradient_system_extended.py
+?? tests/test_inlay_titlebar_i18n.py
+?? tests/test_layout_factory_i18n.py
+?? tests/test_list_factory_i18n.py
+?? tests/test_menu_factory_i18n.py
+?? tests/test_panel_factory_i18n.py
+?? tests/test_plugin_manager_dialog_i18n.py
+?? tests/test_responsive_factory_i18n.py
+?? tests/test_splitter_factory.py
+?? tests/test_tab_hierarchy.py
+?? tests/test_tabs_factory_i18n.py
+?? tests/test_theme_factory_i18n.py
+?? tests/test_theme_manager_extended.py
+?? tests/test_theme_profile_extended.py
+?? tests/test_ui_config_factory_i18n.py
+?? tests/test_ui_dimensions_factory.py
+?? tests/test_undo_redo.py
+?? tests/test_undo_redo_widget_i18n.py
+?? tests/test_unified_tab_item_i18n.py
+?? tests/test_visual_layer_i18n.py

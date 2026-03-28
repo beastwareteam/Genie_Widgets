@@ -124,9 +124,11 @@ class TabSelectorEventHandler(QObject):
                         logger.debug(f"Auto-registering area {area_id}")
                         self.tab_monitor.register_dock_area(area_id, area)
 
-                    # IMPORTANT: Connect to widget's signals
+                    # IMPORTANT: Connect to widget's signals (guard against duplicates)
                     # visibilityChanged: Update count when tab changes
-                    if hasattr(dock_widget, "visibilityChanged"):
+                    if hasattr(dock_widget, "visibilityChanged") and not dock_widget.property(
+                        "ws_signals_connected"
+                    ):
                         dock_widget.visibilityChanged.connect(
                             lambda visible, w=dock_widget: self._on_widget_visibility_changed(
                                 w,
@@ -135,8 +137,12 @@ class TabSelectorEventHandler(QObject):
                         )
 
                     # closed: Mark widget as permanently closed
-                    if hasattr(dock_widget, "closed"):
+                    if hasattr(dock_widget, "closed") and not dock_widget.property(
+                        "ws_signals_connected"
+                    ):
                         dock_widget.closed.connect(lambda w=dock_widget: self._on_widget_closed(w))
+
+                    dock_widget.setProperty("ws_signals_connected", True)
 
                     count = self.tab_monitor._count_tabs_in_area(area)
                     logger.debug(f"Updating tab count for {area_id}: {count}")
