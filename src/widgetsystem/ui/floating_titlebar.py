@@ -154,11 +154,11 @@ class CustomFloatingTitleBar(QWidget):
         title: str,
         parent: QWidget | None = None,
     ) -> None:
-        """Initialize custom floating title bar.
+        """Initialisiert die CustomFloatingTitleBar ohne hartcodierte Styles.
 
         Args:
-            title: Title to display
-            parent: Parent widget
+            title: Titeltext
+            parent: Parent-Widget
         """
         super().__init__(parent)
 
@@ -166,7 +166,6 @@ class CustomFloatingTitleBar(QWidget):
         self._drag_start_pos = None
 
         self._setup_ui()
-        self._setup_style()
 
     def _setup_ui(self) -> None:
         """Setup UI layout and widgets."""
@@ -204,40 +203,14 @@ class CustomFloatingTitleBar(QWidget):
         self.setMaximumHeight(32)
         self.setMinimumHeight(32)
 
-    def _setup_style(self) -> None:
-        """Setup default styling."""
-        # Will be updated from theme via stylesheet
-        self.setStyleSheet("""
-            CustomFloatingTitleBar {
-                background-color: #2b2b2b;
-                border-bottom: 1px solid #1a1a1a;
-            }
-            CustomFloatingTitleBar QLabel {
-                color: #ffffff;
-            }
-            CustomFloatingTitleBar QPushButton {
-                background-color: #3c3c3c;
-                border: none;
-                border-radius: 3px;
-                color: #ffffff;
-                font-weight: bold;
-                padding: 2px;
-            }
-            CustomFloatingTitleBar QPushButton:hover {
-                background-color: #4c4c4c;
-            }
-            CustomFloatingTitleBar QPushButton:pressed {
-                background-color: #5c5c5c;
-            }
-        """)
+    # Entfernt: _setup_style (keine hartcodierten Styles mehr)
 
     def update_theme_style(self, stylesheet: str) -> None:
-        """Update styling from theme stylesheet.
+        """Setzt das Styling ausschließlich über Theme/Config.
 
         Args:
-            stylesheet: QSS stylesheet content
+            stylesheet: QSS-Stylesheet aus Theme/Config
         """
-        # Apply custom styles on top of theme
         self.setStyleSheet(stylesheet)
 
     def set_title(self, title: str) -> None:

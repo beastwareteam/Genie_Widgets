@@ -1,13 +1,35 @@
 {
-  "profiles": [
-    {
-      "id": "light_profile",
-      "name": "Light",
-      "theme_id": "light",
-      "colors": {
-        "tab_active": "#E0E0E0",
-        "tab_inactive": "#BDBDBD"
-      }
-    }
-  ]
+  "name": "Light Profile",
+  "colors": {
+    "window_bg": "#ffffffff",
+    "splitter_handle": "#ffe0e0e0",
+    "splitter_width": 2,
+    "tab_active_bg": "#ffffffff",
+    "tab_active_border": "#ff1976d2",
+    "tab_active_text": "#ff1976d2",
+    "tab_inactive_bg": "#fff5f5f5",
+    "tab_inactive_text": "#ff757575",
+    "tab_padding": 6,
+    "tab_border_radius": 2,
+    "titlebar_bg": "#fff5f5f5",
+    "titlebar_text": "#ff212121",
+    "titlebar_btn_hover": "#ffe0e0e0",
+    "btn_bg": "#ffffffff",
+    "btn_icon": "#ff212121",
+    "floating_border": "#ffe0e0e0",
+    "autohide_sidebar_bg": "#ffffffff",
+    "autohide_tab_bg": "#fff5f5f5",
+    "autohide_container_bg": "#ffffffff",
+    "autohide_container_border": "#ff1976d2",
+    "overlay_base_color": "#801976d2",
+    "overlay_cross_color": "#ff1976d2",
+    "overlay_border_color": "#ff1976d2",
+    "overlay_border_width": 2
+  },
+  "global": {
+    "hue": 0,
+    "saturation": 1.0,
+    "brightness": 1.0
+  }
 }
+// DEAKTIVIERT: Dieses Profil wurde temporär deaktiviert, um nur ein neues Profil zu testen.

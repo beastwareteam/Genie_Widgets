@@ -22,12 +22,12 @@ class TabColorController(QObject):
         inactive_color: Hex color string for inactive tab text (e.g., "#BDBDBD")
     """
 
-    def __init__(self, active_color: str = "#E0E0E0", inactive_color: str = "#BDBDBD") -> None:
-        """Initialize TabColorController with colors.
+    def __init__(self, active_color: str = "", inactive_color: str = "") -> None:
+        """Initialisiert TabColorController ohne Defaultfarben.
 
         Args:
-            active_color: Hex color string for active tab text
-            inactive_color: Hex color string for inactive tab text
+            active_color: Hex-Farbe für aktive Tabs (leer = muss gesetzt werden)
+            inactive_color: Hex-Farbe für inaktive Tabs (leer = muss gesetzt werden)
         """
         super().__init__()
         self.active_color = active_color

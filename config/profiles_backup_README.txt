@@ -1,0 +1,1 @@
+Alle Profile aus dem Ordner config/profiles/ wurden temporär entfernt, um nur ein neues Profil zu testen. Die Originaldateien befinden sich im Backup-Ordner profiles_backup/.

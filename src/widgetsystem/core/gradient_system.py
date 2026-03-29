@@ -45,8 +45,8 @@ class GradientDefinition:
         self.direction = direction
         self.name = name
         self.stops = stops or [
-            GradientStop(0.0, QColor("#252525")),  # Dark gray - top
-            GradientStop(1.0, QColor("#1A1A1A")),  # Darker gray - bottom
+            GradientStop(0.0, QColor(0, 0, 0, 0)),  # Transparent top
+            GradientStop(1.0, QColor(0, 0, 0, 0)),  # Transparent bottom
         ]
 
     def to_qgradient(self, rect: QRect) -> QLinearGradient | QRadialGradient:
@@ -146,30 +146,13 @@ class GradientDefinition:
 class GradientRenderer:
     """Applies custom gradients to dock area widgets, overriding QtAds defaults."""
 
-    def __init__(self) -> None:
-        """Initialize gradient renderer."""
-        # Default gradient: Dark to darker
-        self.dock_area_gradient = GradientDefinition.from_colors(
-            "#252525",  # Light dark gray
-            "#1A1A1A",  # Dark gray
-            direction="vertical",
-            name="Dark Gradient",
-        )
-
-        # Alternate gradient for floating containers
-        self.floating_container_gradient = GradientDefinition.from_colors(
-            "#2D2E31",  # Medium gray
-            "#202124",  # Very dark gray
-            direction="vertical",
-            name="Floating Gradient",
-        )
-
-        self.titlebar_gradient = GradientDefinition.from_colors(
-            "#3C4043",  # Medium gray
-            "#2D2E31",  # Slightly darker
-            direction="vertical",
-            name="Title Bar Gradient",
-        )
+    def __init__(self, dock_area_gradient: GradientDefinition = None, floating_container_gradient: GradientDefinition = None, titlebar_gradient: GradientDefinition = None) -> None:
+        """Initialisiert den GradientRenderer ausschließlich mit Theme/Config-Objekten.
+        Keine festen Farben mehr im Code.
+        """
+        self.dock_area_gradient = dock_area_gradient
+        self.floating_container_gradient = floating_container_gradient
+        self.titlebar_gradient = titlebar_gradient
 
     def paint_dock_area_background(
         self,

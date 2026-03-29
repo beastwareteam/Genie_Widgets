@@ -240,74 +240,18 @@ class MainWindow(QMainWindow):
             if splitter.handleWidth() != 1:
                 splitter.setHandleWidth(1)
 
-    def _apply_custom_gradients(self) -> None:
-        """Apply custom gradients to all dock areas, overriding QtAds defaults.
-
-        QtAds renders gradients in C++ (CDockAreaWidget::paintEvent) which ignores
-        most QSS properties. This method uses QSS stylesheet to disable those gradients
-        by setting explicit background colors and applying CSS gradient overrides.
+    def _apply_custom_gradients(self, theme_qss: str = "") -> None:
+        """Wendet Theme-QSS an, das vollständig aus der Theme-Konfiguration stammt.
+        Keine festen Farben, keine QSS-Blöcke mehr im Code.
         """
-        # Apply QSS that forces solid backgrounds, hiding QtAds gradients
-        gradient_qss = """
-        /* Override QtAds CDockAreaWidget gradients with custom styling */
-        ads--CDockAreaWidget {
-            background-color: #252525;
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                        stop:0 #252525, 
-                                        stop:1 #1A1A1A);
-            color: #E0E0E0;
-            border: 1px solid rgba(64, 64, 64, 0.5);
-            margin: 0px;
-            padding: 0px;
-        }
-        
-        ads--CDockWidget {
-            background-color: #252525;
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                        stop:0 #252525, 
-                                        stop:1 #1A1A1A);
-            color: #E0E0E0;
-            border: 1px solid rgba(64, 64, 64, 0.5);
-            margin: 0px;
-            padding: 0px;
-        }
-        
-        ads--CDockAreaTitleBar {
-            background-color: #3C4043;
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                        stop:0 #3C4043, 
-                                        stop:1 #2D2E31);
-            color: #E0E0E0;
-            border-bottom: 1px solid rgba(64, 64, 64, 0.5);
-            margin: 0px;
-            padding: 0px;
-        }
-        
-        ads--CFloatingDockContainer {
-            background-color: #2D2E31;
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                        stop:0 #2D2E31, 
-                                        stop:1 #202124);
-            color: #E0E0E0;
-            border: 1px solid rgba(64, 64, 64, 0.5);
-            margin: 0px;
-            padding: 0px;
-        }
-        """
-
-        # Merge with existing theme stylesheet
         app = QApplication.instance()
         if isinstance(app, QApplication):
             current_stylesheet = app.styleSheet()
-            # Prepend gradient overrides to ensure they take precedence
-            merged_stylesheet = gradient_qss + "\n\n" + current_stylesheet
+            merged_stylesheet = theme_qss + "\n\n" + current_stylesheet if theme_qss else current_stylesheet
             app.setStyleSheet(merged_stylesheet)
-
-            # Also apply to dock manager
             if hasattr(self, "dock_manager") and self.dock_manager:
                 self.dock_manager.setStyleSheet(merged_stylesheet)
-
-        print("✅ Custom gradients applied - QtAds default gradients overridden")
+        print("Theme-QSS angewendet (nur noch aus Theme)")
 
     def _create_empty_dock(
         self,
@@ -488,10 +432,10 @@ class MainWindow(QMainWindow):
                 )
 
             print(
-                f"✅ DnD System initialized: {len(self.drop_zones_map)} zones, {len(self.dnd_rules_map)} panels",
+                f"DnD System initialized: {len(self.drop_zones_map)} zones, {len(self.dnd_rules_map)} panels",
             )
         except Exception as e:
-            print(f"⚠️ Warning: Failed to load DnD configuration: {e}")
+            print(f"Warning: Failed to load DnD configuration: {e}")
 
     def is_dnd_move_allowed(self, panel_id: str, source_area: str, target_area: str) -> bool:
         """Check if a panel is allowed to move from source to target area."""
@@ -524,10 +468,10 @@ class MainWindow(QMainWindow):
 
             rules = self.responsive_factory.load_responsive_rules()
             print(
-                f"✅ Responsive System initialized: {len(breakpoints)} breakpoints, {len(rules)} rules",
+                f"Responsive System initialized: {len(breakpoints)} breakpoints, {len(rules)} rules",
             )
         except Exception as e:
-            print(f"⚠️ Warning: Failed to load responsive configuration: {e}")
+            print(f"Warning: Failed to load responsive configuration: {e}")
 
         # Check initial breakpoint on startup
         self.resizeEvent(None)
@@ -888,6 +832,13 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(themes_button)
 
         toolbar.addSeparator()
+        refresh_btn = QToolButton()
+        refresh_btn.setText("↻")
+        refresh_btn.setToolTip(self.i18n_factory.translate("toolbar.refresh_themes", default="Refresh Themes"))
+        refresh_btn.clicked.connect(self._reload_themes_menu)
+        toolbar.addWidget(refresh_btn)
+
+        toolbar.addSeparator()
         config_btn = QToolButton()
         config_btn.setText("⚙")
         config_btn.setToolTip(self.i18n_factory.translate("toolbar.config", default="Config"))
@@ -955,10 +906,21 @@ class MainWindow(QMainWindow):
 
     def _reload_themes_menu(self) -> None:
         """Reload themes menu by re-registering all themes."""
+        # Remember current theme
+        current_theme = self.theme_manager.current_theme()
+        current_theme_id = current_theme.theme_id if current_theme else None
+        
         # Clear and re-register all themes
         self.theme_manager.clear()
         self._register_theme_profiles()
         self._populate_themes_menu()
+        
+        # Reapply current theme if it still exists
+        if current_theme_id and current_theme_id in self.theme_manager.theme_names():
+            self.theme_manager.set_current_theme(current_theme_id)
+            print(f"✓ Themes reloaded and {current_theme_id} reapplied")
+        else:
+            print("✓ Themes reloaded")
 
     # ------------------------------------------------------------------
     # Layout persistence
@@ -975,14 +937,14 @@ class MainWindow(QMainWindow):
             written_size = self.layout_file.stat().st_size
             print(f"[SAVE] Written to {self.layout_file}")
             print(f"[SAVE] Actual file size: {written_size} bytes")
-            print("[SAVE] ✅ Save completed successfully")
+            print("[SAVE] Save completed successfully")
             QMessageBox.information(
                 self,
                 self.i18n_factory.translate("message.success", default="Success"),
                 f"{self.i18n_factory.translate('message.layout_saved', default='Layout saved successfully.')}\n{self.layout_file}",
             )
         except Exception as exc:
-            print(f"[SAVE] ❌ Error: {exc}")
+            print(f"[SAVE] Error: {exc}")
             QMessageBox.critical(
                 self,
                 self.i18n_factory.translate("message.error", default="Error"),
@@ -994,7 +956,7 @@ class MainWindow(QMainWindow):
         try:
             print(f"[LOAD] Attempting to load from {self.layout_file}")
             if not self.layout_file.exists():
-                print("[LOAD] ❌ File does not exist")
+                print("[LOAD] File does not exist")
                 QMessageBox.warning(
                     self,
                     self.i18n_factory.translate("message.warning", default="Warning"),
@@ -1009,7 +971,7 @@ class MainWindow(QMainWindow):
             restored = self.dock_manager.restoreState(QByteArray(data))
             print(f"[LOAD] restoreState returned: {restored}")
             if not restored:
-                print("[LOAD] ❌ restoreState failed")
+                print("[LOAD] restoreState failed")
                 QMessageBox.warning(
                     self,
                     self.i18n_factory.translate("message.warning", default="Warning"),
@@ -1019,7 +981,7 @@ class MainWindow(QMainWindow):
                     ),
                 )
                 return
-            print("[LOAD] ✅ Layout restored successfully")
+            print("[LOAD] Layout restored successfully")
             QMessageBox.information(
                 self,
                 self.i18n_factory.translate("message.success", default="Success"),
@@ -1029,7 +991,7 @@ class MainWindow(QMainWindow):
                 ),
             )
         except Exception as exc:
-            print(f"[LOAD] ❌ Exception: {exc}")
+            print(f"[LOAD] Exception: {exc}")
             QMessageBox.critical(
                 self,
                 self.i18n_factory.translate("message.error", default="Error"),
@@ -1042,7 +1004,7 @@ class MainWindow(QMainWindow):
         try:
             print(f"[STARTUP_LOAD] Checking {self.layout_file}")
             if not self.layout_file.exists():
-                print("[STARTUP_LOAD] ⚠️ File does not exist, skipping restore")
+                print("[STARTUP_LOAD] File does not exist, skipping restore")
                 return
             print("[STARTUP_LOAD] File exists, attempting restore")
             data = self.layout_file.read_bytes()
@@ -1050,11 +1012,11 @@ class MainWindow(QMainWindow):
             restored = self.dock_manager.restoreState(QByteArray(data))
             print(f"[STARTUP_LOAD] restoreState returned: {restored}")
             if not restored:
-                print("[STARTUP_LOAD] ⚠️ restoreState failed")
+                print("[STARTUP_LOAD] restoreState failed")
             else:
-                print("[STARTUP_LOAD] ✅ Restored successfully")
+                print("[STARTUP_LOAD] Restored successfully")
         except Exception as exc:
-            print(f"[STARTUP_LOAD] ❌ Exception: {exc}")
+            print(f"[STARTUP_LOAD] Exception: {exc}")
 
     def _load_named_layout(self, layout: LayoutDefinition) -> None:
         """Load a named layout from LayoutFactory."""
@@ -1299,7 +1261,7 @@ class MainWindow(QMainWindow):
                         try:
                             qss_content = generate_qss()
                         except Exception as e:
-                            print(f"⚠️ Failed to generate QSS for profile '{profile_id}': {e}")
+                            print(f"Failed to generate QSS for profile '{profile_id}': {e}")
                             qss_content = None
                         if isinstance(qss_content, str):
                             theme.set_stylesheet(qss_content)
@@ -1308,7 +1270,7 @@ class MainWindow(QMainWindow):
                             self.theme_manager.register_theme(theme)
                             print(f"✓ Registered profile theme: {profile_name}")
                     except Exception as e:
-                        print(f"⚠️ Failed to register profile theme '{profile_id}': {e}")
+                        print(f"Failed to register profile theme '{profile_id}': {e}")
 
         # Set default theme
         default_theme_id = self.theme_factory.get_default_theme_id()
@@ -1349,7 +1311,7 @@ class MainWindow(QMainWindow):
                 print(f"  Stylesheet length: {len(theme.stylesheet)} chars")
                 print(f"  Has rgba colors: {'rgba(' in theme.stylesheet}")
         except Exception as e:
-            print(f"⚠️ Failed to apply theme '{theme.name}': {e}")
+            print(f"Failed to apply theme '{theme.name}': {e}")
 
     def _apply_theme_profile(self, profile_id: str) -> None:
         """Apply a theme profile by ID.
@@ -1487,29 +1449,29 @@ class MainWindow(QMainWindow):
 
     def _show_theme_editor(self) -> None:
         """Show live theme editor dialog."""
-        print("🎨 Öffne Theme-Editor...")
+        print("Öffne Theme-Editor...")
         try:
             from widgetsystem.ui.theme_editor import ThemeEditorDialog
             dialog = ThemeEditorDialog(Path("config"))
             dialog.exec()
-            print("  ✅ Theme-Editor geschlossen")
+            print("Theme-Editor geschlossen")
         except Exception as e:
             QMessageBox.critical(
                 self,
                 self.i18n_factory.translate("message.error", default="Error"),
                 f"Theme-Editor konnte nicht geöffnet werden:\n{e}",
             )
-            print(f"  ❌ Fehler beim Öffnen des Theme-Editors: {e}")
+            print(f"Fehler beim Öffnen des Theme-Editors: {e}")
 
     def _show_color_picker(self) -> None:
         """Show ARGB color picker dialog."""
-        print("🖌️ Öffne ARGB Color-Picker...")
+        print("Öffne ARGB Color-Picker...")
         try:
             from widgetsystem.ui.argb_color_picker import ARGBColorPickerDialog
             dialog = ARGBColorPickerDialog("#FFFF0000")
             if dialog.exec():
                 color = dialog.get_color()
-                print(f"  ✅ Farbe ausgewählt: {color}")
+                print(f"Farbe ausgewählt: {color}")
                 # Copy to clipboard for easy use
                 from PySide6.QtWidgets import QApplication
                 clipboard = QApplication.clipboard()
@@ -1520,34 +1482,34 @@ class MainWindow(QMainWindow):
                     f"Farbe in Zwischenablage kopiert:\n{color}",
                 )
             else:
-                print("  ℹ️ Color-Picker abgebrochen")
+                print(" Color-Picker abgebrochen")
         except Exception as e:
             QMessageBox.critical(
                 self,
                 self.i18n_factory.translate("message.error", default="Error"),
                 f"Color-Picker konnte nicht geöffnet werden:\n{e}",
             )
-            print(f"  ❌ Fehler beim Öffnen des Color-Pickers: {e}")
+            print(f"Fehler beim Öffnen des Color-Pickers: {e}")
 
     def _show_widget_features_editor(self) -> None:
         """Show widget features editor dialog."""
-        print("⚙️ Öffne Widget-Features Editor...")
+        print("Öffne Widget-Features Editor...")
         try:
             from widgetsystem.ui.widget_features_editor import WidgetFeaturesEditorDialog
             dialog = WidgetFeaturesEditorDialog(Path("config"))
             dialog.exec()
-            print("  ✅ Widget-Features Editor geschlossen")
+            print("Widget-Features Editor geschlossen")
         except Exception as e:
             QMessageBox.critical(
                 self,
                 self.i18n_factory.translate("message.error", default="Error"),
                 f"Widget-Features Editor konnte nicht geöffnet werden:\n{e}",
             )
-            print(f"  ❌ Fehler beim Öffnen des Widget-Features Editors: {e}")
+            print(f"Fehler beim Öffnen des Widget-Features Editors: {e}")
 
     def _show_plugin_manager(self) -> None:
         """Show plugin system information."""
-        print("🔌 Zeige Plugin-System Informationen...")
+        print("Zeige Plugin-System Informationen...")
         try:
             # Create a simple info dialog for plugin system
             from PySide6.QtWidgets import QDialog, QVBoxLayout, QLabel, QTextEdit, QDialogButtonBox
@@ -1639,7 +1601,7 @@ Features (wenn aktiviert):
             layout.addWidget(button_box)
 
             dialog.exec()
-            print("  ✅ Plugin-System Dialog geschlossen")
+            print("Plugin-System Dialog geschlossen")
 
         except Exception as e:
             QMessageBox.critical(
@@ -1647,7 +1609,7 @@ Features (wenn aktiviert):
                 self.i18n_factory.translate("message.error", default="Error"),
                 f"Plugin-System konnte nicht geöffnet werden:\n{e}",
             )
-            print(f"  ❌ Fehler beim Öffnen des Plugin-Systems: {e}")
+            print(f"Fehler beim Öffnen des Plugin-Systems: {e}")
 
 
 # ------------------------------------------------------------------

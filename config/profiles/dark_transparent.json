@@ -1,17 +1,17 @@
 {
   "name": "Dark Transparent",
   "colors": {
-    "window_bg": "#00202124",
+    "window_bg": "#40002102",
     "splitter_handle": "#ff3c4043",
     "splitter_width": 2,
-    "tab_active_bg": "#cc3c4043",
-    "tab_active_border": "#ff8ab4f8",
-    "tab_active_text": "#ff8ab4f8",
+    "tab_active_bg": "#B43CCC60",
+    "tab_active_border": "#B48AFF94",
+    "tab_active_text": "#B494FF8A",
     "tab_inactive_bg": "#cc2d2e31",
     "tab_inactive_text": "#ffbdc1c6",
     "tab_padding": 4,
     "tab_border_radius": 0,
-    "titlebar_bg": "#cc2d2e31",
+    "titlebar_bg": "#40cc2d2e",
     "titlebar_text": "#ffe8eaed",
     "titlebar_btn_hover": "#408ab4f8",
     "btn_bg": "#40ffffff",
@@ -32,3 +32,4 @@
     "brightness": 1.0
   }
 }
+// DEAKTIVIERT: Dieses Profil wurde temporär deaktiviert, um nur ein neues Profil zu testen.

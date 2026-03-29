@@ -1,14 +1,10 @@
-/* ============================================================================
-   TRANSPARENT THEME - Transparent surfaces, visible text, 50% border opacity
-   Custom Gradients override QtAds defaults
-   ============================================================================ */
+/*
+TRANSPARENT THEME - Transparent surfaces, visible text, 50% border opacity
 
-/* CRITICAL: Reset all backgrounds to transparent first */
 * {
     background-color: rgba(0, 0, 0, 0);
 }
 
-/* Main Window & General */
 QMainWindow {
     background-color: rgba(0, 0, 0, 0);
     color: #E0E0E0;
@@ -19,18 +15,14 @@ QWidget {
     color: #E0E0E0;
 }
 
-/* Dock System Styling - CDockAreaWidget with custom gradient */
 ads--CDockManager {
     background-color: rgba(0, 0, 0, 0);
     color: #E0E0E0;
 }
 
-/* CRITICAL: Override QtAds CDockAreaWidget gradient */
 ads--CDockAreaWidget {
     background-color: rgba(37, 37, 37, 0.8);
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                stop:0 rgba(37, 37, 37, 0.8), 
-                                stop:1 rgba(26, 26, 26, 0.8));
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(37, 37, 37, 0.8), stop:1 rgba(26, 26, 26, 0.8));
     color: #E0E0E0;
     border: 1px solid rgba(64, 64, 64, 0.5);
     margin: 0px;
@@ -39,9 +31,7 @@ ads--CDockAreaWidget {
 
 ads--CDockWidget {
     background-color: rgba(37, 37, 37, 0.8);
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                stop:0 rgba(37, 37, 37, 0.8), 
-                                stop:1 rgba(26, 26, 26, 0.8));
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(37, 37, 37, 0.8), stop:1 rgba(26, 26, 26, 0.8));
     color: #E0E0E0;
     border: 1px solid rgba(64, 64, 64, 0.5);
     margin: 0px;
@@ -50,14 +40,13 @@ ads--CDockWidget {
 
 ads--CDockAreaTitleBar {
     background-color: rgba(60, 64, 67, 0.8);
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                stop:0 rgba(60, 64, 67, 0.8), 
-                                stop:1 rgba(45, 46, 49, 0.8));
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 rgba(60, 64, 67, 0.8), stop:1 rgba(45, 46, 49, 0.8));
     color: #E0E0E0;
     border-bottom: 1px solid rgba(64, 64, 64, 0.5);
     margin: 0px;
     padding: 0px;
 }
+*/
 
 ads--CFloatingDockContainer {
     background-color: rgba(45, 46, 49, 0.9);

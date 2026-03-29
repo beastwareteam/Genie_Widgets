@@ -110,6 +110,7 @@
   "toolbar.close_all": "Alle schließen",
   "toolbar.layouts": "Layouts",
   "toolbar.themes": "Designs",
+  "toolbar.refresh_themes": "Designs aktualisieren",
   "toolbar.config": "Konfiguration",
   "layout.none_found": "Keine Layouts gefunden",
   "layout.reload": "Layoutliste neu laden",

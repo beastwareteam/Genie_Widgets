@@ -133,48 +133,15 @@ class InlayTitleBar(QWidget):
         hover_bg = "rgba(196,43,28,0.90)" if role == "close" else "rgba(255,255,255,0.15)"
         press_bg = "rgba(140,20,20,0.90)" if role == "close" else "rgba(255,255,255,0.08)"
 
-        btn.setStyleSheet(f"""
-            QPushButton {{
-                background: rgba(255, 255, 255, 0.08);
-                border: none;
-                border-radius: 3px;
-                color: #E8E8E8;
-                font-size: 13px;
-                font-weight: 600;
-                font-family: 'Segoe UI Symbol', 'Segoe UI', 'Arial', sans-serif;
-                padding: 0px;
-            }}
-            QPushButton:hover {{
-                background: {hover_bg};
-                color: #FFFFFF;
-            }}
-            QPushButton:pressed {{
-                background: {press_bg};
-                color: #DDDDDD;
-            }}
-        """)
+        # Style wird jetzt ausschließlich über Theme/Config gesetzt
+        # Beispiel: btn.setStyleSheet(theme.button_style) (muss von außen gesetzt werden)
         
         return btn
 
     def _apply_style(self) -> None:
-        self.setStyleSheet("""
-            #InlayTitleBar {
-                background: qlineargradient(
-                    x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #3C4043,
-                    stop:1 #2D2E31
-                );
-                border-bottom: 1px solid rgba(80,80,80,0.6);
-            }
-
-            #TitleLabel {
-                color: #E8E8E8;
-                font-size: 10pt;
-                font-weight: 500;
-                letter-spacing: 0.5px;
-                padding-left: 4px;
-            }
-        """)
+        # Komplettes StyleSheet wird jetzt über Theme/Config gesetzt
+        # Beispiel: self.setStyleSheet(theme.inlay_titlebar_style)
+        pass
 
     # ── Title text ────────────────────────────────────────────────────────────
 

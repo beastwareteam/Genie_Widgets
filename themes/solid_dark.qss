@@ -1,0 +1,204 @@
+/*
+SOLID DARK THEME - Pure Black with No Transparency
+
+QMainWindow {
+    background-color: #000000;
+    color: #FFFFFF;
+}
+
+ads--CDockManager {
+    background-color: #000000;
+    color: #FFFFFF;
+}
+
+ads--CDockAreaWidget {
+    background-color: #1A1A1A;
+    color: #FFFFFF;
+    border: 1px solid #333333;
+    margin: 0px;
+    padding: 0px;
+}
+
+ads--CDockWidget {
+    background-color: #1A1A1A;
+    color: #FFFFFF;
+    border: 1px solid #333333;
+    margin: 0px;
+    padding: 0px;
+}
+
+ads--CDockAreaTitleBar {
+    background-color: #2A2A2A;
+    color: #FFFFFF;
+    border-bottom: 1px solid #444444;
+    margin: 0px;
+    padding: 0px;
+}
+
+ads--CFloatingDockContainer {
+    background-color: #1A1A1A;
+    color: #FFFFFF;
+    border: 2px solid #444444;
+    margin: 0px;
+    padding: 0px;
+}
+
+ads--CTitleBarButton {
+    background-color: transparent;
+    color: #FFFFFF;
+    border: none;
+}
+
+ads--CTitleBarButton:hover {
+    background-color: #444444;
+    border-radius: 2px;
+}
+
+Tab Bar Styling
+*/
+QTabBar {
+    background-color: #000000;
+    color: #FFFFFF;
+}
+
+QTabBar::tab {
+    background-color: #1A1A1A;
+    color: #CCCCCC;
+    padding: 6px 16px;
+    margin: 2px 2px 0px 0px;
+    border: 1px solid #333333;
+    border-bottom: none;
+}
+
+QTabBar::tab:selected {
+    background-color: #2A2A2A;
+    color: #FFFFFF;
+    border: 1px solid #666666;
+    border-bottom: 2px solid #00E5FF;
+    font-weight: bold;
+}
+
+QTabBar::tab:hover {
+    background-color: #2A2A2A;
+}
+
+QTabWidget::pane {
+    border: 1px solid #333333;
+}
+
+/* Toolbar Styling - Unified Structure (only colors differ between themes) */
+QToolBar {
+    background-color: #000000;       /* THEME COLOR */
+    color: #FFFFFF;                  /* THEME COLOR */
+    border: 1px solid #333333;       /* THEME COLOR */
+    spacing: 4px;                    /* FIXED: consistent spacing */
+}
+
+QToolBar::separator {
+    background-color: #444444;       /* THEME COLOR */
+    width: 2px;                      /* FIXED: consistent separator width */
+    margin: 0px 4px;                 /* FIXED: consistent separator margin */
+}
+
+QToolButton {
+    background-color: transparent;   /* THEME COLOR */
+    color: #FFFFFF;                  /* THEME COLOR */
+    border: 1px solid transparent;   /* FIXED: consistent border style */
+    padding: 4px 8px;                /* FIXED: consistent padding */
+    border-radius: 2px;              /* FIXED: consistent border-radius */
+}
+
+QToolButton:hover {
+    background-color: #2A2A2A;       /* THEME COLOR */
+    border: 1px solid #555555;       /* THEME COLOR */
+}
+
+QToolButton:pressed,
+QToolButton:checked {
+    background-color: #444444;       /* THEME COLOR */
+    border: 1px solid #666666;       /* THEME COLOR */
+}
+
+/* Push Button */
+QPushButton {
+    background-color: #2A2A2A;
+    color: #FFFFFF;
+    border: 1px solid #555555;
+    border-radius: 4px;
+    padding: 6px 16px;
+    font-weight: bold;
+}
+
+QPushButton:hover {
+    background-color: #333333;
+    border: 1px solid #00E5FF;
+}
+
+QPushButton:pressed {
+    background-color: #444444;
+    border: 1px solid #00BCD4;
+}
+
+/* Menu & Menus */
+QMenu {
+    background-color: #1A1A1A;
+    color: #FFFFFF;
+    border: 1px solid #444444;
+    padding: 2px 0px;
+}
+
+QMenu::item:selected {
+    background-color: #00ACC1;
+    color: #FFFFFF;
+}
+
+QMenuBar {
+    background-color: #000000;
+    color: #FFFFFF;
+    border-bottom: 1px solid #333333;
+}
+
+/* Input Widgets */
+QLineEdit,
+QTextEdit,
+QPlainTextEdit {
+    background-color: #0A0A0A;
+    color: #FFFFFF;
+    border: 1px solid #444444;
+    border-radius: 2px;
+    padding: 4px 6px;
+    selection-background-color: #00ACC1;
+    selection-color: #FFFFFF;
+}
+
+QLineEdit:focus,
+QTextEdit:focus,
+QPlainTextEdit:focus {
+    border: 2px solid #00E5FF;
+}
+
+/* Combo Box */
+QComboBox {
+    background-color: #0A0A0A;
+    color: #FFFFFF;
+    border: 1px solid #444444;
+    border-radius: 2px;
+    padding: 4px 6px;
+}
+
+/* Scroll Bar */
+QScrollBar:vertical {
+    background-color: #000000;
+    width: 12px;
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical {
+    background-color: #444444;
+    border-radius: 6px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background-color: #00E5FF;
+}

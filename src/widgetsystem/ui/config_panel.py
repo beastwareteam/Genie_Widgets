@@ -130,7 +130,7 @@ class ConfigurationPanel(QWidget):
         title = QLabel(
             self.i18n_factory.translate("config.menu_editor.label", default="Menu Editor"),
         )
-        title.setStyleSheet("font-weight: bold; font-size: 12px;")
+        # Style wird jetzt über Theme/Config gesetzt
         parent_layout.addWidget(title)
 
         # Splitter for menu tree and properties
@@ -200,7 +200,7 @@ class ConfigurationPanel(QWidget):
         title = QLabel(
             self.i18n_factory.translate("config.list_editor.label", default="List Editor"),
         )
-        title.setStyleSheet("font-weight: bold; font-size: 12px;")
+        # Style wird jetzt über Theme/Config gesetzt
         parent_layout.addWidget(title)
 
         # Splitter for list tree and properties
@@ -371,7 +371,7 @@ class ConfigurationPanel(QWidget):
     def _setup_tabs_editor(self, parent_layout: QVBoxLayout) -> None:
         """Setup tab editor interface."""
         title = QLabel(self.i18n_factory.translate("config.tab_editor.label", default="Tab Editor"))
-        title.setStyleSheet("font-weight: bold; font-size: 12px;")
+        # Style wird jetzt über Theme/Config gesetzt
         parent_layout.addWidget(title)
 
         info = QLabel(
@@ -449,7 +449,7 @@ class ConfigurationPanel(QWidget):
         title = QLabel(
             self.i18n_factory.translate("config.panel_editor.label", default="Panel Editor"),
         )
-        title.setStyleSheet("font-weight: bold; font-size: 12px;")
+        # Style wird jetzt über Theme/Config gesetzt
         parent_layout.addWidget(title)
 
         info = QLabel(
@@ -516,7 +516,7 @@ class ConfigurationPanel(QWidget):
         title = QLabel(
             self.i18n_factory.translate("config.theme_selector.label", default="Theme Selection"),
         )
-        title.setStyleSheet("font-weight: bold; font-size: 12px;")
+        # Style wird jetzt über Theme/Config gesetzt
         parent_layout.addWidget(title)
 
         theme_combo = QComboBox()

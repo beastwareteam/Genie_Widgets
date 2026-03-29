@@ -36,6 +36,9 @@ class ViewerConfig:
     max_depth: int = 10
 
 
+
+from widgetsystem.factories.theme_factory import ThemeFactory
+
 class ListsViewer(QWidget):
     """Viewer for list groups and items with full hierarchy visualization."""
 
@@ -52,17 +55,32 @@ class ListsViewer(QWidget):
         self.i18n_factory = i18n_factory
         self.viewer_config = config or ViewerConfig()
         self.list_factory = ListFactory(self.config_path)
+        self.theme_factory = ThemeFactory(self.config_path)
+        self.theme_colors = self._get_theme_colors()
         self._setup_ui()
         self._load_lists()
+
+    def _get_theme_colors(self) -> dict:
+        themes = self.theme_factory.list_themes()
+        if themes:
+            return themes[0].colors or {}
+        return {}
 
     def _setup_ui(self) -> None:
         """Setup UI with tree and properties."""
         layout = QVBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
 
-        # Header
+        self.theme_factory = ThemeFactory(self.config_path)
+        self.theme_colors = self._get_theme_colors()
+        self._setup_ui()
         header = QLabel(self.i18n_factory.translate("visual.lists.title", default="Listen"))
         header_font = QFont()
+    def _get_theme_colors(self) -> dict:
+        themes = self.theme_factory.list_themes()
+        if themes:
+            return themes[0].colors or {}
+        return {}
         header_font.setBold(True)
         header_font.setPointSize(12)
         header.setFont(header_font)
@@ -144,30 +162,54 @@ class ListsViewer(QWidget):
             if item.children:
                 self._add_items_recursive(child_item, item.children, depth + 1)
 
-    def _on_item_selected(self) -> None:
-        """Update properties panel when tree item selected."""
-        if not self.viewer_config.show_properties:
-            return
+    def _setup_ui(self) -> None:
+        """Setup UI with tree and properties."""
+        layout = QVBoxLayout(self)
+        margin = int(self.theme_colors.get("header_padding", 8))
+        layout.setContentsMargins(margin, margin, margin, margin)
 
-        items = self.tree.selectedItems()
-        if not items:
-            self.properties_text.clear()
-            return
+        # Header
+        header = QLabel(self.i18n_factory.translate("visual.lists.title", default="Listen"))
+        header_font = QFont()
+        header_font.setBold(bool(self.theme_colors.get("header_font_bold", True)))
+        header_font.setPointSize(int(self.theme_colors.get("header_font_size", 12)))
+        header.setFont(header_font)
+        layout.addWidget(header)
 
-        selected_item = items[0]
-        data = selected_item.data(0, Qt.ItemDataRole.UserRole)
+        # Main splitter
+        splitter = QSplitter(Qt.Orientation.Horizontal)
 
-        if data and isinstance(data, tuple):
-            item_type, item_id = data
-            text = f"<b>Typ:</b> {item_type}<br><b>ID:</b> {item_id}"
-            self.properties_text.setHtml(text)
+        # Tree view
+        self.tree = QTreeWidget()
+        self.tree.setHeaderLabel(
+            self.i18n_factory.translate("visual.lists.tree", default="Listen-Hierarchie"),
+        )
+        self.tree.setMinimumWidth(int(self.theme_colors.get("tree_min_width", 300)))
+        splitter.addWidget(self.tree)
 
-    def refresh(self) -> None:
-        """Refresh the viewer."""
-        self.tree.clear()
-        self._load_lists()
+        # Properties panel
+        if self.viewer_config.show_properties:
+            props_widget = QWidget()
+            props_layout = QVBoxLayout(props_widget)
+
+            props_title = QLabel("Eigenschaften")
+            props_title_font = QFont()
+            props_title_font.setBold(bool(self.theme_colors.get("header_font_bold", True)))
+            props_title.setFont(props_title_font)
+            props_layout.addWidget(props_title)
+
+            self.properties_text = QTextEdit()
+            self.properties_text.setReadOnly(True)
+            self.properties_text.setMaximumWidth(int(self.theme_colors.get("properties_panel_max_width", 300)))
+            props_layout.addWidget(self.properties_text)
+            props_layout.addStretch()
+
+            splitter.addWidget(props_widget)
+
+        layout.addWidget(splitter)
 
 
+# Restore MenusViewer class definition
 class MenusViewer(QWidget):
     """Viewer for menu structure with full hierarchy."""
 
@@ -184,18 +226,26 @@ class MenusViewer(QWidget):
         self.i18n_factory = i18n_factory
         self.viewer_config = config or ViewerConfig()
         self.menu_factory = MenuFactory(self.config_path)
+        self.theme_factory = ThemeFactory(self.config_path)
+        self.theme_colors = self._get_theme_colors()
         self._setup_ui()
         self._load_menus()
 
+    def _get_theme_colors(self) -> dict:
+        themes = self.theme_factory.list_themes()
+        if themes:
+            return themes[0].colors or {}
+        return {}
+
     def _setup_ui(self) -> None:
-        """Setup UI."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
+        margin = int(self.theme_colors.get("header_padding", 8))
+        layout.setContentsMargins(margin, margin, margin, margin)
 
         header = QLabel(self.i18n_factory.translate("visual.menus.title", default="Menüs"))
         header_font = QFont()
-        header_font.setBold(True)
-        header_font.setPointSize(12)
+        header_font.setBold(bool(self.theme_colors.get("header_font_bold", True)))
+        header_font.setPointSize(int(self.theme_colors.get("header_font_size", 12)))
         header.setFont(header_font)
         layout.addWidget(header)
 
@@ -205,7 +255,7 @@ class MenusViewer(QWidget):
         self.tree.setHeaderLabel(
             self.i18n_factory.translate("visual.menus.tree", default="Menü-Struktur"),
         )
-        self.tree.setMinimumWidth(300)
+        self.tree.setMinimumWidth(int(self.theme_colors.get("tree_min_width", 300)))
         splitter.addWidget(self.tree)
 
         if self.viewer_config.show_properties:
@@ -214,13 +264,13 @@ class MenusViewer(QWidget):
 
             props_title = QLabel("Eigenschaften")
             props_title_font = QFont()
-            props_title_font.setBold(True)
+            props_title_font.setBold(bool(self.theme_colors.get("header_font_bold", True)))
             props_title.setFont(props_title_font)
             props_layout.addWidget(props_title)
 
             self.properties_text = QTextEdit()
             self.properties_text.setReadOnly(True)
-            self.properties_text.setMaximumWidth(300)
+            self.properties_text.setMaximumWidth(int(self.theme_colors.get("properties_panel_max_width", 300)))
             props_layout.addWidget(self.properties_text)
             props_layout.addStretch()
 
@@ -228,6 +278,59 @@ class MenusViewer(QWidget):
             self.tree.itemSelectionChanged.connect(self._on_item_selected)
 
         layout.addWidget(splitter)
+
+    def _load_menus(self) -> None:
+        """Load menus from factory."""
+        try:
+            menus = self.menu_factory.load_menus()
+            for menu in menus:
+                self._add_menu_item(self.tree, menu)
+            self.tree.expandAll()
+        except Exception as e:
+            error_item = QTreeWidgetItem(self.tree)
+            error_item.setText(0, f"❌ Fehler: {e}")
+
+    def _add_menu_item(
+        self,
+        parent: QTreeWidget | QTreeWidgetItem,
+        menu: MenuItem,
+        depth: int = 0,
+    ) -> None:
+        """Recursively add menu items to tree."""
+        if depth >= self.viewer_config.max_depth:
+            return
+
+        item = QTreeWidgetItem(parent)
+        label = self.i18n_factory.translate(menu.label_key, default=menu.id)
+        menu_type = getattr(menu, "menu_type", None)
+        text = f"{label} [{menu_type}]" if menu_type else label
+        item.setText(0, text)
+        item.setData(0, Qt.ItemDataRole.UserRole, ("menu", menu.id))
+
+        for child in menu.children:
+            self._add_menu_item(item, child, depth + 1)
+
+    def _on_item_selected(self) -> None:
+        """Update properties panel."""
+        if not self.viewer_config.show_properties:
+            return
+
+        items = self.tree.selectedItems()
+        if not items:
+            self.properties_text.clear()
+            return
+
+        selected_item = items[0]
+        data = selected_item.data(0, Qt.ItemDataRole.UserRole)
+        if data and isinstance(data, tuple):
+            item_type, item_id = data
+            text = f"<b>Typ:</b> {item_type}<br><b>ID:</b> {item_id}"
+            self.properties_text.setHtml(text)
+
+    def refresh(self) -> None:
+        """Refresh the viewer."""
+        self.tree.clear()
+        self._load_menus()
 
     def _load_menus(self) -> None:
         """Load menus from factory."""
@@ -299,18 +402,26 @@ class TabsViewer(QWidget):
         self.i18n_factory = i18n_factory
         self.viewer_config = config or ViewerConfig()
         self.tabs_factory = TabsFactory(self.config_path)
+        self.theme_factory = ThemeFactory(self.config_path)
+        self.theme_colors = self._get_theme_colors()
         self._setup_ui()
         self._load_tabs()
 
+    def _get_theme_colors(self) -> dict:
+        themes = self.theme_factory.list_themes()
+        if themes:
+            return themes[0].colors or {}
+        return {}
     def _setup_ui(self) -> None:
         """Setup UI."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
+        margin = int(self.theme_colors.get("header_padding", 8))
+        layout.setContentsMargins(margin, margin, margin, margin)
 
         header = QLabel(self.i18n_factory.translate("visual.tabs.title", default="Tabs"))
         header_font = QFont()
-        header_font.setBold(True)
-        header_font.setPointSize(12)
+        header_font.setBold(bool(self.theme_colors.get("header_font_bold", True)))
+        header_font.setPointSize(int(self.theme_colors.get("header_font_size", 12)))
         header.setFont(header_font)
         layout.addWidget(header)
 
@@ -320,7 +431,7 @@ class TabsViewer(QWidget):
         self.tree.setHeaderLabel(
             self.i18n_factory.translate("visual.tabs.tree", default="Tab-Gruppen"),
         )
-        self.tree.setMinimumWidth(300)
+        self.tree.setMinimumWidth(int(self.theme_colors.get("tree_min_width", 300)))
         splitter.addWidget(self.tree)
 
         if self.viewer_config.show_properties:
@@ -329,13 +440,13 @@ class TabsViewer(QWidget):
 
             props_title = QLabel("Eigenschaften")
             props_title_font = QFont()
-            props_title_font.setBold(True)
+            props_title_font.setBold(bool(self.theme_colors.get("header_font_bold", True)))
             props_title.setFont(props_title_font)
             props_layout.addWidget(props_title)
 
             self.properties_text = QTextEdit()
             self.properties_text.setReadOnly(True)
-            self.properties_text.setMaximumWidth(300)
+            self.properties_text.setMaximumWidth(int(self.theme_colors.get("properties_panel_max_width", 300)))
             props_layout.addWidget(self.properties_text)
             props_layout.addStretch()
 
@@ -408,25 +519,33 @@ class PanelsViewer(QWidget):
         self.i18n_factory = i18n_factory
         self.viewer_config = config or ViewerConfig()
         self.panel_factory = PanelFactory(self.config_path)
+        self.theme_factory = ThemeFactory(self.config_path)
+        self.theme_colors = self._get_theme_colors()
         self._setup_ui()
         self._load_panels()
 
+    def _get_theme_colors(self) -> dict:
+        themes = self.theme_factory.list_themes()
+        if themes:
+            return themes[0].colors or {}
+        return {}
     def _setup_ui(self) -> None:
         """Setup UI."""
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(8, 8, 8, 8)
+        margin = int(self.theme_colors.get("header_padding", 8))
+        layout.setContentsMargins(margin, margin, margin, margin)
 
         header = QLabel(self.i18n_factory.translate("visual.panels.title", default="Panels"))
         header_font = QFont()
-        header_font.setBold(True)
-        header_font.setPointSize(12)
+        header_font.setBold(bool(self.theme_colors.get("header_font_bold", True)))
+        header_font.setPointSize(int(self.theme_colors.get("header_font_size", 12)))
         header.setFont(header_font)
         layout.addWidget(header)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
         self.list_widget = QListWidget()
-        self.list_widget.setMinimumWidth(300)
+        self.list_widget.setMinimumWidth(int(self.theme_colors.get("list_min_width", 300)))
         splitter.addWidget(self.list_widget)
 
         if self.viewer_config.show_properties:
@@ -435,7 +554,7 @@ class PanelsViewer(QWidget):
 
             props_title = QLabel("Panel-Eigenschaften")
             props_title_font = QFont()
-            props_title_font.setBold(True)
+            props_title_font.setBold(bool(self.theme_colors.get("header_font_bold", True)))
             props_title.setFont(props_title_font)
             props_layout.addRow(props_title)
 
@@ -444,7 +563,7 @@ class PanelsViewer(QWidget):
             props_layout.addRow("Area:", QLabel(""))
             props_layout.addRow("Beschreibung:", QLabel(""))
 
-            props_widget.setMaximumWidth(300)
+            props_widget.setMaximumWidth(int(self.theme_colors.get("properties_panel_max_width", 300)))
             splitter.addWidget(props_widget)
 
             self.list_widget.itemSelectionChanged.connect(self._on_item_selected)

@@ -1,26 +1,19 @@
-/* ============================================================================
-   LIGHT THEME - Professional Light Mode with Optimal Contrast
-   Custom Gradients override QtAds defaults
-   ============================================================================ */
+/*
+LIGHT THEME - Professional Light Mode with Optimal Contrast
 
-/* Main Window & General */
 QMainWindow {
     background-color: #F5F5F5;
     color: #212121;
 }
 
-/* Dock System Styling */
 ads--CDockManager {
     background-color: #F5F5F5;
     color: #212121;
 }
 
-/* CRITICAL: Override QtAds CDockAreaWidget gradient */
 ads--CDockAreaWidget {
     background-color: #FFFFFF;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                stop:0 #FFFFFF, 
-                                stop:1 #F0F0F0);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFFFF, stop:1 #F0F0F0);
     color: #212121;
     border: 1px solid #E0E0E0;
     margin: 0px;
@@ -29,35 +22,31 @@ ads--CDockAreaWidget {
 
 ads--CDockWidget {
     background-color: #FFFFFF;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                stop:0 #FFFFFF, 
-                                stop:1 #F0F0F0);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FFFFFF, stop:1 #F0F0F0);
     color: #212121;
     border: 1px solid #E0E0E0;
     margin: 0px;
     padding: 0px;
 }
 
-/* Title Bar with Gradient */
 ads--CDockAreaTitleBar {
     background-color: #F5F5F5;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                stop:0 #F5F5F5, 
-                                stop:1 #E8E8E8);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #F5F5F5, stop:1 #E8E8E8);
     color: #212121;
     border-bottom: 1px solid #E0E0E0;
     margin: 0px;
     padding: 0px;
 }
 
-/* Floating Container with Gradient */
 ads--CFloatingDockContainer {
     background-color: #FAFAFA;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                stop:0 #FAFAFA, 
-                                stop:1 #F0F0F0);
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #FAFAFA, stop:1 #F0F0F0);
     color: #212121;
     border: 1px solid #E0E0E0;
+    margin: 0px;
+    padding: 0px;
+}
+*/
     margin: 0px;
     padding: 0px;
 }

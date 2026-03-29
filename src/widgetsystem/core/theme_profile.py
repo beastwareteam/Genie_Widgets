@@ -26,6 +26,7 @@ class ThemeColors:
     tab_active_text: str = "#ff8ab4f8"  # Blue text
     tab_inactive_bg: str = "#cc2d2e31"  # 80% opacity
     tab_inactive_text: str = "#ffbdc1c6"  # Gray text
+    tab_hover_bg: str = "#40ffffff"  # Hover overlay
     tab_padding: int = 4
     tab_border_radius: int = 0
 
@@ -33,6 +34,7 @@ class ThemeColors:
     titlebar_bg: str = "#cc2d2e31"  # 80% opacity
     titlebar_text: str = "#ffe8eaed"  # Light gray
     titlebar_btn_hover: str = "#408ab4f8"  # 25% blue overlay
+    titlebar_btn_pressed: str = "#60ffffff"  # Pressed state
 
     # Window Management / Decorations
     btn_bg: str = "#40ffffff"  # 25% opacity white
@@ -50,6 +52,46 @@ class ThemeColors:
     overlay_cross_color: str = "#ff8ab4f8"  # Solid blue
     overlay_border_color: str = "#ff8ab4f8"  # Solid blue
     overlay_border_width: int = 2
+
+    # Toolbar
+    toolbar_bg: str = "#cc2d2e31"  # Same as titlebar
+    toolbar_separator: str = "#ff4c4c4c"  # Separator color
+    toolbar_button_bg: str = "#00000000"  # Transparent
+    toolbar_button_hover: str = "#40ffffff"  # Hover overlay
+    toolbar_button_pressed: str = "#60ffffff"  # Pressed state
+
+    # Push Buttons
+    pushbutton_bg: str = "#ff3c4043"  # Button background
+    pushbutton_text: str = "#ffe8eaed"  # Button text
+    pushbutton_border: str = "#ff5c5c5c"  # Button border
+    pushbutton_hover_bg: str = "#ff4c5054"  # Hover background
+    pushbutton_pressed_bg: str = "#ff5c6064"  # Pressed background
+
+    # Input Widgets
+    input_bg: str = "#ff2d2e31"  # Input background
+    input_text: str = "#ffe8eaed"  # Input text
+    input_border: str = "#ff3c4043"  # Input border
+    input_focus_border: str = "#ff8ab4f8"  # Focus border
+    input_selection_bg: str = "#ff1565c0"  # Selection background
+    input_selection_text: str = "#ffffffff"  # Selection text
+
+    # Dropdown/ComboBox
+    combobox_bg: str = "#ff2d2e31"  # ComboBox background
+    combobox_text: str = "#ffe8eaed"  # ComboBox text
+    combobox_border: str = "#ff3c4043"  # ComboBox border
+    combobox_dropdown_bg: str = "#ff3c4043"  # Dropdown background
+
+    # ScrollBar
+    scrollbar_bg: str = "#ff1a1a1a"  # ScrollBar background
+    scrollbar_handle: str = "#ff4c4c4c"  # ScrollBar handle
+    scrollbar_handle_hover: str = "#ff8ab4f8"  # Handle hover
+
+    # Menu
+    menu_bg: str = "#ff2d2e31"  # Menu background
+    menu_text: str = "#ffe8eaed"  # Menu text
+    menu_border: str = "#ff3c4043"  # Menu border
+    menu_item_selected_bg: str = "#cc3c4043"  # Selected item background
+    menu_item_selected_text: str = "#ff8ab4f8"  # Selected item text
 
 
 class ThemeProfile:
@@ -98,6 +140,11 @@ class ThemeProfile:
         Returns:
             Transformed ARGB hex color
         """
+        # Short-circuit: if all transforms are neutral, return original color
+        # This prevents color drift from HSV conversion roundtrip
+        if self.global_hue == 0 and self.global_saturation == 1.0 and self.global_brightness == 1.0:
+            return color_hex
+        
         color = QColor(color_hex)
         hsva_tuple: tuple[float, float, float, float] = color.getHsvF()  # type: ignore[assignment]
         h, s, v, a = hsva_tuple
@@ -194,7 +241,7 @@ ads--CDockWidgetTab[activeTab="true"] {{
 }}
 
 ads--CDockWidgetTab:hover {{
-    background: {self.as_qss_color("#40ffffff")};
+    background: {qss_color("tab_hover_bg")};
 }}
 
 QTabBar {{
@@ -218,7 +265,7 @@ QTabBar::tab:selected {{
 }}
 
 QTabBar::tab:hover {{
-    background: {self.as_qss_color("#40ffffff")};
+    background: {qss_color("tab_hover_bg")};
 }}
 
 /* 5. Titlebars */
@@ -249,7 +296,7 @@ ads--CTitleBarButton:hover {{
 }}
 
 ads--CTitleBarButton:pressed {{
-    background: {self.as_qss_color("#60ffffff")};
+    background: {qss_color("titlebar_btn_pressed")};
 }}
 
 #dockAreaCloseButton, #detachGroupButton, #tabCloseButton, #dockAreaAutoHideButton {{
@@ -324,25 +371,131 @@ QTabWidget::pane {{
 }}
 
 QToolBar {{
-    background: {qss_color("titlebar_bg")};
+    background: {qss_color("toolbar_bg")};
     border: none;
-    spacing: 3px;
+    spacing: 4px;
     padding: 3px;
 }}
 
-QMenuBar {{
-    background: {qss_color("titlebar_bg")};
-    color: {qss_color("titlebar_text")};
+QToolBar::separator {{
+    background: {qss_color("toolbar_separator")};
+    width: 2px;
+    margin: 0px 4px;
 }}
 
-QMenu {{
-    background: {qss_color("titlebar_bg")};
+QToolButton {{
+    background: {qss_color("toolbar_button_bg")};
     color: {qss_color("titlebar_text")};
+    border: 1px solid transparent;
+    padding: 4px 8px;
+    border-radius: 2px;
+}}
+
+QToolButton:hover {{
+    background: {qss_color("toolbar_button_hover")};
     border: 1px solid {qss_color("splitter_handle")};
 }}
 
+QToolButton:pressed,
+QToolButton:checked {{
+    background: {qss_color("toolbar_button_pressed")};
+    border: 1px solid {qss_color("splitter_handle")};
+}}
+
+QPushButton {{
+    background: {qss_color("pushbutton_bg")};
+    color: {qss_color("pushbutton_text")};
+    border: 1px solid {qss_color("pushbutton_border")};
+    border-radius: 4px;
+    padding: 6px 16px;
+    font-weight: bold;
+}}
+
+QPushButton:hover {{
+    background: {qss_color("pushbutton_hover_bg")};
+}}
+
+QPushButton:pressed {{
+    background: {qss_color("pushbutton_pressed_bg")};
+}}
+
+QLineEdit,
+QTextEdit,
+QPlainTextEdit {{
+    background: {qss_color("input_bg")};
+    color: {qss_color("input_text")};
+    border: 1px solid {qss_color("input_border")};
+    border-radius: 2px;
+    padding: 4px 6px;
+    selection-background-color: {qss_color("input_selection_bg")};
+    selection-color: {qss_color("input_selection_text")};
+}}
+
+QLineEdit:focus,
+QTextEdit:focus,
+QPlainTextEdit:focus {{
+    border: 2px solid {qss_color("input_focus_border")};
+}}
+
+QComboBox {{
+    background: {qss_color("combobox_bg")};
+    color: {qss_color("combobox_text")};
+    border: 1px solid {qss_color("combobox_border")};
+    border-radius: 2px;
+    padding: 4px 6px;
+}}
+
+QComboBox::drop-down {{
+    background: {qss_color("combobox_dropdown_bg")};
+    border: none;
+}}
+
+QScrollBar:vertical {{
+    background: {qss_color("scrollbar_bg")};
+    width: 12px;
+    border-radius: 6px;
+}}
+
+QScrollBar::handle:vertical {{
+    background: {qss_color("scrollbar_handle")};
+    border-radius: 6px;
+    min-height: 20px;
+}}
+
+QScrollBar::handle:vertical:hover {{
+    background: {qss_color("scrollbar_handle_hover")};
+}}
+
+QScrollBar:horizontal {{
+    background: {qss_color("scrollbar_bg")};
+    height: 12px;
+    border-radius: 6px;
+}}
+
+QScrollBar::handle:horizontal {{
+    background: {qss_color("scrollbar_handle")};
+    border-radius: 6px;
+    min-width: 20px;
+}}
+
+QScrollBar::handle:horizontal:hover {{
+    background: {qss_color("scrollbar_handle_hover")};
+}}
+
+QMenuBar {{
+    background: {qss_color("menu_bg")};
+    color: {qss_color("menu_text")};
+}}
+
+QMenu {{
+    background: {qss_color("menu_bg")};
+    color: {qss_color("menu_text")};
+    border: 1px solid {qss_color("menu_border")};
+}}
+
 QMenu::item:selected {{
-    background: {qss_color("tab_active_bg")};
+    background: {qss_color("menu_item_selected_bg")};
+    color: {qss_color("menu_item_selected_text")};
 }}
 """
 

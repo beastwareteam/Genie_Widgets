@@ -24,6 +24,7 @@ class ThemeDefinition:
     theme_id: str
     name: str
     file_path: Path
+    colors: dict[str, str] = None
     tab_active_color: str = "#E0E0E0"
     tab_inactive_color: str = "#BDBDBD"
 
@@ -70,7 +71,7 @@ class ThemeFactory:
             return []
 
     def list_themes(self) -> list[ThemeDefinition]:
-        """List all available themes from the configuration file.
+        """List all available themes from the configuration file, inkl. Farben aus theme_colors_<id>.json.
 
         Returns:
             List of ThemeDefinition objects
@@ -82,37 +83,37 @@ class ThemeFactory:
             if not isinstance(theme, dict):
                 continue
 
-            # Check for required fields
             theme_id = theme.get("id")
             name = theme.get("name")
-            
-            # Support both "file" and "stylesheet" keys
             file_path = theme.get("file") or theme.get("stylesheet")
-
             if not (theme_id and name and file_path):
                 continue
-
-            # Resolve file path relative to config_path
             resolved_path = (self.config_path / file_path).resolve()
 
-            # Get tab colors with defaults
-            tab_colors = theme.get("tab_colors", {})
-            if not isinstance(tab_colors, dict):
-                tab_colors = {}
+            # Farben aus theme_colors_<id>.json laden
+            color_file = self.config_path / f"theme_colors_{theme_id}.json"
+            if color_file.exists():
+                try:
+                    with color_file.open("r", encoding="utf-8") as cf:
+                        colors = json.load(cf)
+                except Exception:
+                    colors = {}
+            else:
+                colors = {}
 
-            tab_active = tab_colors.get("active", "#E0E0E0")
-            tab_inactive = tab_colors.get("inactive", "#BDBDBD")
+            tab_active = colors.get("tab_active_color", "#E0E0E0")
+            tab_inactive = colors.get("tab_inactive_color", "#BDBDBD")
 
             themes.append(
                 ThemeDefinition(
                     theme_id=theme_id,
                     name=name,
                     file_path=resolved_path,
+                    colors=colors,
                     tab_active_color=tab_active,
                     tab_inactive_color=tab_inactive,
                 )
             )
-
         return themes
 
     def get_default_theme_id(self) -> str | None:
