@@ -1,13 +1,87 @@
 {
-    "typeCheckingMode": "basic",
-    "pythonVersion": "3.12",
-    "pythonPath": "${workspaceFolder}/.venv/Scripts/python.exe",
-    "include": ["*.py"],
-    "exclude": [".venv", ".git", "__pycache__"],
-    "ignore": [".venv"],
-    "typeStubPath": "${workspaceFolder}/.venv/lib/site-packages",
-    "reportMissingImports": false,
-    "reportMissingTypeStubs": false,
-    "reportOptionalMemberAccess": true,
-    "reportOptionalOperand": false
+    "typeCheckingMode": "strict",
+    "pythonVersion": "3.13",
+    "include": ["src"],
+    "exclude": [
+        ".venv",
+        ".git",
+        "**/__pycache__",
+        "build",
+        "dist",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        "**/node_modules",
+        "**/.*"
+    ],
+    "ignore": ["tests/**"],
+    "venvPath": ".",
+    "venv": ".venv",
+
+    "reportMissingImports": "error",
+    "reportMissingTypeStubs": "warning",
+    "reportMissingModuleSource": "warning",
+
+    "reportGeneralTypeIssues": "error",
+    "reportOptionalSubscript": "error",
+    "reportOptionalMemberAccess": "error",
+    "reportOptionalCall": "error",
+    "reportOptionalIterable": "error",
+    "reportOptionalContextManager": "error",
+    "reportOptionalOperand": "error",
+
+    "reportTypedDictNotRequiredAccess": "warning",
+    "reportUntypedFunctionDecorator": "warning",
+    "reportUntypedClassDecorator": "warning",
+    "reportUntypedBaseClass": "warning",
+    "reportUntypedNamedTuple": "error",
+
+    "reportPrivateUsage": "warning",
+    "reportConstantRedefinition": "error",
+    "reportIncompatibleMethodOverride": "error",
+    "reportIncompatibleVariableOverride": "error",
+    "reportInconsistentConstructor": "error",
+    "reportOverlappingOverload": "error",
+
+    "reportUnusedImport": "warning",
+    "reportUnusedClass": "warning",
+    "reportUnusedFunction": "warning",
+    "reportUnusedVariable": "warning",
+    "reportDuplicateImport": "warning",
+
+    "reportUnknownParameterType": "warning",
+    "reportUnknownArgumentType": "warning",
+    "reportUnknownLambdaType": "warning",
+    "reportUnknownVariableType": "warning",
+    "reportUnknownMemberType": "warning",
+
+    "reportAttributeAccessIssue": "warning",
+    "reportCallIssue": "warning",
+
+    "reportImplicitStringConcatenation": "warning",
+    "reportUnnecessaryIsInstance": "warning",
+    "reportUnnecessaryCast": "warning",
+    "reportUnnecessaryComparison": "warning",
+    "reportUnnecessaryContains": "warning",
+
+    "reportAssertAlwaysTrue": "error",
+    "reportSelfClsParameterName": "error",
+    "reportImplicitOverride": "warning",
+
+    "reportPropertyTypeMismatch": "error",
+    "reportFunctionMemberAccess": "warning",
+    "reportInvalidStringEscapeSequence": "error",
+
+    "reportCallInDefaultInitializer": "warning",
+    "reportUnnecessaryTypeIgnoreComment": "warning",
+    "reportMatchNotExhaustive": "warning",
+
+    "strictListInference": true,
+    "strictDictionaryInference": true,
+    "strictSetInference": true,
+    "strictParameterNoneValue": true,
+
+    "enableTypeIgnoreComments": true,
+    "deprecateTypingAliases": true,
+    "enableExperimentalFeatures": false
 }

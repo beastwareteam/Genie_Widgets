@@ -3,7 +3,7 @@
 import sys
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import PySide6QtAds as QtAds
 from PySide6.QtCore import QByteArray, Qt, QTimer
@@ -33,11 +33,14 @@ from widgetsystem.factories.ui_config_factory import UIConfigFactory
 from widgetsystem.core.plugin_system import PluginManager, PluginRegistry
 from widgetsystem.ui import ConfigurationPanel, InlayTitleBarController
 
-# Import constants from inlay_titlebar
+# Import constants from inlay_titlebar with fallback
 try:
-    from widgetsystem.ui.inlay_titlebar import COLLAPSED_HEIGHT
+    from widgetsystem.ui.inlay_titlebar import COLLAPSED_HEIGHT as _imported_collapsed_height
+    _collapsed_height_value = _imported_collapsed_height
 except ImportError:
-    COLLAPSED_HEIGHT = 3
+    _collapsed_height_value = 3
+
+COLLAPSED_HEIGHT: int = _collapsed_height_value
 
 # Spacing between titlebar and toolbar to prevent overlap
 TITLEBAR_SPACING = 2  # pixels
@@ -146,7 +149,7 @@ class MainWindow(QMainWindow):
         )
 
         # Create dock manager as central widget
-        self.dock_manager: Any = QtAds.CDockManager(self)
+        self.dock_manager = QtAds.CDockManager(self)  # type: ignore[assignment]
 
         # Set narrow splitter width by finding all QSplitter widgets
         self._set_narrow_splitters()

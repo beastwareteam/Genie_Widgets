@@ -107,37 +107,37 @@ QTabWidget::pane {
     border: 1px solid #3C3C3C;
 }
 
-/* Toolbar Styling */
+/* Toolbar Styling - Unified Structure (only colors differ between themes) */
 QToolBar {
-    background-color: #1E1E1E;
-    color: #E0E0E0;
-    border: 1px solid #3C3C3C;
-    spacing: 4px;
+    background-color: #1E1E1E;       /* THEME COLOR */
+    color: #E0E0E0;                  /* THEME COLOR */
+    border: 1px solid #3C3C3C;       /* THEME COLOR */
+    spacing: 4px;                    /* FIXED: consistent spacing */
 }
 
 QToolBar::separator {
-    background-color: #4C4C4C;
-    width: 2px;
-    margin: 0px 4px;
+    background-color: #4C4C4C;       /* THEME COLOR */
+    width: 2px;                      /* FIXED: consistent separator width */
+    margin: 0px 4px;                 /* FIXED: consistent separator margin */
 }
 
 QToolButton {
-    background-color: transparent;
-    color: #E0E0E0;
-    border: 1px solid transparent;
-    padding: 4px 8px;
-    border-radius: 2px;
+    background-color: transparent;   /* THEME COLOR */
+    color: #E0E0E0;                  /* THEME COLOR */
+    border: 1px solid transparent;   /* FIXED: consistent border style */
+    padding: 4px 8px;                /* FIXED: consistent padding */
+    border-radius: 2px;              /* FIXED: consistent border-radius */
 }
 
 QToolButton:hover {
-    background-color: #323232;
-    border: 1px solid #4C4C4C;
+    background-color: #323232;       /* THEME COLOR */
+    border: 1px solid #4C4C4C;       /* THEME COLOR */
 }
 
 QToolButton:pressed,
 QToolButton:checked {
-    background-color: #4C4C4C;
-    border: 1px solid #5C5C5C;
+    background-color: #4C4C4C;       /* THEME COLOR */
+    border: 1px solid #5C5C5C;       /* THEME COLOR */
 }
 
 /* Push Button */

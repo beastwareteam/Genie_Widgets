@@ -1,15 +1,18 @@
 """Theme factory for managing theme definitions and loading theme configurations."""
 
 from dataclasses import dataclass
+import json
 from pathlib import Path
 from typing import Any
-import json
+
+# Import the complete ThemeProfile from core (not duplicated here)
+from widgetsystem.core.theme_profile import ThemeProfile
 
 
 @dataclass
 class ThemeDefinition:
     """Represents a theme definition.
-    
+
     Attributes:
         theme_id: Unique identifier for the theme
         name: Display name for the theme
@@ -23,59 +26,6 @@ class ThemeDefinition:
     file_path: Path
     tab_active_color: str = "#E0E0E0"
     tab_inactive_color: str = "#BDBDBD"
-
-
-class ThemeProfile:
-    """Represents a theme profile with configuration.
-    
-    A profile contains theme colors, layout configuration,
-    and can generate QSS stylesheets.
-    """
-
-    def __init__(self, profile_id: str, name: str) -> None:
-        """Initialize theme profile.
-
-        Args:
-            profile_id: Unique identifier for the profile
-            name: Display name for the profile
-        """
-        self.profile_id = profile_id
-        self.name = name
-
-    @staticmethod
-    def load_from_file(file_path: Path) -> "ThemeProfile":
-        """Load a theme profile from a JSON file.
-
-        Args:
-            file_path: Path to the profile JSON file
-
-        Returns:
-            ThemeProfile instance
-
-        Raises:
-            json.JSONDecodeError: If file contains invalid JSON
-            OSError: If file cannot be read
-        """
-        data = json.loads(file_path.read_text(encoding="utf-8"))
-        profile = ThemeProfile(data.get("id", ""), data.get("name", ""))
-        return profile
-
-    def save_to_file(self, file_path: Path) -> None:
-        """Save theme profile to a JSON file.
-
-        Args:
-            file_path: Path where the profile should be saved
-        """
-        data = {"id": self.profile_id, "name": self.name}
-        file_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
-
-    def generate_qss(self) -> str:
-        """Generate QSS stylesheet content from profile.
-
-        Returns:
-            QSS stylesheet as a string
-        """
-        return ""
 
 
 class ThemeFactory:
@@ -258,16 +208,16 @@ class ThemeFactory:
             return None
 
         try:
-            return ThemeProfile.load_from_file(profile_file)
-        except json.JSONDecodeError:
+            return ThemeProfile.load_from_json_file(profile_file)
+        except (json.JSONDecodeError, OSError, KeyError):
             return None
 
-    def save_profile(self, profile: ThemeProfile, profile_id: str) -> bool:
+    def save_profile(self, profile: ThemeProfile, profile_id: str | None = None) -> bool:
         """Save a theme profile.
 
         Args:
             profile: ThemeProfile instance to save
-            profile_id: ID for the profile
+            profile_id: Optional ID for the profile (uses profile.name if not provided)
 
         Returns:
             True if successful, False otherwise
@@ -275,9 +225,12 @@ class ThemeFactory:
         profiles_dir = self.config_path / "profiles"
         profiles_dir.mkdir(parents=True, exist_ok=True)
 
-        profile_file = profiles_dir / f"{profile_id}.json"
+        # Use profile name as ID if not provided
+        save_id = profile_id if profile_id else profile.name.lower().replace(" ", "_")
+        profile_file = profiles_dir / f"{save_id}.json"
+        
         try:
-            profile.save_to_file(profile_file)
+            profile.save_to_json_file(profile_file)
             return True
         except OSError:
             return False

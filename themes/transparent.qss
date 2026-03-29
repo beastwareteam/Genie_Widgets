@@ -123,28 +123,37 @@ QTabWidget::pane {
     border: 1px solid rgba(64, 64, 64, 0.5);
 }
 
-/* Toolbar Styling */
+/* Toolbar Styling - Unified Structure (only colors differ between themes) */
 QToolBar {
     background-color: rgba(0, 0, 0, 0);
     color: #E0E0E0;
     border: 1px solid rgba(64, 64, 64, 0.5);
-    spacing: 4px;
+    spacing: 4px;                    /* FIXED: consistent spacing */
+}
+
+QToolBar::separator {
+    background-color: rgba(76, 76, 76, 0.5);
+    width: 2px;                      /* FIXED: consistent separator width */
+    margin: 0px 4px;                 /* FIXED: consistent separator margin */
 }
 
 QToolButton {
     background-color: rgba(0, 0, 0, 0);
     color: #E0E0E0;
-    border: 1px solid rgba(64, 64, 64, 0.5);
-    padding: 4px 8px;
-    border-radius: 2px;
+    border: 1px solid transparent;   /* FIXED: transparent border like dark theme */
+    padding: 4px 8px;                /* FIXED: consistent padding */
+    border-radius: 2px;              /* FIXED: consistent border-radius */
 }
 
 QToolButton:hover {
     background-color: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(76, 76, 76, 0.5);  /* ADDED: border on hover */
 }
 
-QToolButton:pressed {
+QToolButton:pressed,
+QToolButton:checked {
     background-color: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(92, 92, 92, 0.5);  /* ADDED: border on press/checked */
 }
 
 /* Push Button */

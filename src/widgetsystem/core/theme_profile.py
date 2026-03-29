@@ -411,3 +411,23 @@ QMenu::item:selected {{
         """
         with open(file_path, encoding="utf-8") as f:
             return cls.from_json(f.read())
+
+    @classmethod
+    def load_from_json_file(cls, file_path: Path) -> "ThemeProfile":
+        """Alias for load_from_file for factory compatibility.
+
+        Args:
+            file_path: Path to JSON file
+
+        Returns:
+            ThemeProfile instance
+        """
+        return cls.load_from_file(file_path)
+
+    def save_to_json_file(self, file_path: Path) -> None:
+        """Alias for save_to_file for factory compatibility.
+
+        Args:
+            file_path: Path to save JSON file
+        """
+        self.save_to_file(file_path)
