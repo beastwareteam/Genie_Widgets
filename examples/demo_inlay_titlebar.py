@@ -63,7 +63,7 @@ class DemoWindow(QMainWindow):
         layout.setContentsMargins(40, 60, 40, 40)  # Top margin for titlebar
 
         # Title
-        title = QLabel("🎨 Inlay TitleBar Demo")
+        title = QLabel("Inlay TitleBar Demo")
         title.setStyleSheet("font-size: 24pt; font-weight: bold;")
         layout.addWidget(title)
 

@@ -138,24 +138,19 @@ ads--CDockAreaTitleBar QLabel {
 
 
 /* ════════════════════════════════════════════════════════════
-   7. ADS — DOCK TAB  ← FIX: padding reduziert, kompakter
+   7. ADS — DOCK TAB  ← FIX: Spezifitäts-Konflikt behoben
    ════════════════════════════════════════════════════════════ */
 
 ads--CDockWidgetTab {
-    background-color: rgba(12, 15, 26, 0.75);
-    border: 1px solid rgba(42, 55, 90, 0.55);
+    background-color: rgba(42, 52, 80, 0.90);
+    border: 1px solid rgba(70, 88, 130, 0.80);
     border-bottom: none;
     border-radius: 4px 4px 0px 0px;
-    padding: 2px 8px 2px 6px;      /* war 4px 10px 4px 8px */
+    padding: 2px 8px 2px 6px;
     margin-right: 2px;
-    min-width: 60px;                /* war 80px */
+    min-width: 60px;
     max-width: 180px;
     qproperty-iconSize: 13px 13px;
-}
-
-ads--CDockWidgetTab:hover {
-    background-color: rgba(30, 40, 70, 0.80);
-    border-color: rgba(61, 127, 255, 0.45);
 }
 
 ads--CDockWidgetTab[activeTab="true"] {
@@ -166,17 +161,36 @@ ads--CDockWidgetTab[activeTab="true"] {
     color: #ffffff;
 }
 
+ads--CDockWidgetTab[activeTab="false"] {
+    background-color: rgba(28, 38, 68, 0.65);
+    border: 1px solid rgba(61, 127, 255, 0.58);
+    border-top: 2px solid rgba(61, 126, 255, 0.65);
+    border-bottom: 1px solid rgba(28, 38, 68, 0.92);
+    color: #ffffff;
+}
+
+/* ↓ Hover NACH den Attribut-Selektoren → höhere Spezifität */
+ads--CDockWidgetTab[activeTab="false"]:hover {
+    background-color: rgba(58, 72, 110, 1);
+    border-color: rgba(61, 127, 255, 0.65);
+}
+
+ads--CDockWidgetTab[activeTab="true"]:hover {
+    background-color: rgba(35, 48, 80, 0.97);
+    border-color: rgba(61, 127, 255, 0.90);
+}
+
 ads--CDockWidgetTab[activeTab="true"] QLabel {
     background-color: transparent;
     color: #7ab8ff;
     font-weight: 600;
-    font-size: 11px;               /* war 12px */
+    font-size: 11px;
 }
 
 ads--CDockWidgetTab QLabel {
     background-color: transparent;
-    color: #4a5878;
-    font-size: 11px;               /* war 12px */
+    color: #a0b0d0;
+    font-size: 11px;
 }
 
 
@@ -492,8 +506,8 @@ QMenu::right-arrow {
    ════════════════════════════════════════════════════════════ */
 
 QToolBar {
-    background-color: rgba(10, 12, 22, 0.97);
-    border-bottom: 1px solid rgba(42, 51, 82, 0.70);
+    background-color: rgba(28, 34, 54, 0.97);
+    border-bottom: 1px solid rgba(61, 75, 110, 0.70);
     spacing: 1px;
     padding: 2px 4px;
     min-height: 24px;
@@ -517,41 +531,42 @@ QToolBar QToolButton,
 QToolBar QAbstractButton {
     background-color: rgba(25, 30, 52, 0.85);
     border: 1px solid rgba(42, 55, 90, 0.60);
-    border-radius: 3px;
+    border-radius: 4px;
     color: #a0adcc;
-    padding: 2px;
+    padding: 0px;
     margin: 1px;
-    min-width: 18px;
-    min-height: 18px;
-    max-width: 18px;
-    max-height: 18px;
+    min-width: 20px;
+    min-height: 20px;
+    max-width: 20px;
+    max-height: 20px;
+    text-align: center;
 }
 
 QToolBar QToolButton:hover,
 QToolBar QAbstractButton:hover {
-    background-color: rgba(61, 127, 255, 0.20);
-    border-color: rgba(61, 127, 255, 0.55);
-    color: #d0daff;
+    background-color: rgba(61, 127, 255, 0.15);
+    border-color: rgba(61, 127, 255, 0.40);
+    color: #c8d4ff;
 }
 
 QToolBar QToolButton:pressed,
 QToolBar QAbstractButton:pressed {
-    background-color: rgba(61, 127, 255, 0.35);
-    border-color: #3d7fff;
+    background-color: rgba(61, 127, 255, 0.28);
+    border-color: rgba(61, 127, 255, 0.65);
     color: #ffffff;
 }
 
 QToolBar QToolButton:checked,
 QToolBar QAbstractButton:checked {
-    background-color: rgba(61, 127, 255, 0.25);
-    border-color: rgba(61, 127, 255, 0.60);
+    background-color: rgba(61, 127, 255, 0.18);
+    border-color: rgba(61, 127, 255, 0.45);
     color: #5b9fff;
 }
 
 QToolBar QToolButton:disabled,
 QToolBar QAbstractButton:disabled {
-    background-color: rgba(20, 24, 40, 0.60);
-    border-color: rgba(42, 51, 82, 0.30);
+    background-color: transparent;
+    border-color: transparent;
     color: #3a4260;
 }
 
@@ -566,6 +581,65 @@ QToolButton::menu-button {
 
 QToolButton::menu-button:hover {
     background-color: rgba(61, 127, 255, 0.20);
+}
+
+
+/* ════════════════════════════════════════════════════════════
+   18b. INLAY TITLE BAR (ausklappbare Fenster-Titelleiste)
+        objectName: "InlayTitleBar"  — WA_StyledBackground gesetzt
+        Button-objectNames: TitleBtn_minimize / _maximize / _close
+   ════════════════════════════════════════════════════════════ */
+
+#InlayTitleBar {
+    background-color: rgba(28, 34, 54, 0.97);
+    border-bottom: 1px solid rgba(61, 75, 110, 0.70);
+}
+
+/* Title label */
+#InlayTitleBar #TitleLabel {
+    background-color: transparent;
+    color: #c8d0e8;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Alle drei Fenster-Buttons: Basis-Style */
+#TitleBtn_minimize,
+#TitleBtn_maximize,
+#TitleBtn_close {
+    background-color: rgba(25, 30, 52, 0.85);
+    border: 1px solid rgba(42, 55, 90, 0.60);
+    border-radius: 4px;
+    color: #a0adcc;
+    font-size: 12px;
+    padding: 0px;
+}
+
+#TitleBtn_minimize:hover,
+#TitleBtn_maximize:hover {
+    background-color: rgba(61, 127, 255, 0.22);
+    border-color: rgba(61, 127, 255, 0.55);
+    color: #d0daff;
+}
+
+#TitleBtn_minimize:pressed,
+#TitleBtn_maximize:pressed {
+    background-color: rgba(61, 127, 255, 0.38);
+    border-color: #3d7fff;
+    color: #ffffff;
+}
+
+/* Close-Button: rot beim Hover */
+#TitleBtn_close:hover {
+    background-color: rgba(196, 43, 28, 0.85);
+    border-color: rgba(220, 60, 50, 0.70);
+    color: #ffffff;
+}
+
+#TitleBtn_close:pressed {
+    background-color: rgba(140, 20, 20, 0.90);
+    border-color: rgba(180, 40, 40, 0.80);
+    color: #ffffff;
 }
 
 
