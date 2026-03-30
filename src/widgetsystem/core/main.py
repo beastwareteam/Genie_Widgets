@@ -215,6 +215,8 @@ class MainWindow(QMainWindow):
         # Apply custom gradients to override QtAds default gradients
         QTimer.singleShot(150, self._apply_custom_gradients)
 
+        QTimer.singleShot(200, self._setup_titlebar_button_collapser)
+
     # ------------------------------------------------------------------
     # Dock creation helpers
     # ------------------------------------------------------------------
@@ -386,6 +388,15 @@ class MainWindow(QMainWindow):
             movable=movable,
             floatable=floatable,
             delete_on_close=panel.delete_on_close,
+        )
+
+    def _setup_titlebar_button_collapser(self) -> None:
+        from widgetsystem.ui import TitleBarButtonCollapserManager
+        self._tb_collapser = TitleBarButtonCollapserManager(
+            self.dock_manager, parent=self
+        )
+        self._floating_tracker.register_post_refresh_callback(
+            self._tb_collapser.refresh_area
         )
 
     def _resolve_dock_area(self, area_name: str) -> Any:

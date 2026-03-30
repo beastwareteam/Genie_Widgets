@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"tabCloseButton\\\\|tabsMenuButton\\\\|detachGroupButton\\\\|CloseButton\\\\|closeButton\" /f/Projekte/WidgetSystem_v1/themes/*.qss)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''f:/Projekte/WidgetSystem_v1/src/widgetsystem/ui/title_bar_button_collapser.py''\\).read\\(\\)\\); print\\(''OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''f:/Projekte/WidgetSystem_v1/src/widgetsystem/ui/title_bar_button_collapser.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''OK''\\)\")"
+    ]
+  }
+}

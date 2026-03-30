@@ -1,15 +1,15 @@
 {
-    "default_theme": "dark",
+    "default_theme": "dark_blue_ads",
     "themes": [
-        {
-            "id": "dark",
-            "name": "Dark",
-            "stylesheet": "../themes/dark.qss"
-        },
         {
             "id": "dark_blue_ads",
             "name": "Dark Blue ADS",
             "stylesheet": "../themes/dark_blue_ads_theme.qss"
-        }
+        },
+        {
+            "id": "dark",
+            "name": "Dark",
+            "stylesheet": "../themes/dark.qss"
+        }        
     ]
 }

@@ -354,6 +354,10 @@ QToolButton::menu-button:hover {
     color: #a0adcc;
     font-size: 12px;
     padding: 0px;
+    min-width: 20px;
+    max-width: 20px;
+    min-height: 20px;
+    max-height: 20px;
 }
 
 #TitleBtn_minimize:hover,
@@ -1522,12 +1526,14 @@ ads--CDockAreaTitleBar QToolButton:pressed {
 }
 
 /* Close-Button der TitleBar: abweichend rot */
+ads--CDockAreaTitleBar > QAbstractButton#dockAreaCloseButton:hover,
 ads--CDockAreaTitleBar > QAbstractButton#closeButton:hover {
     background-color: rgba(200, 50, 50, 0.30);
     border-color: rgba(220, 70, 70, 0.60);
     color: #ff7070;
 }
 
+ads--CDockAreaTitleBar > QAbstractButton#dockAreaCloseButton:pressed,
 ads--CDockAreaTitleBar > QAbstractButton#closeButton:pressed {
     background-color: rgba(200, 50, 50, 0.50);
 }
@@ -1620,22 +1626,28 @@ ads--CDockWidgetTab[activeTab="true"] QLabel {
    ════════════════════════════════════════════════════════════════════════════ */
 
 ads--CDockWidgetTab > QAbstractButton#tabCloseButton {
-    background-color: transparent;
-    border: none;
-    border-radius: 3px;
-    margin: 2px 0px 0px 10px;
+    background-color: rgba(25, 30, 52, 0.85);
+    border: 1px solid rgba(42, 55, 90, 0.60);
+    border-radius: 4px;
+    color: #a0adcc;
+    margin: 1px 1px 1px 8px;
     padding: 1px;
-    subcontrol-origin: margin;
-    subcontrol-position: right;
+    min-width: 16px;
+    max-width: 16px;
+    min-height: 16px;
+    max-height: 16px;
 }
 
 ads--CDockWidgetTab > QAbstractButton#tabCloseButton:hover {
-    background-color: rgba(35, 48, 80, 0.57);
-    border: 1px solid rgba(35, 48, 80, 0.97);
+    background-color: rgba(200, 50, 50, 0.30);
+    border-color: rgba(220, 70, 70, 0.60);
+    color: #ff7070;
 }
 
 ads--CDockWidgetTab > QAbstractButton#tabCloseButton:pressed {
-    background-color: rgba(255, 80, 80, 0.45);
+    background-color: rgba(200, 50, 50, 0.50);
+    border-color: rgba(220, 70, 70, 0.80);
+    color: #ffffff;
 }
 
 

@@ -6,6 +6,7 @@ from widgetsystem.ui.argb_color_picker import (
     ARGBColorPickerDialog,
 )
 from widgetsystem.ui.config_panel import ConfigurationPanel
+from widgetsystem.ui.title_bar_button_collapser import TitleBarButtonCollapserManager
 from widgetsystem.ui.floating_state_tracker import FloatingStateTracker
 from widgetsystem.ui.floating_titlebar import (
     CustomFloatingTitleBar,
@@ -44,6 +45,7 @@ __all__ = [
     "ARGBColorPicker",
     "ARGBColorPickerDialog",
     "ConfigurationPanel",
+    "TitleBarButtonCollapserManager",
     "CustomFloatingTitleBar",
     "FloatingStateTracker",
     "FloatingWindowPatcher",

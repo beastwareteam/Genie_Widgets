@@ -127,7 +127,7 @@ class InlayTitleBar(QWidget):
     def _make_button(self, symbol: str, role: str) -> QPushButton:
         btn = QPushButton(symbol)
         btn.setObjectName(f"TitleBtn_{role}")
-        btn.setFixedSize(QSize(32, EXPANDED_HEIGHT - 4))
+        btn.setFixedSize(QSize(20, 20))
         btn.setCursor(Qt.CursorShape.PointingHandCursor)
 
         hover_bg = "rgba(196,43,28,0.90)" if role == "close" else "rgba(255,255,255,0.15)"

@@ -240,10 +240,11 @@
             "current_theme": {
               "type": "select",
               "label_key": "config.current_theme",
-              "default": "dark",
+              "default": "dark_blue_ads",
               "options": [
                 {"value": "light", "label": "config.theme.light"},
-                {"value": "dark", "label": "config.theme.dark"}
+                {"value": "dark", "label": "config.theme.dark"},
+                {"value": "dark_blue_ads", "label": "config.theme.dark_blue_ads"}
               ]
             }
           }

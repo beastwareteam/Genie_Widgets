@@ -79,14 +79,6 @@ class TabSelectorVisibilityController(QObject):
                 )  # DEBUG
                 self._set_selector_visibility(tab_selector, should_show)
 
-            # CRITICAL: Also ensure float button is visible!
-            # This handles cases where count changes (e.g., widget added/removed)
-            float_button = self._find_float_button(title_bar)
-            if float_button and not float_button.isVisible():
-                float_button.setVisible(True)
-                print(
-                    f"[TabSelectorVisibilityController] Restored float button visibility for {area_id} (on count change)",
-                )  # DEBUG
 
         except Exception as e:
             print(f"Error in _on_tab_count_changed: {e}")
@@ -126,15 +118,6 @@ class TabSelectorVisibilityController(QObject):
                 should_show = count > 1
                 self._set_selector_visibility(tab_selector, should_show)
 
-            # CRITICAL: Also restore float button visibility!
-            # QtAds recreates title bar on re-docking with wrong button states
-            float_button = self._find_float_button(title_bar)
-            if float_button:
-                # Float button should always be visible (enabled state controlled by QtAds)
-                float_button.setVisible(True)
-                print(
-                    f"[TabSelectorVisibilityController] Restored float button visibility for {area_id}",
-                )  # DEBUG
 
         except Exception as e:
             print(f"Error in refresh_area_visibility: {e}")
