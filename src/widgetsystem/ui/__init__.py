@@ -27,8 +27,8 @@ from widgetsystem.ui.visual_app import VisualMainWindow
 from widgetsystem.ui.visual_layer import (
     ListsViewer,
     MenusViewer,
-    PanelsViewer,
-    TabsViewer,
+
+
     ViewerConfig,
     VisualDashboard,
 )
@@ -52,12 +52,12 @@ __all__ = [
     "ListsViewer",
     "LiveThemeEditor",
     "MenusViewer",
-    "PanelsViewer",
+
     "TabColorController",
     "TabSelectorEventHandler",
     "TabSelectorMonitor",
     "TabSelectorVisibilityController",
-    "TabsViewer",
+
     "ThemeEditorDialog",
     "ThemePropertyEditor",
     "ViewerConfig",

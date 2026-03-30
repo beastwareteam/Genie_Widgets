@@ -1,0 +1,24 @@
+{
+  "_comment": "Design-Tokens für Farben, Maße, etc. – zentrale Quelle für Theme-Generierung. Nur hier editieren!",
+  "colors": {
+    "bg-root": "rgba(10, 12, 22, 0.97)",
+    "bg-overlay": "rgba(14, 17, 28, 0.97)",
+    "bg-surface": "rgba(17, 21, 32, 0.88)",
+    "accent": "#3d7fff",
+    "accent-soft": "rgba(61, 127, 255, 0.80)",
+    "text-primary": "#e8edf8",
+    "text-bright": "#ffffff"
+    // ... weitere Farben nach Bedarf ...
+  },
+  "radius": {
+    "sm": "4px",
+    "md": "5px",
+    "lg": "6px",
+    "xl": "8px"
+  },
+  "sizes": {
+    "dock-tab-min-w": "140px",
+    "dock-tab-max-w": "180px",
+    "btn-icon-size": "20px"
+  }
+}

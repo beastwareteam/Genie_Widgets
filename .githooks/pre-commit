@@ -1,0 +1,16 @@
+#!/bin/sh
+# Pre-commit Hook: QSS- und Encoding-Check für WidgetSystem
+
+# 1. QSS-Validierung
+python scripts/check_qss_validity.py || exit 1
+
+# 2. UTF-8 Encoding-Check für QSS und JSON
+find themes/ config/ -type f \( -name '*.qss' -o -name '*.json' \) | \
+while read file; do
+    if ! file -bi "$file" | grep -q 'charset=utf-8'; then
+        echo "FEHLER: $file ist nicht UTF-8 kodiert!"
+        exit 1
+    fi
+done
+
+exit 0

@@ -29,7 +29,7 @@ ads--CDockAreaWidget {
 ads--CDockWidget {
     background-color: #252525;
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                stop:0 #252525, 
+                                stop:0 #aa228d, 
                                 stop:1 #1A1A1A);
     color: #E0E0E0;
     border: 1px solid #3C3C3C;
@@ -41,7 +41,7 @@ ads--CDockWidget {
 ads--CDockAreaTitleBar {
     background-color: #3C4043;
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1, 
-                                stop:0 #3C4043, 
+                                stop:0 #6cb336, 
                                 stop:1 #2D2E31);
     color: #E0E0E0;
     border-bottom: 1px solid #3C3C3C;

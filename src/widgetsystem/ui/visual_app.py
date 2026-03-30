@@ -31,8 +31,8 @@ from widgetsystem.ui.tab_color_controller import TabColorController
 from widgetsystem.ui.visual_layer import (
     ListsViewer,
     MenusViewer,
-    PanelsViewer,
-    TabsViewer,
+
+
     ViewerConfig,
     VisualDashboard,
 )
@@ -242,14 +242,14 @@ class VisualMainWindow(QMainWindow):
         self.docks.append(menus_dock)
 
         # Tabs viewer
-        self.tabs_viewer = TabsViewer(Path("config"), self.i18n_factory, config=viewer_config)
+        # self.tabs_viewer = TabsViewer(Path("config"), self.i18n_factory, config=viewer_config)
         tabs_dock = QtAds.CDockWidget(self.dock_manager, "Tabs", self)
         tabs_dock.setWidget(self.tabs_viewer)
         self.dock_manager.addDockWidget(QtAds.RightDockWidgetArea, tabs_dock)
         self.docks.append(tabs_dock)
 
         # Panels viewer
-        self.panels_viewer = PanelsViewer(Path("config"), self.i18n_factory, config=viewer_config)
+        # self.panels_viewer = PanelsViewer(Path("config"), self.i18n_factory, config=viewer_config)
         panels_dock = QtAds.CDockWidget(self.dock_manager, "Panels", self)
         panels_dock.setWidget(self.panels_viewer)
         self.dock_manager.addDockWidget(QtAds.RightDockWidgetArea, panels_dock)

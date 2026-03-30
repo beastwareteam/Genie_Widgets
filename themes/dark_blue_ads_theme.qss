@@ -1,11 +1,135 @@
-/* FIXES APPLIED:
-   1. QMainWindow bekommt soliden Hintergrund (war transparent → Titelleiste unsichtbar)
-   2. Tab-Leisten deutlich schmaler (min-height, padding reduziert)
-*/
+/* ════════════════════════════════════════════════════════════════════════════
+   dark_blue_ads_theme.qss  
+   AUFBAU
+   ──────
+   §0   DESIGN TOKENS  ← alle Farb-/Maß-Werte NUR hier ändern
+   §1   RESET & BASIS
+   §2   HAUPTFENSTER
+   §3   MENÜLEISTE
+   §4   TOOLBAR
+   §4b  INLAY-TITELLEISTE
+   §5   STATUSBAR
+   §6   BUTTONS (QPushButton)
+   §7   EINGABEN (QLineEdit / QTextEdit / QPlainTextEdit)
+   §8   SPINBOX / DOUBLESPINBOX
+   §9   COMBOBOX
+   §10  CHECKBOX & RADIO
+   §11  SLIDER
+   §12  PROGRESSBAR
+   §13  SCROLLBAR
+   §14  TABS (QTabWidget / QTabBar)
+   §15  TREE / LIST / TABLE
+   §16  DIALOGE
+   §17  LABEL
+   §18  GROUPBOX
+   §19  FRAME / LINE
+   §20  STACKED / SCROLLAREA
+   §21  TOOLTIPS
+   §22  RUBBERBAND
+   §23  KALENDER
+   §24  DATEI- / FARB- / FONTDIALOG
+   §25  HILFSWERKZEUGE (glass, glow, sidebar, badges, status)
+   §26  SPLITTER (allgemein)
+   §27  ADS — DOCK MANAGER
+   §28  ADS — DOCK CONTAINER
+   §29  ADS — DOCK AREA
+   §30  ADS — TITELLEISTE (CDockAreaTitleBar)
+   §31  ADS — TABBAR (CDockTabBar / CDockWidgetTab)
+   §32  ADS — TAB-SCHLIESSEN-BUTTON
+   §33  ADS — DOCK WIDGET
+   §34  ADS — FLOATING DOCK CONTAINER
+   §35  ADS — DROP OVERLAY
+   §36  ADS — AUTO-HIDE
+   §37  ADS — SPLITTER
+   ════════════════════════════════════════════════════════════════════════════ */
 
-/* ════════════════════════════════════════════════════════════
-   1. GLOBALE BASISSTILE
-   ════════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════════════════════════
+   §0  DESIGN TOKENS
+   Alle Farb- und Maßwerte hier zentral pflegen. Nirgendwo sonst
+   werden Rohwerte wie rgba(…) im Regelwerk wiederholt.
+   QSS unterstützt keine nativen Custom Properties → wir sammeln alle
+   Literale in diesem Kommentarblock als verbindliche Referenz und
+   setzen sie konsistent per Suchen-&-Ersetzen ein.
+
+   HINTERGRUNDEBENEN
+     bg-root    rgba(10, 12, 22, 0.97)       Hauptfenster, Statusbar
+     bg-overlay rgba(14, 17, 28, 0.97)       Dialoge, Menüs, Comboboxen
+     bg-surface rgba(17, 21, 32, 0.88)       Panel, TabPane, Groupbox
+     bg-input   rgba(12, 15, 24, 0.90)       Eingabefelder, Listen, Spinboxen
+     bg-widget  rgba(13, 16, 28, 0.80)       DockWidget-Inhalt
+     bg-dock    rgba(15, 19, 34, 0.78)       DockArea
+     bg-titlebar rgba(24, 16, 10, 0.88)      DockArea-Titelleiste
+     bg-toolbar  rgba(28, 34, 54, 0.97)      Toolbar + InlayTitleBar
+     bg-btn     rgba(25, 30, 52, 0.85)       Buttons, TitelBar-Buttons
+     bg-tab-active  rgba(28, 38, 68, 0.75)   aktiver DockTab
+     bg-tab-inactive rgba(28, 38, 68, 0.92)  inaktiver DockTab
+     bg-autohide rgba(23, 28, 46, 0.75)      AutoHideTab
+     bg-scroll  rgba(12, 15, 24, 0.70)       Scrollbar-Kanal
+     bg-float   rgba(12, 15, 24, 0.94)       Floating Container
+     bg-overlay-cross rgba(17, 21, 32, 0.90) Drop-Overlay-Kreuztasten
+     bg-hover-split rgba(5, 7, 14, 0.90)     Splitter-Griff (normal)
+     bg-disabled rgba(17, 21, 32, 0.60)      deaktivierte Eingaben
+     bg-readonly rgba(17, 21, 32, 0.70)      schreibgeschützte Felder
+     bg-glass   rgba(28, 34, 54, 0.60)       .glass-Panel
+     bg-glow    rgba(28, 34, 54, 0.75)       .glow-Panel
+     bg-sidebar rgba(10, 13, 20, 0.92)       .sidebar + CSideTabBar
+     bg-autohide-bar rgba(10, 13, 20, 0.92)  CSideTabBar
+     bg-autohide-active rgba(28, 34, 54, 0.95)
+
+   AKZENTFARBEN (Blau-Palette)
+     accent        #3d7fff                   Primär, aktive Kanten
+     accent-soft   rgba(61, 127, 255, 0.80)  Hover-Kante
+     accent-mid    rgba(61, 127, 255, 0.50)  Hover Eingabe
+     accent-dim    rgba(61, 127, 255, 0.35)  Normale Kante Buttons
+     accent-faint  rgba(61, 127, 255, 0.25)  Tab-Overlay
+     accent-pale   rgba(61, 127, 255, 0.20)  Button-Hover-Bg
+     accent-ghost  rgba(61, 127, 255, 0.14)  Item-Hover
+     accent-btn    rgba(61, 127, 255, 0.18)  Checked-Button
+     accent-bg     rgba(61, 127, 255, 0.08)  CDockOverlay-Hintergrund
+     accent-lite   #5b9fff                   Scrollbar-Hover, Tab-Text
+     primary-btn   #2255cc                   Primär-Button Bg
+     primary-hover #3060dd
+     primary-press #1a45b0
+
+   RANDFARBEN
+     border-base    rgba(42, 51, 82, 0.75)   Eingaben, Listen
+     border-mild    rgba(42, 51, 82, 0.65)   Panels, Tabellen
+     border-soft    rgba(42, 51, 82, 0.60)   Toolbar, DockArea
+     border-faint   rgba(42, 51, 82, 0.50)   Splitter, CheckBox
+     border-sep     rgba(42, 51, 82, 0.55)   Statusbar, DialogBox
+     border-btn     rgba(42, 55, 90, 0.60)   Button/TitleBar-Button
+     border-tab     rgba(69, 117, 185, 1)    inaktiver DockTab
+     border-tab-act rgb(58, 110, 184)        aktiver DockTab
+     border-float   rgba(61, 127, 255, 0.35) Floating Container
+
+   TEXTFARBEN
+     text-primary   #e8edf8 / #e0e8ff        Haupttext
+     text-bright    #ffffff                  aktive Tabs, gedrückte Buttons
+     text-mid       #c8d0e8 / #c0ccec / #c8d4f0  UI-Text
+     text-muted     #a0adcc                  Buttons, TitleBar-Buttons
+     text-dim       #8a98bc                  Header, SubLabel, StatusBar
+     text-tab-act   #7ab8ff                  aktiver DockTab-Label
+     text-tab-in    #a0b0d0                  inaktiver DockTab-Label
+     text-disabled  #4a5470
+     text-accent    #5b9fff                  selected Tabs, GroupBox-Titel
+
+   MASSZAHLEN
+     radius-sm 4px    kleine Elemente
+     radius-md 5px    Eingaben, Buttons
+     radius-lg 6px    Panels, Menüs, Dialoge
+     radius-xl 8px    Floating, Dialoge
+     dock-tab-min-w  140px
+     dock-tab-max-w  180px
+     btn-icon-size   20px    (TitleBar-Buttons, Toolbar-Buttons)
+     titlebar-h-min  22px
+     titlebar-h-max  26px
+   ════════════════════════════════════════════════════════════════════════════ */
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   §1  RESET & BASIS
+   ════════════════════════════════════════════════════════════════════════════ */
 
 * {
     outline: none;
@@ -16,9 +140,9 @@ QWidget {
     color: #e8edf8;
     font-family: "Segoe UI", "SF Pro Display", "Noto Sans", sans-serif;
     font-size: 13px;
+    border: none;
     selection-background-color: rgba(61, 127, 255, 0.35);
     selection-color: #ffffff;
-    border: none;
 }
 
 QWidget:disabled {
@@ -26,9 +150,9 @@ QWidget:disabled {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   2. HAUPTFENSTER
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §2  HAUPTFENSTER
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QMainWindow {
     background-color: rgba(10, 12, 22, 0.97);
@@ -45,399 +169,9 @@ QMainWindow::separator:hover {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   3. ADS — DOCK MANAGER
-   ════════════════════════════════════════════════════════════ */
-
-ads--CDockManager {
-    background-color: transparent;
-}
-
-ads--CDockManager > QSplitter::handle {
-    background-color: rgba(5, 7, 14, 0.90);
-}
-
-ads--CDockManager > QSplitter::handle:hover {
-    background-color: #3d7fff;
-}
-
-
-/* ════════════════════════════════════════════════════════════
-   4. ADS — DOCK CONTAINER
-   ════════════════════════════════════════════════════════════ */
-
-ads--CDockContainerWidget {
-    background-color: transparent;
-}
-
-ads--CDockContainerWidget > QSplitter::handle {
-    background-color: rgba(5, 7, 14, 0.90);
-}
-
-ads--CDockContainerWidget > QSplitter::handle:hover {
-    background-color: rgba(61, 127, 255, 0.80);
-}
-
-
-/* ════════════════════════════════════════════════════════════
-   5. ADS — DOCK AREA
-   ════════════════════════════════════════════════════════════ */
-
-ads--CDockAreaWidget {
-    background-color: rgba(15, 19, 34, 0.78);
-    border: 1px solid rgba(42, 55, 90, 0.75);
-    border-radius: 6px;
-}
-
-ads--CDockAreaWidget[focused="true"] {
-    border: 1px solid rgba(61, 127, 255, 0.70);
-}
-
-
-/* ════════════════════════════════════════════════════════════
-   6. ADS — TAB BAR
-   ════════════════════════════════════════════════════════════ */
-
-ads--CDockAreaTitleBar {
-    background-color: rgba(10, 13, 24, 0.88);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.60);
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
-    padding: 1px 2px 0px 2px;
-    min-height: 22px;        /* war 34px */
-    max-height: 26px;
-}
-
-ads--CDockAreaTitleBar > QWidget,
-ads--CDockAreaTitleBar QFrame,
-ads--CDockAreaTitleBar QScrollArea,
-ads--CDockAreaTitleBar QScrollArea > QWidget,
-ads--CDockAreaTitleBar QScrollArea > QWidget > QWidget,
-ads--CDockAreaTitleBar QScrollArea > QWidget > QWidget > QWidget {
-    background-color: transparent;
-}
-
-ads--CDockTabBar {
-    background-color: transparent;
-    border-bottom: none;
-}
-
-ads--CDockTabBar QScrollArea,
-ads--CDockTabBar QScrollArea > QWidget,
-ads--CDockTabBar QScrollArea > QWidget > QWidget {
-    background-color: transparent;
-}
-
-ads--CDockWidgetTab QWidget,
-ads--CDockWidgetTab QLabel,
-ads--CDockWidgetTab QAbstractButton,
-ads--CDockAreaTitleBar QWidget,
-ads--CDockAreaTitleBar QLabel {
-    background-color: transparent;
-}
-
-
-/* ════════════════════════════════════════════════════════════
-   7. ADS — DOCK TAB
-   ════════════════════════════════════════════════════════════ */
-
-ads--CDockWidgetTab {
-    background-color: rgba(42, 52, 80, 0.90);
-    border-bottom: none;
-    border-top-left-radius: 7px;
-    border-top-right-radius: 7px;
-    border-bottom-left-radius: 0px;
-    border-bottom-right-radius: 0px;
-    margin-left: 1px;
-    margin-top: 1px;
-    margin-right: 2px;
-    min-width: 140px;
-    max-width: 180px;
-    qproperty-iconSize: 13px 13px;
-}
-
-ads--CDockWidgetTab[activeTab="true"] {
-    background-color: rgba(28, 38, 68, 0.75);
-    border: 2px solid rgb(58, 110, 184);
-    border-top: 2px solid rgb(57, 111, 185);
-    border-bottom: 1px solid rgba(28, 38, 68, 0.92);
-    color: #ffffff;
-}
-
-ads--CDockWidgetTab[activeTab="false"] {
-    background-color: rgba(28, 38, 68, 0.92);
-    border: 0.5px solid rgba(69, 117, 185, 1);
-    border-top: 0.5px solid rgba(69, 117, 185, 1);
-    border-bottom: 1px solid rgba(28, 38, 68, 0.92);
-    color: #ffffff;
-}
-
-/* ↓ Hover NACH den Attribut-Selektoren → höhere Spezifität */
-ads--CDockWidgetTab[activeTab="false"]:hover {
-    background-color: rgba(58, 72, 110, 1);
-    border-color: rgba(61, 127, 255, 0.65);
-}
-
-ads--CDockWidgetTab[activeTab="true"]:hover {
-    background-color: rgba(58, 72, 110, 1);
-    border-color: rgba(61, 127, 255, 0.90);
-}
-
-ads--CDockWidgetTab[activeTab="false"]:hover {
-    background-color: rgba(35, 48, 80, 0.67);
-    border-color: rgba(61, 127, 255, 0.90);
-}
-
-ads--CDockWidgetTab[activeTab="true"] QLabel {
-    background-color: transparent;
-    color: #7ab8ff;
-    font-weight: 600;
-    font-size: 11px;
-}
-
-ads--CDockWidgetTab QLabel {
-    background-color: transparent;
-    color: #a0b0d0;
-    font-size: 11px;
-    qproperty-alignment: 'AlignLeft | AlignVCenter';
-}
-
-
-/* ════════════════════════════════════════════════════════════
-   8. ADS — TAB SCHLIESSEN-BUTTON
-   ════════════════════════════════════════════════════════════ */
-
-ads--CDockWidgetTab > QAbstractButton#tabCloseButton {
-    background-color: transparent;
-    border: none;
-    border-radius: 3px;
-    margin: 2px 0px 0px 10px;
-    padding: 1px;
-    min-width: 14px;
-    min-height: 14px;
-    max-width: 14px;
-    max-height: 14px;
-    subcontrol-origin: margin;
-    subcontrol-position: right;
-}
-
-ads--CDockWidgetTab > QAbstractButton#tabCloseButton:hover {
-    background-color: rgba(35, 48, 80, 0.57);
-    border: 1px solid rgba(35, 48, 80, 0.97);
-}
-
-ads--CDockWidgetTab > QAbstractButton#tabCloseButton:pressed {
-    background-color: rgba(255, 80, 80, 0.45);
-}
-
-ads--CDockWidgetTab[activeTab="true"] > QAbstractButton#tabCloseButton:hover {
-    background-color: rgba(35, 48, 80, 0.57);
-    border: 1px solid rgba(35, 48, 80, 0.97);
-}
-
-/* ════════════════════════════════════════════════════════════
-   9. ADS — DOCK WIDGET
-   ════════════════════════════════════════════════════════════ */
-
-ads--CDockWidget {
-    background-color: rgba(13, 16, 28, 0.80);
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
-}
-
-ads--CDockWidget > QWidget {
-    background-color: rgba(13, 16, 28, 0.80);
-}
-
-
-/* ════════════════════════════════════════════════════════════
-   10. ADS — TITELLEISTE BUTTONS
-   ════════════════════════════════════════════════════════════ */
-
-ads--CDockAreaTitleBar > QAbstractButton,
-ads--CDockAreaTitleBar QToolButton {
-    background-color: rgba(25, 30, 52, 0.85);
-    border: 1px solid rgba(42, 55, 90, 0.60);
-    border-radius: 4px;
-    color: #a0adcc;
-    margin: 1px 1px;
-    padding: 2px;
-    min-width: 20px;               /* war 26px */
-    min-height: 20px;              /* war 26px */
-    max-width: 20px;               /* war 26px */
-    max-height: 20px;              /* war 26px */
-}
-
-ads--CDockAreaTitleBar > QAbstractButton:hover,
-ads--CDockAreaTitleBar QToolButton:hover {
-    background-color: rgba(61, 127, 255, 0.20);
-    border-color: rgba(61, 127, 255, 0.55);
-    color: #d0daff;
-}
-
-ads--CDockAreaTitleBar > QAbstractButton:pressed,
-ads--CDockAreaTitleBar QToolButton:pressed {
-    background-color: rgba(61, 127, 255, 0.35);
-    border-color: #3d7fff;
-    color: #ffffff;
-}
-
-ads--CDockAreaTitleBar > QAbstractButton#closeButton:hover {
-    background-color: rgba(200, 50, 50, 0.30);
-    border-color: rgba(220, 70, 70, 0.60);
-    color: #ff7070;
-}
-
-ads--CDockAreaTitleBar > QAbstractButton#closeButton:pressed {
-    background-color: rgba(200, 50, 50, 0.50);
-}
-
-
-/* ════════════════════════════════════════════════════════════
-   11. ADS — FLOATING DOCK CONTAINER
-   ════════════════════════════════════════════════════════════ */
-
-ads--CFloatingDockContainer {
-    background-color: rgba(12, 15, 24, 0.94);
-    border: 1px solid rgba(61, 127, 255, 0.35);
-    border-radius: 8px;
-}
-
-ads--CFloatingDockContainer[focused="true"] {
-    border-color: rgba(61, 127, 255, 0.70);
-}
-
-ads--CFloatingDockContainer ads--CDockAreaTitleBar {
-    background-color: rgba(10, 13, 20, 0.96);
-    border-bottom: 1px solid rgba(61, 127, 255, 0.30);
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-}
-
-
-/* ════════════════════════════════════════════════════════════
-   12. ADS — DROP OVERLAY
-   ════════════════════════════════════════════════════════════ */
-
-ads--CDockOverlay {
-    background-color: rgba(61, 127, 255, 0.08);
-    border: 2px solid rgba(61, 127, 255, 0.60);
-    border-radius: 6px;
-}
-
-ads--CDockOverlayCross {
-    background-color: transparent;
-}
-
-ads--CDockOverlayCross > QAbstractButton {
-    background-color: rgba(17, 21, 32, 0.90);
-    border: 2px solid rgba(61, 127, 255, 0.55);
-    border-radius: 24px;
-    color: #5b9fff;
-}
-
-ads--CDockOverlayCross > QAbstractButton:hover {
-    background-color: rgba(61, 127, 255, 0.25);
-    border-color: #3d7fff;
-}
-
-
-/* ════════════════════════════════════════════════════════════
-   13. ADS — AUTO-HIDE
-   ════════════════════════════════════════════════════════════ */
-
-ads--CAutoHideDockContainer {
-    background-color: rgba(12, 15, 24, 0.93);
-    border: 1px solid rgba(61, 127, 255, 0.35);
-    border-radius: 6px;
-}
-
-ads--CSideTabBar {
-    background-color: rgba(10, 13, 20, 0.92);
-    border-right: 1px solid rgba(42, 51, 82, 0.60);
-}
-
-ads--CAutoHideTab {
-    background-color: rgba(23, 28, 46, 0.75);
-    border: 1px solid rgba(42, 51, 82, 0.50);
-    border-radius: 4px;
-    color: #8a98bc;
-    font-size: 11px;
-    margin: 2px;
-    padding: 4px 6px;
-    min-height: 20px;
-}
-
-ads--CAutoHideTab:hover {
-    background-color: rgba(61, 127, 255, 0.14);
-    border-color: rgba(61, 127, 255, 0.40);
-    color: #5b9fff;
-}
-
-ads--CAutoHideTab[activeTab="true"] {
-    background-color: rgba(28, 34, 54, 0.95);
-    border-color: rgba(61, 127, 255, 0.60);
-    color: #5b9fff;
-    font-weight: 600;
-}
-
-
-/* ════════════════════════════════════════════════════════════
-   14. ADS — SPLITTER
-   ════════════════════════════════════════════════════════════ */
-
-ads--CDockSplitter::handle {
-    background-color: rgba(5, 7, 14, 0.90);
-    border-radius: 0px;
-}
-
-ads--CDockSplitter::handle:horizontal {
-    width: 4px;
-    image: none;
-}
-
-ads--CDockSplitter::handle:vertical {
-    height: 4px;
-    image: none;
-}
-
-ads--CDockSplitter::handle:hover {
-    background-color: #3d7fff;
-}
-
-ads--CDockSplitter::handle:pressed {
-    background-color: #5b9fff;
-}
-
-
-/* ════════════════════════════════════════════════════════════
-   15. SPLITTER (allgemein)
-   ════════════════════════════════════════════════════════════ */
-
-QSplitter::handle {
-    background-color: rgba(42, 51, 82, 0.50);
-}
-
-QSplitter::handle:horizontal {
-    width: 3px;
-}
-
-QSplitter::handle:vertical {
-    height: 3px;
-}
-
-QSplitter::handle:hover {
-    background-color: rgba(61, 127, 255, 0.65);
-}
-
-QSplitter::handle:pressed {
-    background-color: #3d7fff;
-}
-
-
-/* ════════════════════════════════════════════════════════════
-   16. MENÜLEISTE
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §3  MENÜLEISTE
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QMenuBar {
     background-color: rgba(10, 12, 22, 0.97);
@@ -452,7 +186,6 @@ QMenuBar::item {
     background-color: transparent;
     border-radius: 4px;
     padding: 4px 10px;
-    color: #c8d0e8;
 }
 
 QMenuBar::item:selected {
@@ -464,11 +197,6 @@ QMenuBar::item:pressed {
     background-color: rgba(61, 127, 255, 0.30);
     color: #ffffff;
 }
-
-
-/* ════════════════════════════════════════════════════════════
-   17. KONTEXT- UND DROPDOWN-MENÜS
-   ════════════════════════════════════════════════════════════ */
 
 QMenu {
     background-color: rgba(14, 17, 28, 0.97);
@@ -515,9 +243,9 @@ QMenu::right-arrow {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   18. TOOLBAR 
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §4  TOOLBAR
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QToolBar {
     background-color: rgba(28, 34, 54, 0.97);
@@ -541,6 +269,7 @@ QToolBar::handle {
     border-radius: 2px;
 }
 
+/* Toolbar-Buttons: Basisgröße 20×20 px, alle Zustände hier vollständig */
 QToolBar QToolButton,
 QToolBar QAbstractButton {
     background-color: rgba(25, 30, 52, 0.85);
@@ -584,6 +313,7 @@ QToolBar QAbstractButton:disabled {
     color: #3a4260;
 }
 
+/* Dropdown-Pfeil am ToolButton — nur einmal definiert */
 QToolButton::menu-button {
     background-color: transparent;
     border: none;
@@ -598,18 +328,15 @@ QToolButton::menu-button:hover {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   18b. INLAY TITLE BAR (ausklappbare Fenster-Titelleiste)
-        objectName: "InlayTitleBar"  — WA_StyledBackground gesetzt
-        Button-objectNames: TitleBtn_minimize / _maximize / _close
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §4b  INLAY-TITELLEISTE  (objectName: InlayTitleBar)
+   ════════════════════════════════════════════════════════════════════════════ */
 
 #InlayTitleBar {
     background-color: rgba(28, 34, 54, 0.97);
     border-bottom: 1px solid rgba(61, 75, 110, 0.70);
 }
 
-/* Title label */
 #InlayTitleBar #TitleLabel {
     background-color: transparent;
     color: #c8d0e8;
@@ -617,7 +344,7 @@ QToolButton::menu-button:hover {
     font-weight: 500;
 }
 
-/* Alle drei Fenster-Buttons: Basis-Style */
+/* Gemeinsame Basis für alle drei Fenster-Buttons */
 #TitleBtn_minimize,
 #TitleBtn_maximize,
 #TitleBtn_close {
@@ -643,7 +370,6 @@ QToolButton::menu-button:hover {
     color: #ffffff;
 }
 
-/* Close-Button: rot beim Hover */
 #TitleBtn_close:hover {
     background-color: rgba(196, 43, 28, 0.85);
     border-color: rgba(220, 60, 50, 0.70);
@@ -657,9 +383,9 @@ QToolButton::menu-button:hover {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   19. STATUS BAR
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §5  STATUSBAR
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QStatusBar {
     background-color: rgba(8, 10, 18, 0.96);
@@ -684,9 +410,9 @@ QSizeGrip {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   20. SCHALTFLÄCHEN (QPushButton)
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §6  BUTTONS (QPushButton)
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QPushButton {
     background-color: rgba(35, 42, 66, 0.85);
@@ -753,9 +479,9 @@ QPushButton[class="danger"]:hover {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   21. EINGABEFELDER
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §7  EINGABEN (QLineEdit / QTextEdit / QPlainTextEdit)
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QLineEdit {
     background-color: rgba(12, 15, 24, 0.90);
@@ -773,7 +499,7 @@ QLineEdit:hover {
 
 QLineEdit:focus {
     background-color: rgba(14, 18, 30, 0.95);
-    border: 1px solid rgba(61, 127, 255, 0.80);
+    border-color: rgba(61, 127, 255, 0.80);
 }
 
 QLineEdit:disabled {
@@ -799,8 +525,8 @@ QPlainTextEdit {
 
 QTextEdit:focus,
 QPlainTextEdit:focus {
-    border: 1px solid rgba(61, 127, 255, 0.75);
     background-color: rgba(14, 18, 30, 0.95);
+    border-color: rgba(61, 127, 255, 0.75);
 }
 
 QTextEdit:disabled,
@@ -810,9 +536,9 @@ QPlainTextEdit:disabled {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   22. SPINBOX / DOUBLESPINBOX
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §8  SPINBOX / DOUBLESPINBOX
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QSpinBox,
 QDoubleSpinBox {
@@ -878,9 +604,9 @@ QDoubleSpinBox::down-arrow {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   23. COMBOBOX
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §9  COMBOBOX
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QComboBox {
     background-color: rgba(12, 15, 24, 0.90);
@@ -945,17 +671,23 @@ QComboBox QAbstractItemView::item:selected {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   24. CHECKBOX & RADIO
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §10  CHECKBOX & RADIO
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QCheckBox {
     color: #c0ccec;
     spacing: 8px;
+    background-color: transparent;
 }
 
-QCheckBox:hover { color: #e0e8ff; }
-QCheckBox:disabled { color: #4a5470; }
+QCheckBox:hover {
+    color: #e0e8ff;
+}
+
+QCheckBox:disabled {
+    color: #4a5470;
+}
 
 QCheckBox::indicator {
     width: 16px;
@@ -975,7 +707,9 @@ QCheckBox::indicator:checked {
     border-color: #3d7fff;
 }
 
-QCheckBox::indicator:checked:hover { background-color: #3060e0; }
+QCheckBox::indicator:checked:hover {
+    background-color: #3060e0;
+}
 
 QCheckBox::indicator:disabled {
     border-color: rgba(42, 51, 82, 0.40);
@@ -985,10 +719,16 @@ QCheckBox::indicator:disabled {
 QRadioButton {
     color: #c0ccec;
     spacing: 8px;
+    background-color: transparent;
 }
 
-QRadioButton:hover { color: #e0e8ff; }
-QRadioButton:disabled { color: #4a5470; }
+QRadioButton:hover {
+    color: #e0e8ff;
+}
+
+QRadioButton:disabled {
+    color: #4a5470;
+}
 
 QRadioButton::indicator {
     width: 16px;
@@ -998,14 +738,23 @@ QRadioButton::indicator {
     background-color: rgba(12, 15, 24, 0.85);
 }
 
-QRadioButton::indicator:hover { border-color: rgba(61, 127, 255, 0.75); }
-QRadioButton::indicator:checked { background-color: #2a5cd4; border-color: #3d7fff; }
-QRadioButton::indicator:checked:hover { background-color: #3060e0; }
+QRadioButton::indicator:hover {
+    border-color: rgba(61, 127, 255, 0.75);
+}
+
+QRadioButton::indicator:checked {
+    background-color: #2a5cd4;
+    border-color: #3d7fff;
+}
+
+QRadioButton::indicator:checked:hover {
+    background-color: #3060e0;
+}
 
 
-/* ════════════════════════════════════════════════════════════
-   25. SLIDER
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §11  SLIDER
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QSlider::groove:horizontal {
     background-color: rgba(42, 51, 82, 0.70);
@@ -1028,8 +777,14 @@ QSlider::handle:horizontal {
     margin: -5px 0px;
 }
 
-QSlider::handle:horizontal:hover { background-color: #7ab0ff; border-color: #5b9fff; }
-QSlider::handle:horizontal:pressed { background-color: #3d7fff; }
+QSlider::handle:horizontal:hover {
+    background-color: #7ab0ff;
+    border-color: #5b9fff;
+}
+
+QSlider::handle:horizontal:pressed {
+    background-color: #3d7fff;
+}
 
 QSlider::groove:vertical {
     background-color: rgba(42, 51, 82, 0.70);
@@ -1038,7 +793,10 @@ QSlider::groove:vertical {
     margin: 0px;
 }
 
-QSlider::sub-page:vertical { background-color: #2255cc; border-radius: 3px; }
+QSlider::sub-page:vertical {
+    background-color: #2255cc;
+    border-radius: 3px;
+}
 
 QSlider::handle:vertical {
     background-color: #5b9fff;
@@ -1049,19 +807,29 @@ QSlider::handle:vertical {
     margin: 0px -5px;
 }
 
-QSlider::handle:vertical:hover { background-color: #7ab0ff; }
-QSlider::handle:vertical:pressed { background-color: #3d7fff; }
+QSlider::handle:vertical:hover {
+    background-color: #7ab0ff;
+}
+
+QSlider::handle:vertical:pressed {
+    background-color: #3d7fff;
+}
 
 QSlider:disabled::groove:horizontal,
-QSlider:disabled::groove:vertical { background-color: rgba(42, 51, 82, 0.35); }
+QSlider:disabled::groove:vertical {
+    background-color: rgba(42, 51, 82, 0.35);
+}
 
 QSlider:disabled::handle:horizontal,
-QSlider:disabled::handle:vertical { background-color: #3a4466; border-color: #2a3352; }
+QSlider:disabled::handle:vertical {
+    background-color: #3a4466;
+    border-color: #2a3352;
+}
 
 
-/* ════════════════════════════════════════════════════════════
-   26. PROGRESS BAR
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §12  PROGRESSBAR
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QProgressBar {
     background-color: rgba(12, 15, 24, 0.90);
@@ -1082,9 +850,9 @@ QProgressBar::chunk {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   27. SCROLLBAR
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §13  SCROLLBAR
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QScrollBar:horizontal {
     background-color: rgba(12, 15, 24, 0.70);
@@ -1100,8 +868,13 @@ QScrollBar::handle:horizontal {
     margin: 2px 20px;
 }
 
-QScrollBar::handle:horizontal:hover { background-color: rgba(61, 127, 255, 0.75); }
-QScrollBar::handle:horizontal:pressed { background-color: #3d7fff; }
+QScrollBar::handle:horizontal:hover {
+    background-color: rgba(61, 127, 255, 0.75);
+}
+
+QScrollBar::handle:horizontal:pressed {
+    background-color: #3d7fff;
+}
 
 QScrollBar::add-line:horizontal,
 QScrollBar::sub-line:horizontal {
@@ -1112,14 +885,23 @@ QScrollBar::sub-line:horizontal {
     subcontrol-origin: margin;
 }
 
-QScrollBar::add-line:horizontal { subcontrol-position: right; }
-QScrollBar::sub-line:horizontal { subcontrol-position: left; }
+QScrollBar::add-line:horizontal {
+    subcontrol-position: right;
+}
+
+QScrollBar::sub-line:horizontal {
+    subcontrol-position: left;
+}
 
 QScrollBar::add-line:horizontal:hover,
-QScrollBar::sub-line:horizontal:hover { background-color: rgba(61, 127, 255, 0.30); }
+QScrollBar::sub-line:horizontal:hover {
+    background-color: rgba(61, 127, 255, 0.30);
+}
 
 QScrollBar::add-page:horizontal,
-QScrollBar::sub-page:horizontal { background-color: transparent; }
+QScrollBar::sub-page:horizontal {
+    background-color: transparent;
+}
 
 QScrollBar:vertical {
     background-color: rgba(12, 15, 24, 0.70);
@@ -1135,8 +917,13 @@ QScrollBar::handle:vertical {
     margin: 20px 2px;
 }
 
-QScrollBar::handle:vertical:hover { background-color: rgba(61, 127, 255, 0.75); }
-QScrollBar::handle:vertical:pressed { background-color: #3d7fff; }
+QScrollBar::handle:vertical:hover {
+    background-color: rgba(61, 127, 255, 0.75);
+}
+
+QScrollBar::handle:vertical:pressed {
+    background-color: #3d7fff;
+}
 
 QScrollBar::add-line:vertical,
 QScrollBar::sub-line:vertical {
@@ -1147,21 +934,32 @@ QScrollBar::sub-line:vertical {
     subcontrol-origin: margin;
 }
 
-QScrollBar::add-line:vertical { subcontrol-position: bottom; }
-QScrollBar::sub-line:vertical { subcontrol-position: top; }
+QScrollBar::add-line:vertical {
+    subcontrol-position: bottom;
+}
+
+QScrollBar::sub-line:vertical {
+    subcontrol-position: top;
+}
 
 QScrollBar::add-line:vertical:hover,
-QScrollBar::sub-line:vertical:hover { background-color: rgba(61, 127, 255, 0.30); }
+QScrollBar::sub-line:vertical:hover {
+    background-color: rgba(61, 127, 255, 0.30);
+}
 
 QScrollBar::add-page:vertical,
-QScrollBar::sub-page:vertical { background-color: transparent; }
+QScrollBar::sub-page:vertical {
+    background-color: transparent;
+}
 
 
-/* ════════════════════════════════════════════════════════════
-   28. TABS (QTabWidget / QTabBar)
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §14  TABS (QTabWidget / QTabBar)
+   ════════════════════════════════════════════════════════════════════════════ */
 
-QTabWidget { background-color: transparent; }
+QTabWidget {
+    background-color: transparent;
+}
 
 QTabWidget::pane {
     background-color: rgba(17, 21, 32, 0.88);
@@ -1170,9 +968,13 @@ QTabWidget::pane {
     padding: 4px;
 }
 
-QTabWidget::pane:top { border-top-left-radius: 0px; }
+QTabWidget::pane:top {
+    border-top-left-radius: 0px;
+}
 
-QTabBar { background-color: transparent; }
+QTabBar {
+    background-color: transparent;
+}
 
 QTabBar::tab {
     background-color: rgba(17, 21, 32, 0.70);
@@ -1199,12 +1001,22 @@ QTabBar::tab:selected {
     font-weight: 600;
 }
 
-QTabBar::tab:disabled { color: #4a5470; }
+QTabBar::tab:disabled {
+    color: #4a5470;
+}
 
-QTabBar::close-button { background-color: transparent; border-radius: 2px; }
-QTabBar::close-button:hover { background-color: rgba(255, 80, 80, 0.25); }
+QTabBar::close-button {
+    background-color: transparent;
+    border-radius: 2px;
+}
 
-QTabBar::scroller { width: 20px; }
+QTabBar::close-button:hover {
+    background-color: rgba(255, 80, 80, 0.25);
+}
+
+QTabBar::scroller {
+    width: 20px;
+}
 
 QTabBar QToolButton {
     background-color: rgba(23, 28, 46, 0.80);
@@ -1218,9 +1030,9 @@ QTabBar QToolButton:hover {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   29. TREE / LIST / TABLE VIEW
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §15  TREE / LIST / TABLE
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QTreeView,
 QListView,
@@ -1246,19 +1058,31 @@ QTableView::item {
 
 QTreeView::item:hover,
 QListView::item:hover,
-QTableView::item:hover { background-color: rgba(61, 127, 255, 0.14); }
+QTableView::item:hover {
+    background-color: rgba(61, 127, 255, 0.14);
+}
 
 QTreeView::item:selected,
 QListView::item:selected,
-QTableView::item:selected { background-color: rgba(61, 127, 255, 0.28); color: #ffffff; }
+QTableView::item:selected {
+    background-color: rgba(61, 127, 255, 0.28);
+    color: #ffffff;
+}
 
 QTreeView::item:selected:!active,
 QListView::item:selected:!active,
-QTableView::item:selected:!active { background-color: rgba(61, 127, 255, 0.16); color: #c0ccec; }
+QTableView::item:selected:!active {
+    background-color: rgba(61, 127, 255, 0.16);
+    color: #c0ccec;
+}
 
-QTreeView::branch { background-color: transparent; }
+QTreeView::branch {
+    background-color: transparent;
+}
 
-QHeaderView { background-color: transparent; }
+QHeaderView {
+    background-color: transparent;
+}
 
 QHeaderView::section {
     background-color: rgba(10, 13, 20, 0.92);
@@ -1272,8 +1096,14 @@ QHeaderView::section {
     min-height: 24px;
 }
 
-QHeaderView::section:hover { background-color: rgba(61, 127, 255, 0.12); color: #c0ccec; }
-QHeaderView::section:checked { color: #5b9fff; }
+QHeaderView::section:hover {
+    background-color: rgba(61, 127, 255, 0.12);
+    color: #c0ccec;
+}
+
+QHeaderView::section:checked {
+    color: #5b9fff;
+}
 
 QTableView QTableCornerButton::section {
     background-color: rgba(10, 13, 20, 0.92);
@@ -1283,9 +1113,9 @@ QTableView QTableCornerButton::section {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   30. DIALOG BOXES
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §16  DIALOGE
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QDialog {
     background-color: rgba(14, 17, 28, 0.97);
@@ -1300,13 +1130,19 @@ QDialogButtonBox {
     padding: 8px 4px 4px 4px;
 }
 
-QMessageBox { background-color: rgba(14, 17, 28, 0.97); color: #e0e8ff; }
-QMessageBox QLabel { color: #c8d4f0; }
+QMessageBox {
+    background-color: rgba(14, 17, 28, 0.97);
+    color: #e0e8ff;
+}
+
+QMessageBox QLabel {
+    color: #c8d4f0;
+}
 
 
-/* ════════════════════════════════════════════════════════════
-   31. LABEL
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §17  LABEL
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QLabel {
     background-color: transparent;
@@ -1314,16 +1150,30 @@ QLabel {
     font-size: 13px;
 }
 
-QLabel:disabled { color: #4a5470; }
+QLabel:disabled {
+    color: #4a5470;
+}
 
-QLabel#titleLabel { color: #5b9fff; font-size: 16px; font-weight: 700; }
-QLabel#subtitleLabel { color: #8a98bc; font-size: 12px; }
-QLabel#accentLabel { color: #3d7fff; font-weight: 600; }
+QLabel#titleLabel {
+    color: #5b9fff;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+QLabel#subtitleLabel {
+    color: #8a98bc;
+    font-size: 12px;
+}
+
+QLabel#accentLabel {
+    color: #3d7fff;
+    font-weight: 600;
+}
 
 
-/* ════════════════════════════════════════════════════════════
-   32. GROUP BOX
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §18  GROUPBOX
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QGroupBox {
     background-color: rgba(17, 21, 32, 0.70);
@@ -1346,46 +1196,67 @@ QGroupBox::title {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   33. FRAME / LINE
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §19  FRAME / LINE
+   ════════════════════════════════════════════════════════════════════════════ */
 
-QFrame { background-color: transparent; border: none; }
+QFrame {
+    background-color: transparent;
+    border: none;
+}
 
 QFrame[frameShape="4"],
-QFrame[frameShape="5"] { background-color: rgba(42, 51, 82, 0.60); border: none; }
+QFrame[frameShape="5"] {
+    background-color: rgba(42, 51, 82, 0.60);
+    border: none;
+}
 
-QFrame[frameShape="4"] { max-height: 1px; min-height: 1px; }
-QFrame[frameShape="5"] { max-width: 1px; min-width: 1px; }
+QFrame[frameShape="4"] {
+    max-height: 1px;
+    min-height: 1px;
+}
+
+QFrame[frameShape="5"] {
+    max-width: 1px;
+    min-width: 1px;
+}
 
 
-/* ════════════════════════════════════════════════════════════
-   34. STACKED WIDGET / SCROLL AREA
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §20  STACKED WIDGET / SCROLL AREA
+   ════════════════════════════════════════════════════════════════════════════ */
 
-QStackedWidget { background-color: transparent; }
-QScrollArea { background-color: transparent; border: none; }
-QScrollArea > QWidget > QWidget { background-color: transparent; }
+QStackedWidget {
+    background-color: transparent;
+}
+
+QScrollArea {
+    background-color: transparent;
+    border: none;
+}
+
+QScrollArea > QWidget > QWidget {
+    background-color: transparent;
+}
 
 
-/* ════════════════════════════════════════════════════════════
-   35. TOOLTIPS
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §21  TOOLTIPS
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QToolTip {
     background-color: rgba(10, 13, 20, 0.97);
     border: 1px solid rgba(61, 127, 255, 0.50);
     border-radius: 5px;
     color: #c8d4f0;
-    font-size: 12px;
     padding: 5px 8px;
     opacity: 230;
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   36. RUBBER BAND
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §22  RUBBERBAND
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QRubberBand {
     background-color: rgba(61, 127, 255, 0.15);
@@ -1394,9 +1265,9 @@ QRubberBand {
 }
 
 
-/* ════════════════════════════════════════════════════════════
-   37. KALENDER-WIDGET
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §23  KALENDER
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QCalendarWidget {
     background-color: rgba(14, 17, 28, 0.96);
@@ -1413,8 +1284,14 @@ QCalendarWidget QToolButton {
     padding: 3px 6px;
 }
 
-QCalendarWidget QToolButton:hover { background-color: rgba(61, 127, 255, 0.18); color: #5b9fff; }
-QCalendarWidget QToolButton:pressed { background-color: rgba(61, 127, 255, 0.30); }
+QCalendarWidget QToolButton:hover {
+    background-color: rgba(61, 127, 255, 0.18);
+    color: #5b9fff;
+}
+
+QCalendarWidget QToolButton:pressed {
+    background-color: rgba(61, 127, 255, 0.30);
+}
 
 QCalendarWidget QWidget#qt_calendar_navigationbar {
     background-color: rgba(10, 13, 20, 0.95);
@@ -1431,25 +1308,38 @@ QCalendarWidget QAbstractItemView {
     selection-color: #ffffff;
 }
 
-QCalendarWidget QAbstractItemView:enabled { color: #c0ccec; }
-QCalendarWidget QAbstractItemView:disabled { color: #4a5470; }
+QCalendarWidget QAbstractItemView:enabled {
+    color: #c0ccec;
+}
+
+QCalendarWidget QAbstractItemView:disabled {
+    color: #4a5470;
+}
 
 
-/* ════════════════════════════════════════════════════════════
-   38-39. FONT / COLOR / FILE DIALOG
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §24  DATEI- / FARB- / FONTDIALOG
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QFontDialog,
 QColorDialog,
-QFileDialog { background-color: rgba(14, 17, 28, 0.97); color: #e0e8ff; }
+QFileDialog {
+    background-color: rgba(14, 17, 28, 0.97);
+    color: #e0e8ff;
+}
 
-QFileDialog QSplitter { background-color: transparent; }
-QFileDialog QSplitter::handle { background-color: rgba(42, 51, 82, 0.50); }
+QFileDialog QSplitter {
+    background-color: transparent;
+}
+
+QFileDialog QSplitter::handle {
+    background-color: rgba(42, 51, 82, 0.50);
+}
 
 
-/* ════════════════════════════════════════════════════════════
-   40. LIQUID GLASS / AKZENT PANEL
-   ════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════════════
+   §25  HILFSWERKZEUGE (Klassen-basierte Utility-Widgets)
+   ════════════════════════════════════════════════════════════════════════════ */
 
 QWidget[class="glass"] {
     background-color: rgba(28, 34, 54, 0.60);
@@ -1468,9 +1358,20 @@ QWidget[class="sidebar"] {
     border-right: 1px solid rgba(42, 51, 82, 0.60);
 }
 
-QLabel[class="statusOk"]      { color: #40d080; font-weight: 600; }
-QLabel[class="statusError"]   { color: #ff5050; font-weight: 600; }
-QLabel[class="statusWarning"] { color: #ffc040; font-weight: 600; }
+QLabel[class="statusOk"] {
+    color: #40d080;
+    font-weight: 600;
+}
+
+QLabel[class="statusError"] {
+    color: #ff5050;
+    font-weight: 600;
+}
+
+QLabel[class="statusWarning"] {
+    color: #ffc040;
+    font-weight: 600;
+}
 
 QLabel[class="badge"] {
     background-color: #2255cc;
@@ -1484,6 +1385,397 @@ QLabel[class="badge"] {
     padding: 1px 5px;
 }
 
-/* ══════════════════════════════════════════════════════════
-   ENDE — dark_blue_ads_theme.qss (fixed)
-   ══════════════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════════════════════════════════
+   §26  SPLITTER (QSplitter, allgemein)
+   ════════════════════════════════════════════════════════════════════════════ */
+
+QSplitter::handle {
+    background-color: rgba(42, 51, 82, 0.50);
+}
+
+QSplitter::handle:horizontal {
+    width: 3px;
+}
+
+QSplitter::handle:vertical {
+    height: 3px;
+}
+
+QSplitter::handle:hover {
+    background-color: rgba(61, 127, 255, 0.65);
+}
+
+QSplitter::handle:pressed {
+    background-color: #3d7fff;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   §27  ADS — DOCK MANAGER
+   ════════════════════════════════════════════════════════════════════════════ */
+
+ads--CDockManager {
+    background-color: transparent;
+}
+
+ads--CDockManager > QSplitter::handle {
+    background-color: rgba(5, 7, 14, 0.90);
+}
+
+ads--CDockManager > QSplitter::handle:hover {
+    background-color: #3d7fff;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   §28  ADS — DOCK CONTAINER
+   ════════════════════════════════════════════════════════════════════════════ */
+
+ads--CDockContainerWidget {
+    background-color: transparent;
+}
+
+ads--CDockContainerWidget > QSplitter::handle {
+    background-color: rgba(5, 7, 14, 0.90);
+}
+
+ads--CDockContainerWidget > QSplitter::handle:hover {
+    background-color: rgba(61, 127, 255, 0.80);
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   §29  ADS — DOCK AREA
+   ════════════════════════════════════════════════════════════════════════════ */
+
+ads--CDockAreaWidget {
+    background-color: rgba(15, 19, 34, 0.78);
+    border: 1px solid rgba(42, 55, 90, 0.75);
+    border-radius: 6px;
+}
+
+ads--CDockAreaWidget[focused="true"] {
+    border-color: rgba(61, 127, 255, 0.70);
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   §30  ADS — TITELLEISTE (CDockAreaTitleBar)
+   Buttons: 20×20 px — einheitlich, nicht doppelt definiert.
+   Alle Zustände vollständig hier, keine Wiederholung in §31 o.ä.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+ads--CDockAreaTitleBar {
+    background-color: rgba(42, 52, 80, 0.90);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.60);
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    padding: 1px 2px 0px 2px;
+    min-height: 22px;
+    max-height: 26px;
+}
+
+/* Alle direkten Kinder-Widgets der TitleBar transparent halten */
+ads--CDockAreaTitleBar > QWidget,
+ads--CDockAreaTitleBar QFrame,
+ads--CDockAreaTitleBar QScrollArea,
+ads--CDockAreaTitleBar QScrollArea > QWidget,
+ads--CDockAreaTitleBar QScrollArea > QWidget > QWidget,
+ads--CDockAreaTitleBar QScrollArea > QWidget > QWidget > QWidget {
+    background-color: transparent;
+}
+
+/* Labels in der TitleBar */
+ads--CDockAreaTitleBar QWidget,
+ads--CDockAreaTitleBar QLabel {
+    background-color: transparent;
+}
+
+/* Titelleisten-Buttons: Basisgröße 20×20 px */
+ads--CDockAreaTitleBar > QAbstractButton,
+ads--CDockAreaTitleBar QToolButton {
+    background-color: rgba(25, 30, 52, 0.85);
+    border: 1px solid rgba(42, 55, 90, 0.60);
+    border-radius: 4px;
+    color: #a0adcc;
+    margin: 1px 1px;
+    padding: 2px;
+    min-width: 20px;
+    min-height: 20px;
+    max-width: 20px;
+    max-height: 20px;
+}
+
+ads--CDockAreaTitleBar > QAbstractButton:hover,
+ads--CDockAreaTitleBar QToolButton:hover {
+    background-color: rgba(61, 127, 255, 0.20);
+    border-color: rgba(61, 127, 255, 0.55);
+    color: #d0daff;
+}
+
+ads--CDockAreaTitleBar > QAbstractButton:pressed,
+ads--CDockAreaTitleBar QToolButton:pressed {
+    background-color: rgba(61, 127, 255, 0.35);
+    border-color: #3d7fff;
+    color: #ffffff;
+}
+
+/* Close-Button der TitleBar: abweichend rot */
+ads--CDockAreaTitleBar > QAbstractButton#closeButton:hover {
+    background-color: rgba(200, 50, 50, 0.30);
+    border-color: rgba(220, 70, 70, 0.60);
+    color: #ff7070;
+}
+
+ads--CDockAreaTitleBar > QAbstractButton#closeButton:pressed {
+    background-color: rgba(200, 50, 50, 0.50);
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   §31  ADS — TABBAR & DOCK-TAB
+   Reihenfolge: Attribut-Selektoren VOR Pseudo-Klassen → klare Spezifität.
+   Jeder Zustand genau einmal. Kein doppelter :hover-Block.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+ads--CDockTabBar {
+    background-color: transparent;
+    border-bottom: none;
+}
+
+ads--CDockTabBar QScrollArea,
+ads--CDockTabBar QScrollArea > QWidget,
+ads--CDockTabBar QScrollArea > QWidget > QWidget {
+    background-color: transparent;
+}
+
+/* Tabs: Basis (gemeinsame Layout-Eigenschaften) */
+ads--CDockWidgetTab {
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+    margin-left: 1px;
+    margin-top: 1px;
+    margin-right: 2px;
+    min-width: 140px;
+    max-width: 180px;
+    qproperty-iconSize: 13px 13px;
+}
+
+/* Labels im Tab */
+ads--CDockWidgetTab QLabel {
+    background-color: transparent;
+    color: #a0b0d0;
+    font-size: 11px;
+    qproperty-alignment: 'AlignLeft | AlignVCenter';
+}
+
+ads--CDockWidgetTab QWidget,
+ads--CDockWidgetTab QAbstractButton {
+    background-color: transparent;
+}
+
+/* Inaktiver Tab — Normalzustand */
+ads--CDockWidgetTab[activeTab="false"] {
+    background-color: rgba(28, 38, 68, 0.92);
+    border: 0.5px solid rgba(69, 117, 185, 1);
+    border-top: 0.5px solid rgba(69, 117, 185, 1);
+    border-bottom: 1px solid rgba(28, 38, 68, 0.92);
+    color: #ffffff;
+}
+
+/* Inaktiver Tab — Hover */
+ads--CDockWidgetTab[activeTab="false"]:hover {
+    background-color: rgba(35, 48, 80, 0.67);
+    border-color: rgba(61, 127, 255, 0.90);
+}
+
+/* Aktiver Tab — Normalzustand */
+ads--CDockWidgetTab[activeTab="true"] {
+    background-color: rgba(28, 38, 68, 0.75);
+    border: 2px solid rgb(58, 110, 184);
+    border-top: 2px solid rgb(57, 111, 185);
+    border-bottom: 1px solid rgba(28, 38, 68, 0.92);
+    color: #ffffff;
+}
+
+/* Aktiver Tab — Hover */
+ads--CDockWidgetTab[activeTab="true"]:hover {
+    background-color: rgba(58, 72, 110, 1);
+    border-color: rgba(61, 127, 255, 0.90);
+}
+
+/* Label im aktiven Tab */
+ads--CDockWidgetTab[activeTab="true"] QLabel {
+    color: #7ab8ff;
+    font-weight: 600;
+    font-size: 11px;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   §32  ADS — TAB-SCHLIESSEN-BUTTON
+   ════════════════════════════════════════════════════════════════════════════ */
+
+ads--CDockWidgetTab > QAbstractButton#tabCloseButton {
+    background-color: transparent;
+    border: none;
+    border-radius: 3px;
+    margin: 2px 0px 0px 10px;
+    padding: 1px;
+    subcontrol-origin: margin;
+    subcontrol-position: right;
+}
+
+ads--CDockWidgetTab > QAbstractButton#tabCloseButton:hover {
+    background-color: rgba(35, 48, 80, 0.57);
+    border: 1px solid rgba(35, 48, 80, 0.97);
+}
+
+ads--CDockWidgetTab > QAbstractButton#tabCloseButton:pressed {
+    background-color: rgba(255, 80, 80, 0.45);
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   §33  ADS — DOCK WIDGET
+   ════════════════════════════════════════════════════════════════════════════ */
+
+ads--CDockWidget {
+    background-color: rgba(13, 16, 28, 0.80);
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                stop:0 #1a1a1a86, 
+                                stop:1 #227697);
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+ads--CDockWidget > QWidget {
+    background-color: rgba(13, 16, 28, 0.38);
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   §34  ADS — FLOATING DOCK CONTAINER
+   ════════════════════════════════════════════════════════════════════════════ */
+
+ads--CFloatingDockContainer {
+    background-color: rgba(12, 15, 24, 0.94);
+    border: 1px solid rgba(61, 127, 255, 0.35);
+    border-radius: 8px;
+}
+
+ads--CFloatingDockContainer[focused="true"] {
+    border-color: rgba(61, 127, 255, 0.70);
+}
+
+/* TitleBar im Floating Container: abweichende Farben, Rest erbt aus §30 */
+ads--CFloatingDockContainer ads--CDockAreaTitleBar {
+    background-color: rgba(20, 15, 10, 0.96);
+    border-bottom: 1px solid rgba(61, 127, 255, 0.30);
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   §35  ADS — DROP OVERLAY
+   ════════════════════════════════════════════════════════════════════════════ */
+
+ads--CDockOverlay {
+    background-color: rgba(61, 127, 255, 0.08);
+    border: 2px solid rgba(61, 127, 255, 0.60);
+    border-radius: 6px;
+}
+
+ads--CDockOverlayCross {
+    background-color: transparent;
+}
+
+ads--CDockOverlayCross > QAbstractButton {
+    background-color: rgba(17, 21, 32, 0.90);
+    border: 2px solid rgba(61, 127, 255, 0.55);
+    border-radius: 24px;
+    color: #5b9fff;
+}
+
+ads--CDockOverlayCross > QAbstractButton:hover {
+    background-color: rgba(61, 127, 255, 0.25);
+    border-color: #3d7fff;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   §36  ADS — AUTO-HIDE
+   ════════════════════════════════════════════════════════════════════════════ */
+
+ads--CAutoHideDockContainer {
+    background-color: rgba(12, 15, 24, 0.93);
+    border: 1px solid rgba(61, 127, 255, 0.35);
+    border-radius: 6px;
+}
+
+ads--CSideTabBar {
+    background-color: rgba(10, 13, 20, 0.92);
+    border-right: 1px solid rgba(42, 51, 82, 0.60);
+}
+
+ads--CAutoHideTab {
+    background-color: rgba(23, 28, 46, 0.75);
+    border: 1px solid rgba(42, 51, 82, 0.50);
+    border-radius: 4px;
+    color: #8a98bc;
+    font-size: 11px;
+    margin: 2px;
+    padding: 4px 6px;
+    min-height: 20px;
+}
+
+ads--CAutoHideTab:hover {
+    background-color: rgba(61, 127, 255, 0.14);
+    border-color: rgba(61, 127, 255, 0.40);
+    color: #5b9fff;
+}
+
+ads--CAutoHideTab[activeTab="true"] {
+    background-color: rgba(28, 34, 54, 0.95);
+    border-color: rgba(61, 127, 255, 0.60);
+    color: #5b9fff;
+    font-weight: 600;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   §37  ADS — SPLITTER
+   Spezifischer als §26 (allg. QSplitter) → gewinnt ohne !important.
+   ════════════════════════════════════════════════════════════════════════════ */
+
+ads--CDockSplitter::handle {
+    background-color: rgba(5, 7, 14, 0.90);
+    border-radius: 0px;
+}
+
+ads--CDockSplitter::handle:horizontal {
+    width: 4px;
+    image: none;
+}
+
+ads--CDockSplitter::handle:vertical {
+    height: 4px;
+    image: none;
+}
+
+ads--CDockSplitter::handle:hover {
+    background-color: #3d7fff;
+}
+
+ads--CDockSplitter::handle:pressed {
+    background-color: #5b9fff;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   ENDE — dark_blue_ads_theme.qss  (refactored)
+   ══════════════════════════════════════════════════════════════════════════ */
