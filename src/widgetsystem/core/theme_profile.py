@@ -244,6 +244,21 @@ ads--CDockWidgetTab:hover {{
     background: {qss_color("tab_hover_bg")};
 }}
 
+/* Ensure tab close button sits 4px from the right edge of the tab */
+ads--CDockWidgetTab > QAbstractButton#tabCloseButton {{
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+    margin: 0px 4px 0px 0px;
+    padding: 1px;
+    min-width: 14px;
+    min-height: 14px;
+    max-width: 14px;
+    max-height: 14px;
+    subcontrol-origin: padding;
+    subcontrol-position: right;
+}}
+
 QTabBar {{
     background: {qss_color("window_bg")};
 }}
@@ -302,6 +317,7 @@ ads--CTitleBarButton:pressed {{
 #dockAreaCloseButton, #detachGroupButton, #tabCloseButton, #dockAreaAutoHideButton {{
     background: {qss_color("btn_bg")};
     border-radius: 2px;
+    subcontrol-position: right;
 }}
 
 #dockAreaCloseButton:hover, #detachGroupButton:hover, 

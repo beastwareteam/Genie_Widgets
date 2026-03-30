@@ -85,7 +85,11 @@ QTabBar {
 QTabBar::tab {
     background-color: #2A2A2A;
     color: #BDBDBD;
-    padding: 6px 16px;
+    padding: 6px 32px 6px 16px; /* rechts mehr Platz für Close-Button */
+    QTabBar::close-button {
+        subcontrol-position: right;
+        right: 6px;
+    }
     margin: 2px 2px 0px 0px;
     border: 1px solid #3C3C3C;
     border-bottom: none;

@@ -27,7 +27,7 @@ QWidget:disabled {
 
 
 /* ════════════════════════════════════════════════════════════
-   2. HAUPTFENSTER  ← FIX: war transparent, jetzt solid
+   2. HAUPTFENSTER
    ════════════════════════════════════════════════════════════ */
 
 QMainWindow {
@@ -95,7 +95,7 @@ ads--CDockAreaWidget[focused="true"] {
 
 
 /* ════════════════════════════════════════════════════════════
-   6. ADS — TAB BAR  ← FIX: min-height 34→22px, padding reduziert
+   6. ADS — TAB BAR
    ════════════════════════════════════════════════════════════ */
 
 ads--CDockAreaTitleBar {
@@ -138,33 +138,36 @@ ads--CDockAreaTitleBar QLabel {
 
 
 /* ════════════════════════════════════════════════════════════
-   7. ADS — DOCK TAB  ← FIX: Spezifitäts-Konflikt behoben
+   7. ADS — DOCK TAB
    ════════════════════════════════════════════════════════════ */
 
 ads--CDockWidgetTab {
     background-color: rgba(42, 52, 80, 0.90);
-    border: 1px solid rgba(70, 88, 130, 0.80);
     border-bottom: none;
-    border-radius: 4px 4px 0px 0px;
-    padding: 2px 8px 2px 6px;
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+    margin-left: 1px;
+    margin-top: 1px;
     margin-right: 2px;
-    min-width: 60px;
+    min-width: 140px;
     max-width: 180px;
     qproperty-iconSize: 13px 13px;
 }
 
 ads--CDockWidgetTab[activeTab="true"] {
-    background-color: rgba(28, 38, 68, 0.92);
-    border: 1px solid rgba(61, 127, 255, 0.75);
-    border-top: 2px solid #3d7fff;
+    background-color: rgba(28, 38, 68, 0.75);
+    border: 2px solid rgb(58, 110, 184);
+    border-top: 2px solid rgb(57, 111, 185);
     border-bottom: 1px solid rgba(28, 38, 68, 0.92);
     color: #ffffff;
 }
 
 ads--CDockWidgetTab[activeTab="false"] {
-    background-color: rgba(28, 38, 68, 0.65);
-    border: 1px solid rgba(61, 127, 255, 0.58);
-    border-top: 2px solid rgba(61, 126, 255, 0.65);
+    background-color: rgba(28, 38, 68, 0.92);
+    border: 0.5px solid rgba(69, 117, 185, 1);
+    border-top: 0.5px solid rgba(69, 117, 185, 1);
     border-bottom: 1px solid rgba(28, 38, 68, 0.92);
     color: #ffffff;
 }
@@ -176,7 +179,12 @@ ads--CDockWidgetTab[activeTab="false"]:hover {
 }
 
 ads--CDockWidgetTab[activeTab="true"]:hover {
-    background-color: rgba(35, 48, 80, 0.97);
+    background-color: rgba(58, 72, 110, 1);
+    border-color: rgba(61, 127, 255, 0.90);
+}
+
+ads--CDockWidgetTab[activeTab="false"]:hover {
+    background-color: rgba(35, 48, 80, 0.67);
     border-color: rgba(61, 127, 255, 0.90);
 }
 
@@ -191,35 +199,41 @@ ads--CDockWidgetTab QLabel {
     background-color: transparent;
     color: #a0b0d0;
     font-size: 11px;
+    qproperty-alignment: 'AlignLeft | AlignVCenter';
 }
 
 
 /* ════════════════════════════════════════════════════════════
-   8. ADS — TAB SCHLIESSEN-BUTTON  ← FIX: kleiner (14px statt 16px)
+   8. ADS — TAB SCHLIESSEN-BUTTON
    ════════════════════════════════════════════════════════════ */
 
 ads--CDockWidgetTab > QAbstractButton#tabCloseButton {
     background-color: transparent;
     border: none;
     border-radius: 3px;
-    margin: 0px 0px 0px 3px;
+    margin: 2px 0px 0px 10px;
     padding: 1px;
     min-width: 14px;
     min-height: 14px;
     max-width: 14px;
     max-height: 14px;
     subcontrol-origin: margin;
+    subcontrol-position: right;
 }
 
 ads--CDockWidgetTab > QAbstractButton#tabCloseButton:hover {
-    background-color: rgba(255, 80, 80, 0.25);
-    border: 1px solid rgba(255, 80, 80, 0.40);
+    background-color: rgba(35, 48, 80, 0.57);
+    border: 1px solid rgba(35, 48, 80, 0.97);
 }
 
 ads--CDockWidgetTab > QAbstractButton#tabCloseButton:pressed {
     background-color: rgba(255, 80, 80, 0.45);
 }
 
+ads--CDockWidgetTab[activeTab="true"] > QAbstractButton#tabCloseButton:hover {
+    background-color: rgba(35, 48, 80, 0.57);
+    border: 1px solid rgba(35, 48, 80, 0.97);
+}
 
 /* ════════════════════════════════════════════════════════════
    9. ADS — DOCK WIDGET
@@ -237,7 +251,7 @@ ads--CDockWidget > QWidget {
 
 
 /* ════════════════════════════════════════════════════════════
-   10. ADS — TITELLEISTE BUTTONS  ← FIX: 26→20px, kompakter
+   10. ADS — TITELLEISTE BUTTONS
    ════════════════════════════════════════════════════════════ */
 
 ads--CDockAreaTitleBar > QAbstractButton,
@@ -502,7 +516,7 @@ QMenu::right-arrow {
 
 
 /* ════════════════════════════════════════════════════════════
-   18. TOOLBAR  ← FIX: min-height 36→24px, Buttons 26→18px
+   18. TOOLBAR 
    ════════════════════════════════════════════════════════════ */
 
 QToolBar {
