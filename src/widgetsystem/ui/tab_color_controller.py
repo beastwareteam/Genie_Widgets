@@ -80,7 +80,6 @@ class TabColorController(QObject):
         """
         if event is None or watched is None:
             return False
-
         try:
             # Monitor for show events on dock areas (when new areas are created)
             if event.type() == QEvent.Type.Show and isinstance(watched, QtAds.CDockAreaWidget):
@@ -96,11 +95,40 @@ class TabColorController(QObject):
                         break
                     parent = parent.parent() if isinstance(parent, QWidget) else None
 
+        except KeyboardInterrupt:
+            print("[TabColorController] Event-Filter durch KeyboardInterrupt sauber beendet.")
+            return False
         except Exception as e:
-            # Silently fail - don't disrupt normal event processing
+            print(f"[TabColorController] Fehler im Event-Filter: {e}")
             logger.exception(f"Event filter error: {e}")
-
+            return False
         return False
+    def apply(self) -> None:
+        if getattr(self, '_applying', False):
+            return
+        self._applying = True
+        try:
+            for widget in QApplication.allWidgets():
+                if not isinstance(widget, QtAds.CDockAreaWidget):
+                    continue
+                dock_area: Any = widget  # Cast to avoid type checker issues
+                current_dock = dock_area.currentDockWidget()
+                if current_dock is None:
+                    continue
+                try:
+                    current_tab_widget = current_dock.tabWidget()
+                except Exception:
+                    continue
+                for tab in dock_area.findChildren(QWidget):
+                    if "CDockWidgetTab" not in tab.metaObject().className():
+                        continue
+                    is_active = tab == current_tab_widget
+                    color = self.active_color if is_active else self.inactive_color
+                    for label in tab.findChildren(QWidget):
+                        if label.objectName() == "dockWidgetTabLabel":
+                            label.setStyleSheet(f"color: {color};")
+        finally:
+            self._applying = False
 
     def shutdown(self) -> None:
         """Remove event filter and cleanup."""

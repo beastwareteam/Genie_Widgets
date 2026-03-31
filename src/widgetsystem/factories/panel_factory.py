@@ -200,6 +200,51 @@ class PanelFactory:
         except Exception:
             return False
 
+    def delete_panel(self, panel_id: str) -> bool:
+        """Delete a panel from configuration."""
+        try:
+            if self._panels_cache is None:
+                self.load_panels()
+            if self._panels_cache is None or panel_id not in self._panels_cache:
+                return False
+            del self._panels_cache[panel_id]
+            return self.save_to_file()
+        except Exception:
+            return False
+
+    def update_panel(
+        self,
+        panel_id: str,
+        name_key: str | None = None,
+        area: str | None = None,
+        closable: bool | None = None,
+        movable: bool | None = None,
+        floatable: bool | None = None,
+        delete_on_close: bool | None = None,
+    ) -> bool:
+        """Update an existing panel's properties."""
+        try:
+            if self._panels_cache is None:
+                self.load_panels()
+            if self._panels_cache is None or panel_id not in self._panels_cache:
+                return False
+            panel = self._panels_cache[panel_id]
+            if name_key is not None:
+                panel.name_key = name_key
+            if area is not None:
+                panel.area = area
+            if closable is not None:
+                panel.closable = closable
+            if movable is not None:
+                panel.movable = movable
+            if floatable is not None:
+                panel.floatable = floatable
+            if delete_on_close is not None:
+                panel.delete_on_close = delete_on_close
+            return self.save_to_file()
+        except Exception:
+            return False
+
     def save_to_file(self) -> bool:
         """Serialize and write panels to file."""
         try:

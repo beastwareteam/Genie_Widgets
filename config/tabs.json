@@ -10,29 +10,63 @@
           "id": "tab_overview",
           "title_key": "tab.overview",
           "component": "overview",
-          "closable": false,
-          "active": true
+          "closable": true,
+          "active": true,
+          "icon": "",
+          "tooltip": "",
+          "context_menu": "",
+          "children": [
+            {
+              "id": "tab_overview_sub_f9f2d6",
+              "title_key": "Neuer Subtab",
+              "component": "",
+              "closable": true,
+              "active": false,
+              "icon": "",
+              "tooltip": "",
+              "context_menu": ""
+            },
+            {
+              "id": "tab_overview_sub_8385ad",
+              "title_key": "Neuer Subtab",
+              "component": "",
+              "closable": true,
+              "active": false,
+              "icon": "",
+              "tooltip": "",
+              "context_menu": ""
+            }
+          ]
         },
         {
           "id": "tab_analytics",
           "title_key": "tab.analytics",
           "component": "analytics",
           "closable": true,
-          "active": false,
+          "active": true,
+          "icon": "",
+          "tooltip": "",
+          "context_menu": "",
           "children": [
             {
               "id": "subtab_charts",
               "title_key": "tab.charts",
               "component": "charts",
               "closable": true,
-              "active": false
+              "active": false,
+              "icon": "",
+              "tooltip": "",
+              "context_menu": ""
             },
             {
               "id": "subtab_tables",
               "title_key": "tab.tables",
               "component": "tables",
               "closable": true,
-              "active": false
+              "active": false,
+              "icon": "",
+              "tooltip": "",
+              "context_menu": ""
             }
           ]
         }
@@ -41,6 +75,13 @@
     {
       "id": "tabwidget",
       "title_key": "tabs.tabwidget.title",
+      "dock_area": "center",
+      "orientation": "horizontal",
+      "tabs": []
+    },
+    {
+      "id": "super",
+      "title_key": "tabs.super.title",
       "dock_area": "center",
       "orientation": "horizontal",
       "tabs": []

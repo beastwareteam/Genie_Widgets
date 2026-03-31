@@ -1,3 +1,12 @@
+
+/*
+    AUTOMATISCHER SUBTABWIDGET-STYLESHEET-IMPORT
+    ------------------------------------------------
+    Diese Styles sorgen für ein konsistentes, abgesetztes Design für alle SubTab-Ebenen (QTabWidget#SubTabWidget).
+    Sie überschreiben KEINE bestehenden QTabWidget/QTabBar-Styles, sondern ergänzen sie gezielt für verschachtelte Tabs.
+    Quelle: _auto_subtabwidget.qss (automatisch generiert)
+*/
+@import "_auto_subtabwidget.qss";
 /* ════════════════════════════════════════════════════════════════════════════
    dark_blue_ads_theme.qss  
    AUFBAU

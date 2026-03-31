@@ -3,7 +3,7 @@
 import sys
 from collections.abc import Iterable
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 import PySide6QtAds as QtAds
 from PySide6.QtCore import QByteArray, Qt, QTimer
@@ -192,8 +192,12 @@ class MainWindow(QMainWindow):
         # Tab Color Controller - load colors from theme
         active, inactive = "#E0E0E0", "#BDBDBD"
 
-        self._tab_color_controller = TabColorController(active, inactive)
-        self._tab_color_controller.initialize()
+        try:
+            self._tab_color_controller = TabColorController(active, inactive)
+            self._tab_color_controller.initialize()
+        except Exception as e:
+            print(f"[TabColorController] Initialization failed: {e}")
+            self._tab_color_controller = None
 
         # Build UI with factories
         self._initialize_dnd()
@@ -344,28 +348,52 @@ class MainWindow(QMainWindow):
         self._floating_tracker.track_dock_widget(tab_group.id, dock)
 
     def _add_tab_recursive(self, parent_widget: QTabWidget, tab: Tab, depth: int = 0) -> None:
-        """Recursively add tabs (handling nested children)."""
-        # Translate tab name using i18n
+        """Recursively add tabs (handling nested children, icons, closable, tooltip, context menu, active)."""
+        from PySide6.QtGui import QIcon
+        from PySide6.QtWidgets import QWidget, QTabWidget
+
         tab_name = self.i18n_factory.translate(tab.title_key, default=tab.id)
+        tab_icon = QIcon(tab.component) if getattr(tab, "icon", None) else QIcon()
+        tab_tooltip = getattr(tab, "tooltip", "")
+        tab_closable = getattr(tab, "closable", True)
+        tab_active = getattr(tab, "active", False)
+        tab_context_menu = getattr(tab, "context_menu", None)
 
         if tab.children:
             # Tab has nested children - create sub-tab widget
             sub_tab_widget = QTabWidget()
             sub_tab_widget.setDocumentMode(True)
             sub_tab_widget.setTabsClosable(True)
+            sub_tab_widget.setObjectName("SubTabWidget")  # Für QSS-Selektor
 
             for child_tab in tab.children:
                 self._add_tab_recursive(sub_tab_widget, child_tab, depth=depth + 1)
 
-            parent_widget.addTab(sub_tab_widget, tab_name)
+            idx = parent_widget.addTab(sub_tab_widget, tab_icon, tab_name)
+            if tab_tooltip:
+                parent_widget.setTabToolTip(idx, tab_tooltip)
+            # Closable-Status für Subtab
+            from PySide6.QtWidgets import QTabBar
+            parent_widget.tabBar().setTabButton(idx, QTabBar.ButtonPosition.RightSide, None if tab_closable else QWidget())
+            # Kontextmenü (optional)
+            if tab_context_menu:
+                sub_tab_widget.setContextMenuPolicy(tab_context_menu)
+            # Aktiver Tab
+            if tab_active:
+                parent_widget.setCurrentIndex(idx)
         else:
             # Leaf tab - add placeholder content
             content_widget = QWidget()
-            parent_widget.addTab(content_widget, tab_name)
-
-        # Set active tab if specified
-        if tab.active and depth == 0:
-            parent_widget.setCurrentIndex(parent_widget.count() - 1)
+            idx = parent_widget.addTab(content_widget, tab_icon, tab_name)
+            if tab_tooltip:
+                parent_widget.setTabToolTip(idx, tab_tooltip)
+            if not tab_closable:
+                from PySide6.QtWidgets import QTabBar
+                parent_widget.tabBar().setTabButton(idx, QTabBar.ButtonPosition.RightSide, QWidget())
+            if tab_context_menu:
+                content_widget.setContextMenuPolicy(tab_context_menu)
+            if tab_active:
+                parent_widget.setCurrentIndex(idx)
 
     def _create_panel_dock(self, panel: PanelConfig) -> None:
         """Create a dock widget from PanelConfig."""
@@ -1081,9 +1109,10 @@ class MainWindow(QMainWindow):
                 app.setStyleSheet(stylesheet)
 
                 # Update tab colors from theme
-                self._tab_color_controller.active_color = theme.tab_active_color
-                self._tab_color_controller.inactive_color = theme.tab_inactive_color
-                self._tab_color_controller.apply()
+                if self._tab_color_controller is not None:
+                    self._tab_color_controller.active_color = theme.tab_active_color
+                    self._tab_color_controller.inactive_color = theme.tab_inactive_color
+                    self._tab_color_controller.apply()
 
                 QMessageBox.information(
                     self,
@@ -1314,9 +1343,10 @@ class MainWindow(QMainWindow):
                 # Update tab colors
                 tab_active = theme.get_property("tab_active_color", "#E0E0E0")
                 tab_inactive = theme.get_property("tab_inactive_color", "#BDBDBD")
-                self._tab_color_controller.active_color = tab_active
-                self._tab_color_controller.inactive_color = tab_inactive
-                self._tab_color_controller.apply()
+                if self._tab_color_controller is not None:
+                    self._tab_color_controller.active_color = tab_active
+                    self._tab_color_controller.inactive_color = tab_inactive
+                    self._tab_color_controller.apply()
 
                 print(f"✓ Theme applied: {theme.name}")
                 print(f"  Stylesheet length: {len(theme.stylesheet)} chars")
@@ -1400,7 +1430,7 @@ class MainWindow(QMainWindow):
         """Show configuration panel for UI customization."""
         try:
             # Create configuration panel widget
-            config_widget_content = ConfigurationPanel(Path("config"), self.i18n_factory)
+            config_widget_content = ConfigurationPanel(Path("config"), self.i18n_factory, self)
 
             # Find or create configuration dock
             config_dock = None
@@ -1428,6 +1458,8 @@ class MainWindow(QMainWindow):
 
             # Connect signals for live updates
             config_widget_content.config_changed.connect(self._on_config_changed)
+            config_widget_content.panel_close_requested.connect(self._on_panel_close_requested)
+            config_widget_content.panel_rename_requested.connect(self._on_panel_rename_requested)
 
         except Exception as e:
             QMessageBox.critical(
@@ -1453,6 +1485,27 @@ class MainWindow(QMainWindow):
                 print("✓ Panels configuration reloaded")
         except Exception as e:
             print(f"Warning: Failed to reload {category} configuration: {e}")
+
+    def _on_panel_close_requested(self, panel_id: str) -> None:
+        """Force close a panel dock by ID, bypassing closable=False."""
+        for dock in list(self.docks):
+            if dock.objectName() == panel_id:
+                # Temporarily allow closing, close it, then restore
+                dock.setFeature(QtAds.CDockWidget.DockWidgetFeature.DockWidgetClosable, True)
+                dock.closeDockWidget()
+                return
+        QMessageBox.information(
+            self,
+            self.i18n_factory.translate("message.info", default="Info"),
+            f"Panel '{panel_id}' not found or already closed.",
+        )
+
+    def _on_panel_rename_requested(self, panel_id: str, new_title: str) -> None:
+        """Update the title of a panel dock at runtime."""
+        for dock in list(self.docks):
+            if dock.objectName() == panel_id:
+                dock.setWindowTitle(new_title)
+                return
 
     # ------------------------------------------------------------------
     # Phase 5: Advanced Features
@@ -1642,7 +1695,11 @@ def main() -> None:
     window = MainWindow()
     window.show()
 
-    sys.exit(app.exec())
+    try:
+        sys.exit(app.exec())
+    except KeyboardInterrupt:
+        print("[Main] Anwendung wurde per KeyboardInterrupt (Strg+C) beendet.")
+        sys.exit(0)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,63 @@
+/*
+   SubTabWidget Styles – Automatisch generiert für Nested Tabs
+   Diese Selektoren sorgen für ein konsistentes, abgesetztes Design für alle SubTab-Ebenen.
+   Farben und Maße orientieren sich an den Design Tokens aus dark_blue_ads_theme.qss
+*/
+
+QTabWidget#SubTabWidget {
+    background: transparent;
+    border: none;
+    margin-top: 6px;
+    margin-bottom: 2px;
+}
+
+QTabWidget#SubTabWidget > QTabBar {
+    background: transparent;
+    border: none;
+    min-height: 24px;
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+QTabWidget#SubTabWidget > QTabBar::tab {
+    min-width: 90px;
+    max-width: 160px;
+    padding: 4px 16px 4px 12px;
+    border-radius: 6px 6px 0 0;
+    background: rgba(28, 38, 68, 0.92); /* bg-tab-inactive */
+    color: #a0b0d0; /* text-tab-in */
+    border: 1px solid rgba(69, 117, 185, 1); /* border-tab */
+    border-bottom: none;
+    font-size: 12px;
+    margin-right: 2px;
+}
+
+QTabWidget#SubTabWidget > QTabBar::tab:selected {
+    background: rgba(28, 38, 68, 0.75); /* bg-tab-active */
+    color: #7ab8ff; /* text-tab-act */
+    border-color: rgb(58, 110, 184); /* border-tab-act */
+    font-weight: 600;
+}
+
+QTabWidget#SubTabWidget > QTabBar::tab:hover {
+    background: rgba(61, 127, 255, 0.18); /* accent-faint */
+    color: #5b9fff; /* accent-lite */
+    border-color: #3d7fff; /* accent */
+}
+
+QTabWidget#SubTabWidget > QTabBar::close-button {
+    image: url(:/icons/close.svg);
+    background: transparent;
+    border: none;
+    width: 16px;
+    height: 16px;
+    margin-left: 4px;
+}
+
+QTabWidget#SubTabWidget > QTabBar::close-button:hover {
+    background: rgba(200, 50, 50, 0.30);
+}
+
+QTabWidget#SubTabWidget > QTabBar::close-button:pressed {
+    background: rgba(200, 50, 50, 0.50);
+}
